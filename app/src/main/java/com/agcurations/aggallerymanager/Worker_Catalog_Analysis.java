@@ -148,8 +148,8 @@ public class Worker_Catalog_Analysis extends Worker {
                 stopWatch.Reset();
                 stopWatch.PostDebugLogAndRestart("Performing indexing.");
                 //If the directory index file does not exist, perform new indexing:
-                sMessage = GlobalClass.gsCatalogFolderNames[giMediaCategory] + " directory index file does not exist. " +
-                        "Indexing " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " directory...\n";
+                sMessage = GlobalClass.gsCatalogFolderNames[giMediaCategory] + " directory index does not exist in memory. " +
+                        "Indexing " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " directory now. User may exit this part of the app and return when complete or to check progress.\n";
                 LogThis("doWork()", sMessage, null);
 
                 for (String sFolderName : alsFolderNamesInUse) {
@@ -1144,85 +1144,34 @@ public class Worker_Catalog_Analysis extends Worker {
                             String sM3U8_File_Contents = new String(byteM3U8_File);
                             String[] sM3U8_FileLines = sM3U8_File_Contents.split("\n");
 
-                            boolean bM3U8_File_Internal_Paths_UpToDate = false;
                             int iSegmentFileCount = 0;
                             int iSegmentFilesFound = 0;
-                            for (String sM3U8_File_Line : sM3U8_FileLines) {
-                                if (!sM3U8_File_Line.startsWith("#") && sM3U8_File_Line.endsWith("st")) {
-                                    //sLine should now have a Uri string to a ts file.
-                                    iSegmentFileCount++;
-                                    if(!bM3U8_File_Internal_Paths_UpToDate) {
-                                        if (sM3U8_File_Line.startsWith(GlobalClass.gsUriAppRootPrefix)) {
-                                            bM3U8_File_Internal_Paths_UpToDate = true;
-                                        } else {
-                                            //M3U8 file does not have up-to-date paths utilizing the current storage structure.
-                                            // This could be caused by moving the database.
-                                            iM3U8ProblemItemCount++;
-                                            sMessage = "\n" + iM3U8ProblemItemCount + ". Catalog item ID " + ci.sItemID + " does not have an up-to-date m3u8 file aligned with the current base storage." +
-                                                    " This is could be caused by a move of the folder.\n";
-                                            SendLogLine(sMessage);
-                                            sbLogLines.append(sMessage);
-                                            break; //Don't process any more lines from this file.
-                                        }
-                                    }
-                                    //If we are here, then the segment files' paths are aligned with the base storage.
-                                    //Check to ensure that the segment file exists:
 
-                                    String sTemp = GlobalClass.gsUriAppRootPrefix
-                                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS];
-                                    int iLengthOfPathToExclude = sTemp.length();
-                                    sRelativeFullPath = sM3U8_File_Line.substring(iLengthOfPathToExclude);
-                                    if(sRelativeFullPath.startsWith("%2F")){
-                                        sRelativeFullPath = sRelativeFullPath.substring(3);
-                                    }
-                                    if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).containsKey(sRelativeFullPath)){
-                                        //gtmicf_AllFileItemsInMediaFolder key => icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName;
-                                        //Segment file exists in the videos media folder.
-                                       iSegmentFilesFound++;
-                                    }
-
-                                } //End if this is an M3U8 segment file listing.
-
-                            } //End loop through M3U8 file record lines.
+                            boolean bM3U8_File_Internal_Paths_UpToDate = M3U8FileRelativePathsUptoDate(sM3U8_FileLines);
 
                             if(!bM3U8_File_Internal_Paths_UpToDate){
+                                //M3U8 file does not have up-to-date paths utilizing the current storage structure.
+                                // This could be caused by moving the database.
+                                iM3U8ProblemItemCount++;
+                                sMessage = "\n" + iM3U8ProblemItemCount + ". Catalog item ID " + ci.sItemID + " does not have an up-to-date m3u8 file aligned with the current base storage." +
+                                        " This is could be caused by a move of the folder. Attempting to update the file...\n";
+                                SendLogLine(sMessage);
+                                sbLogLines.append(sMessage);
+
                                 //Update the file to the current base storage:
                                 try {
-                                    StringBuilder sbM3U8 = new StringBuilder();
-                                    String sLine;
-                                    for (String sM3U8_File_Line : sM3U8_FileLines) {
-                                        sLine = sM3U8_File_Line;
-                                        if (!sM3U8_File_Line.startsWith("#") && sM3U8_File_Line.endsWith("st")) {
-                                            //sLine should be a line which is a file name or a path + a file name.
-                                            String sFileName;
-                                            int iLastIndexOfFileDelimeter = sLine.lastIndexOf(GlobalClass.gsFileSeparator);
-                                            if(iLastIndexOfFileDelimeter > 0){
-                                                sFileName = sLine.substring(sLine.lastIndexOf("/"));
-                                            } else {
-                                                sFileName = sLine;
-                                            }
-                                            //Don't try to make sure that the file exists here. It is important that the file exists or the player
-                                            //  might not play at all, but that is a task for another routine in order to save time.
-                                            sLine = sUpdatedM3U8BasePath + GlobalClass.gsFileSeparator + sFileName;
-                                        }
-                                        sbM3U8.append(sLine);
-                                        sbM3U8.append("\n");
-
-                                    } //End loop through M3U8 file record lines.
-                                    //Updated file formed in memory. Write the file:
-                                    OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8);
-                                    if (osM3U8 == null) {
+                                    if(UpdateM3U8FileRelativePaths(sM3U8_FileLines, sUpdatedM3U8BasePath, uriM3U8)){
+                                        iM3U8_Files_Updated++;
+                                        sMessage = "File updated successfully.\n";
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
+                                        bM3U8_File_Internal_Paths_UpToDate = true;
+                                    } else {
                                         sMessage = "\nCould not open file for writing for update to current path.\n";
                                         SendLogLine(sMessage);
                                         sbLogLines.append(sMessage);
                                         continue;
                                     }
-                                    String sM3U8_Data = sbM3U8.toString();
-                                    osM3U8.write(sM3U8_Data.getBytes(StandardCharsets.UTF_8));
-                                    osM3U8.flush();
-                                    osM3U8.close();
-                                    iM3U8_Files_Updated++;
-
                                 } catch (Exception e) {
                                     sMessage = "Problem processing and/or writing to updated M3U8 file: " + e.getMessage() + "\n";
                                     globalClass.BroadcastProgress(true, sMessage,
@@ -1230,6 +1179,29 @@ public class Worker_Catalog_Analysis extends Worker {
                                             false, "",
                                             GlobalClass.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE);
                                 }
+                            } else {
+                                //Count the M3U8 segment files listed in the M3U8 file, and check to make sure those files exist:
+                                for (String sM3U8_File_Line : sM3U8_FileLines) {
+                                    if (!sM3U8_File_Line.startsWith("#") && sM3U8_File_Line.endsWith("st")) {
+                                        //sLine should now have a Uri string to a ts file.
+                                        iSegmentFileCount++;
+                                        //Check to ensure that the segment file exists:
+                                        String sTemp = GlobalClass.gsUriAppRootPrefix
+                                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS];
+                                        int iLengthOfPathToExclude = sTemp.length();
+                                        sRelativeFullPath = sM3U8_File_Line.substring(iLengthOfPathToExclude);
+                                        if (sRelativeFullPath.startsWith("%2F")) {
+                                            sRelativeFullPath = sRelativeFullPath.substring(3);
+                                        }
+                                        if (GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).containsKey(sRelativeFullPath)) {
+                                            //gtmicf_AllFileItemsInMediaFolder key => icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName;
+                                            //Segment file exists in the videos media folder.
+                                            iSegmentFilesFound++;
+                                        }
+
+                                    } //End if this is an M3U8 segment file listing.
+
+                                } //End loop through M3U8 file record lines.
                             }
 
 
@@ -1422,6 +1394,69 @@ public class Worker_Catalog_Analysis extends Worker {
                 false, "",
                 CATALOG_ANALYSIS_ACTION_RESPONSE);
         Log.d("Worker_Catalog_Verification:" + sRoutine, sMessage);
+    }
+
+
+    public static boolean M3U8FileRelativePathsUptoDate(String[] sM3U8_FileLines){
+        for (String sM3U8_File_Line : sM3U8_FileLines) {
+            if (!sM3U8_File_Line.startsWith("#") && sM3U8_File_Line.endsWith("st")) {
+                //sLine should now have a Uri string to a ts file.
+                if (sM3U8_File_Line.startsWith(GlobalClass.gsUriAppRootPrefix)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } //End if this is an M3U8 segment file listing.
+        } //End loop through M3U8 file record lines.
+        return true; //If we are here, then the file likely has no valid records.
+    }
+
+    /**
+     * @param sM3U8_FileLines String Array containing lines from the file to be examined, altered, & written.
+     * @param sUpdatedM3U8BasePath A path similar to: GlobalClass.gsUriAppRootPrefix
+     *             + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
+     *             + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
+     * @param uriM3U8 The Uri to the file to be written.
+     *
+     * @return Returns true if successful, returns false if it could not write the new file.
+     * @throws Exception
+     */
+    public static boolean UpdateM3U8FileRelativePaths(String[] sM3U8_FileLines, String sUpdatedM3U8BasePath, Uri uriM3U8) throws Exception{
+        //Update the file to the current base storage:
+
+        StringBuilder sbM3U8 = new StringBuilder();
+        String sLine;
+        for (String sM3U8_File_Line : sM3U8_FileLines) {
+            sLine = sM3U8_File_Line;
+            if (!sM3U8_File_Line.startsWith("#") && sM3U8_File_Line.endsWith("st")) {
+                //sLine should be a line which is a file name or a path + a file name.
+                String sFileName;
+                int iLastIndexOfFileDelimeter = sLine.lastIndexOf(GlobalClass.gsFileSeparator);
+                if(iLastIndexOfFileDelimeter > 0){
+                    sFileName = sLine.substring(sLine.lastIndexOf("/"));
+                } else {
+                    sFileName = sLine;
+                }
+                //Don't try to make sure that the file exists here. It is important that the file exists or the player
+                //  might not play at all, but that is a task for another routine in order to save time.
+                sLine = sUpdatedM3U8BasePath + GlobalClass.gsFileSeparator + sFileName;
+            }
+            sbM3U8.append(sLine);
+            sbM3U8.append("\n");
+
+        } //End loop through M3U8 file record lines.
+        //Updated file formed in memory. Write the file:
+        OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8);
+        if (osM3U8 == null) {
+            return false;
+        }
+        String sM3U8_Data = sbM3U8.toString();
+        osM3U8.write(sM3U8_Data.getBytes(StandardCharsets.UTF_8));
+        osM3U8.flush();
+        osM3U8.close();
+
+        return true;
+
     }
 
 }
