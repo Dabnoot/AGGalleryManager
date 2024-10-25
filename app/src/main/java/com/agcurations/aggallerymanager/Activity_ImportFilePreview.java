@@ -13,7 +13,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.view.GestureDetector;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -25,12 +24,10 @@ import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.slider.RangeSlider;
@@ -54,6 +51,10 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.PlayerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.Data;
@@ -75,12 +76,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     private boolean gbLookForFileAdjacencies = false;
 
-    VideoView gVideoView_VideoPlayer;
-    MediaController gMediaController;
+        //ExoPlayer is used for playback of local M3U8 files:
+    private ExoPlayer gExoPlayer;
+    private PlayerView gplayerView_ExoVideoPlayer;
 
     private ImageView gImagePreview;
 
-    private int giCurrentVideoPosition = 1;
+    private long glCurrentVideoPosition = 1;
     private final int VIDEO_PLAYBACK_STATE_PAUSED = 0;
     private final int VIDEO_PLAYBACK_STATE_PLAYING = 1;
     private int giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
@@ -129,7 +131,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         if (savedInstanceState != null) {
             giFileItemIndex = savedInstanceState.getInt(IMAGE_PREVIEW_INDEX);
             giFileItemLastIndex = giFileItemIndex;
-            giCurrentVideoPosition = savedInstanceState.getInt(PLAYBACK_TIME);
+            glCurrentVideoPosition = savedInstanceState.getLong(PLAYBACK_TIME);
         }
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
@@ -249,7 +251,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         Bundle b = getIntent().getExtras();
         if(b != null) {
             GlobalClass globalClass = (GlobalClass) getApplicationContext(); 
-            galFileItems = globalClass.galPreviewFileList;
+            galFileItems = GlobalClass.galPreviewFileList;
             giMaxFileItemIndex = galFileItems.size() - 1;
             giFileItemIndex = b.getInt(Activity_Import.PREVIEW_FILE_ITEMS_POSITION, 0);
             giFileItemLastIndex = giFileItemIndex;
@@ -293,7 +295,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 }
             }
 
-            gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayerPreview);
+            //Create the ExoPlayer.
+            gExoPlayer = new ExoPlayer.Builder(this).build();
+            gExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
+            gplayerView_ExoVideoPlayer = findViewById(R.id.playerView_ExoVideoPlayer);
+            gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
+
+
             gImagePreview = findViewById(R.id.imageView_ImagePreview);
 
             //Prepare a touch listener accept swipe to go to next or previous file:
@@ -395,23 +403,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 long lVideoDuration = galFileItems.get(giFileItemIndex).lVideoTimeInMilliseconds;
                 if (lVideoDuration < 0L) {
                     //If there is no video length, exit this activity.
+                    Toast.makeText(getApplicationContext(),"No video length.", Toast.LENGTH_SHORT).show();
                     finish();
                 }
-                gVideoView_VideoPlayer.bringToFront();
-
-                //Configure the media controller:
-                gMediaController = new MediaController(this);
-                gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
-                gVideoView_VideoPlayer.setOnPreparedListener(mp -> gMediaController.setAnchorView(gVideoView_VideoPlayer));
-                gMediaController.addOnUnhandledKeyEventListener((view, keyEvent) -> {
-                    //Handle BACK button
-                    if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                        onBackPressed();
-                        return true;
-                    }
-                    return false;
-                });
-                gVideoView_VideoPlayer.setMediaController(gMediaController);
+                gplayerView_ExoVideoPlayer.bringToFront();
+                gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
 
             } else {
 
@@ -525,14 +521,101 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             if(galFileItems.get(giFileItemIndex).iTypeFileFolderURL == ItemClass_File.TYPE_FILE) {
                 Uri uriVideoFile = Uri.parse(galFileItems.get(giFileItemIndex).sUri);
-                gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
+
+                MediaItem mediaItem = MediaItem.fromUri(uriVideoFile);
+                gExoPlayer.setMediaItem(mediaItem);
+                gExoPlayer.prepare();
+
+            } else if(galFileItems.get(giFileItemIndex).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {
+                //If we are here, then this is an m3u8 folder passed by the CatalogAnalyzer and the user is checking to
+                //  see if this orphaned file matches something in the database.
+                //Look for the m3u8 file:
+                String sMessage;
+                if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory) != null){
+                    if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).size() > 0){
+                        String sKeyPrefix = GlobalClass.GetRelativePathFromUriString(galFileItems.get(giFileItemIndex).sUri, GlobalClass.gUriDataFolder.toString());
+                        for(Map.Entry<String, ItemClass_File> entry: GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).entrySet()){
+                            if(entry.getKey().startsWith(sKeyPrefix)){
+                                if(entry.getKey().endsWith("m3u8")){
+
+                                    //Check to see if the m3u8 file needs to be corrected to have relative paths.
+                                    //  If the user has transferred data to a new memory card, this is important.
+                                    //Open the m3u8 file and ensure that it has the proper paths:
+                                    String sM3U8_Uri = GlobalClass.FormChildUriString(GlobalClass.gUriCatalogFolders[giMediaCategory].toString(), entry.getKey());
+                                    byte[] byteM3U8_File = null;
+                                    Uri uriM3U8 = null;
+                                    try{
+                                        uriM3U8 = Uri.parse(sM3U8_Uri);
+                                        InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8);
+                                        if(isM3U8 == null){
+                                            sMessage = "Could not open M3U8 file.";
+                                            Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            byteM3U8_File = GlobalClass.readAllBytes(isM3U8);
+                                            isM3U8.close();
+                                        }
+
+                                    } catch (Exception e){
+                                        sMessage = "Problem identifying M3U8 file. " + e.getMessage();
+                                        Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    if(byteM3U8_File != null) {
+                                        //Read-in one path to make sure it is accurate.
+                                        String sM3U8_File_Contents = new String(byteM3U8_File);
+                                        String[] sM3U8_FileLines = sM3U8_File_Contents.split("\n");
+
+                                        boolean bM3U8_File_Internal_Paths_UpToDate = Worker_Catalog_Analysis.M3U8FileRelativePathsUptoDate(sM3U8_FileLines);
+
+                                        if(!bM3U8_File_Internal_Paths_UpToDate){
+                                            //M3U8 file does not have up-to-date paths utilizing the current storage structure.
+                                            // This could be caused by moving the database.
+
+                                            //Update the file to the current base storage:
+                                            try {
+                                                String sParentFolder = GlobalClass.GetParentUri(sM3U8_Uri);
+                                                if(Worker_Catalog_Analysis.UpdateM3U8FileRelativePaths(sM3U8_FileLines, sParentFolder, uriM3U8)){
+                                                    sMessage = "M3U8 playlist file internal paths updated successfully.";
+                                                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                                } else {
+                                                    sMessage = "Could not open M3U8 playlist file to update file paths.";
+                                                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                                    continue;
+                                                }
+                                            } catch (Exception e) {
+                                                sMessage = "Problem processing and/or writing to updated M3U8 file: " + e.getMessage();
+                                                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+
+                                    } //End if the M3U8 file bytes not null.
+
+                                    if(uriM3U8 != null) {
+                                        MediaItem mediaItem = MediaItem.fromUri(uriM3U8);
+                                        gExoPlayer.setMediaItem(mediaItem);
+                                        gExoPlayer.prepare();
+                                        gExoPlayer.setPlayWhenReady(true);
+                                    } else {
+                                        sMessage = "Could not locate M3U8 file.";
+                                        Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
             } else if (galFileItems.get(giFileItemIndex).iTypeFileFolderURL == ItemClass_File.TYPE_URL) {
-                gVideoView_VideoPlayer.setVideoPath(galFileItems.get(giFileItemIndex).sURLVideoLink);
+                MediaItem mediaItem = MediaItem.fromUri(galFileItems.get(giFileItemIndex).sURLVideoLink);
+                gExoPlayer.setMediaItem(mediaItem);
+                gExoPlayer.prepare();
+                gExoPlayer.setPlayWhenReady(true);
+
             }
             // Skipping to 1 shows the first frame of the video.
-            gVideoView_VideoPlayer.seekTo(1);
-            giCurrentVideoPosition = 1;
-            gVideoView_VideoPlayer.start();
+            gExoPlayer.seekTo(1);
+            glCurrentVideoPosition = 1;
 
             giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
         } else {
@@ -928,9 +1011,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
+            gExoPlayer.seekTo(glCurrentVideoPosition);
             if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
-                gVideoView_VideoPlayer.start();
+                gExoPlayer.play();
             }
         }
     }
@@ -938,13 +1021,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     @Override
     protected void onPause() {
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            giCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
-            if (gVideoView_VideoPlayer.isPlaying()) {
+            glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
+            if (gExoPlayer.isPlaying()) {
                 giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
             } else {
                 giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
             }
-            gVideoView_VideoPlayer.pause();
+            gExoPlayer.pause();
         }
         super.onPause();
     }
@@ -953,7 +1036,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            gVideoView_VideoPlayer.stopPlayback();
+            gExoPlayer.stop();
         }
     }
 
@@ -961,7 +1044,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            outState.putInt(PLAYBACK_TIME, gVideoView_VideoPlayer.getCurrentPosition());
+            outState.putLong(PLAYBACK_TIME, gExoPlayer.getCurrentPosition());
         }
         outState.putInt(IMAGE_PREVIEW_INDEX, giFileItemIndex);
     }

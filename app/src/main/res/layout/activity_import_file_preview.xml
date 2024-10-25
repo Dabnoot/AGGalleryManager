@@ -34,12 +34,14 @@
                     android:contentDescription="Image preview"
                     android:layout_centerHorizontal="true"/>
 
-                <VideoView
-                    android:id="@+id/videoView_VideoPlayerPreview"
+                <androidx.media3.ui.PlayerView
+                    android:id="@+id/playerView_ExoVideoPlayer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:layout_centerInParent="true"
                     android:backgroundTint="@color/colorBlack"
-                    android:layout_centerHorizontal="true"/>
+                    android:layout_gravity="center"
+                    android:visibility="invisible"/>
 
             </RelativeLayout>
 
