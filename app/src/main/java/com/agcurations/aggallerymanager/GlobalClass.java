@@ -126,6 +126,7 @@ public class GlobalClass extends Application {
     // icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName.
     // icf.sMediaFolderRelativePath excludes the media type folder. Media type folder is identified by the media type array index.
     //End Catalog Analysis globals
+    public static ArrayList<ItemClass_File> galf_Orphaned_Files;
 
     public static ContentResolver gcrContentResolver;
 
@@ -150,7 +151,7 @@ public class GlobalClass extends Application {
     public static final int LOADING_STATE_FINISHED = 2;
     public static int giLoadingState = LOADING_STATE_NOT_STARTED;
 
-    public static ArrayList<ItemClass_File> galf_Orphaned_Files;
+
 
     //Activity_CatalogViewer variables:
     public static TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
@@ -1806,7 +1807,7 @@ public class GlobalClass extends Application {
         // Only update if the size of the tree is > 0, as it must be initiated by the Catalog Analysis worker.
 
         if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
-            String sKey = GetRelativePathFromUriString(sUri);
+            String sKey = GetRelativePathFromUriString(sUri, gUriDataFolder.toString());
             if(!sKey.equals("")) {
                 if (GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).containsKey(sKey)) {
                     GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).remove(sKey);
@@ -1823,13 +1824,27 @@ public class GlobalClass extends Application {
      * Relative path = subfolder + GlobalClass.gsFileSeparator + filename.
      * It does not include the media class folder, such as "Videos", "Images", or "Comics".
      * @param sUri - A string representing a Uri path.
+     * @param sUriDataFolder - A string representing the base of the Uri to be removed.
      * @return - Returns the relative path, such as "1013/2e5d2p4/index.m3u8" or "1013/046256.mbew"
      */
-    public static String GetRelativePathFromUriString(String sUri){
+    public static String GetRelativePathFromUriString(String sUri, String sUriDataFolder){
+        String sBase = sUri;
+        //sBase = cleanHTMLCodedCharacters(sBase);
+        //sUriDataFolder = cleanHTMLCodedCharacters(sUriDataFolder);
         String sRelativePath = "";
-        if(sUri.lastIndexOf(":") > 0) {
-            sRelativePath = sUri.substring(sUri.lastIndexOf(":"));
+        if(sBase.contains(sUriDataFolder)){
+            sRelativePath = sBase.substring(sUriDataFolder.length());
         }
+        //There should be two encoded slashes at the front of sRelativePath.
+        int iSlashCharsCount = gsFileSeparator.length();
+        if(sRelativePath.contains(gsCatalogFolderNames[MEDIA_CATEGORY_VIDEOS])){
+            sRelativePath = sRelativePath.substring(gsCatalogFolderNames[MEDIA_CATEGORY_VIDEOS].length() + 2 * iSlashCharsCount); //Plus 2 to get rid of slashes.
+        } else if(sRelativePath.contains(gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES])){
+            sRelativePath = sRelativePath.substring(gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES].length() + 2 * iSlashCharsCount);
+        } else if(sRelativePath.contains(gsCatalogFolderNames[MEDIA_CATEGORY_COMICS])){
+            sRelativePath = sRelativePath.substring(gsCatalogFolderNames[MEDIA_CATEGORY_COMICS].length() + 2 * iSlashCharsCount);
+        }
+
         return sRelativePath;
     }
 
