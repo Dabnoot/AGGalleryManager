@@ -23,6 +23,7 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
     public static final String TAG_WORKER_BROWSER_GETWEBPAGEPREVIEW = "com.agcurations.aggallermanager.tag_worker_browser_getwebpagepreview";
     public static final String RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED";
 
+    public static final String WORKER_BROWSER_GET_WEB_PAGE_PREVIEW_MESSAGE = "com.agcurations.aggallerymanager.intent.action.WORKER_BROWSER_GET_WEB_PAGE_PREVIEW_MESSAGE";
 
     private final String gsTabID;
     private final String gsAddress;
@@ -192,12 +193,12 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
 
             //Broadcast a message to be picked-up by the WebPage Activity:
             Intent broadcastIntent = new Intent();
-            broadcastIntent.setAction(Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+            broadcastIntent.setAction(WORKER_BROWSER_GET_WEB_PAGE_PREVIEW_MESSAGE);
             broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
             broadcastIntent.putExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_TABID, gsTabID);
             broadcastIntent.putExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_TITLE, sTitle);
             broadcastIntent.putExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_FAVICON_ADDRESS, sFaviconAddress);
-            broadcastIntent.putExtra(GlobalClass.EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED);
+            broadcastIntent.putExtra(GlobalClass.EXTRA_RESULT_TYPE_WEB_PAGE_TAB_MESSAGE, RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
         }
 

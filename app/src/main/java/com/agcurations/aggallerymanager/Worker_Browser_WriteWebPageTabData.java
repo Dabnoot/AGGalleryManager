@@ -19,6 +19,7 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
 
     public static final String TAG_WORKER_BROWSER_WRITEWEBPAGETABDATA = "com.agcurations.aggallermanager.tag_worker_browser_writewebpagetabdata";
 
+    public static final String WORKER_BROWSER_WRITE_WEB_PAGE_TAB_DATA_MESSAGE = "com.agcurations.aggallerymanager.intent.action.WORKER_BROWSER_WRITE_WEB_PAGE_TAB_DATA_MESSAGE";
 
     String gsCallerID;
     Double gdCallerTimeStamp;
@@ -124,7 +125,7 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
 
         } catch (Exception e) {
             globalClass.problemNotificationConfig( e.getMessage(),
-                    Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+                    WORKER_BROWSER_WRITE_WEB_PAGE_TAB_DATA_MESSAGE);
         }
 
         GlobalClass.queueWebPageTabDataFileWriteRequests.remove();

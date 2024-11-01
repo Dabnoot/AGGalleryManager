@@ -27,17 +27,18 @@ import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -48,12 +49,14 @@ import java.util.ArrayList;
 public class Activity_Browser extends AppCompatActivity {
 
     public TabLayout tabLayout_WebTabs;
-    ViewPager2 viewPager2_WebPages;
+    ViewPager2 gViewPager2_WebPages;
     FragmentViewPagerAdapter viewPagerFragmentAdapter;
+
+    RelativeLayout gRelativeLayout_Progress;
 
     GlobalClass globalClass;
 
-    WebPageTabDataServiceResponseReceiver webPageTabDataServiceResponseReceiver;
+    BroadcastReceiver_ActivityBrowser webPageTabDataServiceResponseReceiver;
 
     boolean bTabsLoaded = false;
 
@@ -67,7 +70,7 @@ public class Activity_Browser extends AppCompatActivity {
 
     private String[] gsNewTabSequenceHelper;
 
-    ProgressBar gProgressBar_Progress;
+    LinearProgressIndicator gProgressIndicator_Progress;
     TextView gTextView_ProgressBarText;
 
     @Override
@@ -95,12 +98,12 @@ public class Activity_Browser extends AppCompatActivity {
             gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
         }
 
-        gProgressBar_Progress = findViewById(R.id.progressBar_Progress);
-        gProgressBar_Progress.setMax(100);
+        gProgressIndicator_Progress = findViewById(R.id.progressIndicator_Progress);
+        gProgressIndicator_Progress.setMax(100);
         gTextView_ProgressBarText = findViewById(R.id.textView_ProgressBarText);
         if(GlobalClass.gUriDataFolder == null){
             //No storage location has been specified. Tabs will not be loaded.
-            gProgressBar_Progress.setVisibility(View.INVISIBLE);
+            gProgressIndicator_Progress.setVisibility(View.INVISIBLE);
             gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
             Toast.makeText(getApplicationContext(),
                     "No data folder selected." +
@@ -119,25 +122,27 @@ public class Activity_Browser extends AppCompatActivity {
 
             GlobalClass.gal_WebPagesForCurrentUser = new ArrayList<>();
 
-            viewPager2_WebPages = findViewById(R.id.viewPager2_WebPages);
+            gRelativeLayout_Progress = findViewById(R.id.relativeLayout_Progress);
+
+            gViewPager2_WebPages = findViewById(R.id.viewPager2_WebPages);
             //Set the number of pages that should be retained to either side of the current page
             // in the view hierarchy in an idle state. Pages beyond this limit will be recreated
             // from the adapter when needed.:
-            viewPager2_WebPages.setOffscreenPageLimit(1);
+            gViewPager2_WebPages.setOffscreenPageLimit(1);
 
             ApplicationLogWriter("Getting new FragmentViewPagerAdapter.");
             viewPagerFragmentAdapter = new FragmentViewPagerAdapter(getSupportFragmentManager(), getLifecycle(), getApplicationContext());
 
             // set Orientation in your ViewPager2
-            viewPager2_WebPages.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
+            gViewPager2_WebPages.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
 
-            viewPager2_WebPages.setAdapter(viewPagerFragmentAdapter);
+            gViewPager2_WebPages.setAdapter(viewPagerFragmentAdapter);
             ApplicationLogWriter("FragmentViewPagerAdapter assigned to ViewPager.");
 
             //Stop the user from swiping left and right on the ViewPager (control with Next button):
-            viewPager2_WebPages.setUserInputEnabled(false);
+            gViewPager2_WebPages.setUserInputEnabled(false);
 
-            viewPager2_WebPages.setPageTransformer(new ViewPager2.PageTransformer() {
+            gViewPager2_WebPages.setPageTransformer(new ViewPager2.PageTransformer() {
                 @Override
                 public void transformPage(@NonNull View page, float position) {
 
@@ -152,7 +157,7 @@ public class Activity_Browser extends AppCompatActivity {
             //AutoRefresh tells the system to recreate all the tabs of the tabLayout if notifyDataSetChanged is called to the viewPager adapter.
             TabLayoutMediator tlm = new TabLayoutMediator(
                     tabLayout_WebTabs,
-                    viewPager2_WebPages,
+                    gViewPager2_WebPages,
                     true,
                     false,
                     new TabLayoutMediator.TabConfigurationStrategy() {
@@ -209,7 +214,7 @@ public class Activity_Browser extends AppCompatActivity {
             });
 
             //Configure a response receiver to listen for updates from the Data Service:
-            IntentFilter filter = new IntentFilter(WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+            IntentFilter filter = new IntentFilter();
             filter.addCategory(Intent.CATEGORY_DEFAULT);
             filter.addAction(Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
             filter.addAction(Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE);
@@ -223,7 +228,11 @@ public class Activity_Browser extends AppCompatActivity {
             filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
             filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
             filter.addAction(GlobalClass.BROADCAST_CATALOG_FILES_MAINTENANCE);
-            webPageTabDataServiceResponseReceiver = new WebPageTabDataServiceResponseReceiver();
+            filter.addAction(Worker_Catalog_Analysis.CATALOG_ANALYSIS_ACTION_RESPONSE);
+            filter.addAction(Worker_Browser_GetWebPagePreview.WORKER_BROWSER_GET_WEB_PAGE_PREVIEW_MESSAGE);
+            filter.addAction(Worker_Browser_GetWebPageTabData.WORKER_BROWSER_GET_WEB_TAB_DATA_MESSAGE);
+            filter.addAction(Worker_Browser_WriteWebPageTabData.WORKER_BROWSER_WRITE_WEB_PAGE_TAB_DATA_MESSAGE);
+            webPageTabDataServiceResponseReceiver = new BroadcastReceiver_ActivityBrowser();
             //registerReceiver(importDataServiceResponseReceiver, filter);
             LocalBroadcastManager.getInstance(this).registerReceiver(webPageTabDataServiceResponseReceiver, filter);
 
@@ -295,7 +304,7 @@ public class Activity_Browser extends AppCompatActivity {
             //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
             //Update stored data:
             Activity_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: CreateNewTab()");
-            viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
+            gViewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
         }
 
     }
@@ -471,22 +480,22 @@ public class Activity_Browser extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Closing tab...", Toast.LENGTH_SHORT).show();
                     //If the tab being closed is not the tab which has focus, make sure that the
                     //  focus tab retains focus.
-                    int iFocusPosition = viewPager2_WebPages.getCurrentItem();
+                    int iFocusPosition = gViewPager2_WebPages.getCurrentItem();
                     int iMaxPosition = iFocusPosition;
-                    if(viewPager2_WebPages.getAdapter() != null){
-                        iMaxPosition = viewPager2_WebPages.getAdapter().getItemCount() - 1;
+                    if(gViewPager2_WebPages.getAdapter() != null){
+                        iMaxPosition = gViewPager2_WebPages.getAdapter().getItemCount() - 1;
                     }
                     //Make sure tab focus remains on the correct tab:
                     if(iFocusPosition != iPosition){
                         if(iFocusPosition < iPosition){
-                            viewPager2_WebPages.setCurrentItem(iFocusPosition, false);
+                            gViewPager2_WebPages.setCurrentItem(iFocusPosition, false);
                         } else {
-                            viewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
+                            gViewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
                         }
                     } else {
                         //Select the tab that was before the one being closed, if such a tab exists:
                         if(iFocusPosition > 0 && iFocusPosition != iMaxPosition){
-                            viewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
+                            gViewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
                         }
                     }
 
@@ -669,8 +678,7 @@ public class Activity_Browser extends AppCompatActivity {
     //======= Broadcast Receivers===================================================================
     //==============================================================================================
 
-    public class WebPageTabDataServiceResponseReceiver extends BroadcastReceiver {
-        public static final String WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_WEB_PAGE_TAB_DATA_SERVICE";
+    public class BroadcastReceiver_ActivityBrowser extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -683,7 +691,7 @@ public class Activity_Browser extends AppCompatActivity {
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
-                String sResultType = intent.getStringExtra(GlobalClass.EXTRA_RESULT_TYPE);
+                String sResultType = intent.getStringExtra(GlobalClass.EXTRA_RESULT_TYPE_WEB_PAGE_TAB_MESSAGE);
                 if(sResultType != null){
                     if(sResultType.equals(Worker_Browser_GetWebPageTabData.RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED)){
 
@@ -708,10 +716,14 @@ public class Activity_Browser extends AppCompatActivity {
                         //Go to the tab last having the user focus:
                         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                         int iTabofLastFocus = sharedPreferences.getInt(GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX, 0);
-                        viewPager2_WebPages.setCurrentItem(iTabofLastFocus, false);
+                        gViewPager2_WebPages.setCurrentItem(iTabofLastFocus, false);
 
-                        gProgressBar_Progress.setVisibility(View.INVISIBLE);
-                        gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
+                        //Shrink the progressbar:
+                        if(gRelativeLayout_Progress != null){
+                            ViewGroup.LayoutParams layoutParams = gRelativeLayout_Progress.getLayoutParams();
+                            layoutParams.height = 0;
+                            gRelativeLayout_Progress.setLayoutParams(layoutParams);
+                        }
 
                         bTabsLoaded = true;
 
@@ -751,9 +763,50 @@ public class Activity_Browser extends AppCompatActivity {
 
 
                     }
+
+                }//If result type != null
+
+                //Check to see if this is a response to update log or progress bar:
+                boolean 	bUpdatePercentComplete;
+                boolean 	bUpdateProgressBarText;
+
+                //Get booleans from the intent telling us what to update:
+                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+                if(gProgressIndicator_Progress != null && gTextView_ProgressBarText != null) {
+                    if (bUpdatePercentComplete) {
+                        int iAmountComplete;
+                        iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                        if (gProgressIndicator_Progress != null) {
+                            gProgressIndicator_Progress.setProgress(iAmountComplete);
+                        }
+                        if (iAmountComplete == 100) {
+                            //Shrink the progressbar:
+                            if(gRelativeLayout_Progress != null){
+                                ViewGroup.LayoutParams layoutParams = gRelativeLayout_Progress.getLayoutParams();
+                                layoutParams.height = 0;
+                                gRelativeLayout_Progress.setLayoutParams(layoutParams);
+                            }
+
+                        } else {
+                            //Expand the progressbar:
+                            if(gRelativeLayout_Progress != null){
+                                ViewGroup.LayoutParams layoutParams = gRelativeLayout_Progress.getLayoutParams();
+                                layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                                gRelativeLayout_Progress.setLayoutParams(layoutParams);
+                            }
+                        }
+
+                    }
+                    if (bUpdateProgressBarText) {
+                        String sProgressBarText;
+                        sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                        if (gTextView_ProgressBarText != null) {
+                            gTextView_ProgressBarText.setText(sProgressBarText);
+                        }
+                    }
                 }
-
-
             }
 
 

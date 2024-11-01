@@ -21,6 +21,8 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
 
     public static final String RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TAB_DATA_ACQUIRED";
 
+    public static final String WORKER_BROWSER_GET_WEB_TAB_DATA_MESSAGE = "com.agcurations.aggallerymanager.intent.action.WORKER_BROWSER_GET_WEB_TAB_DATA_MESSAGE";
+
     public Worker_Browser_GetWebPageTabData(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
@@ -107,20 +109,20 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
                 if(GlobalClass.gicuCurrentUser == null && GlobalClass.gal_WebPagesForOtherUsers.size() > 0){
                     //Notify that a user is not signed-in. The user may have forgotten.
                     globalClass.problemNotificationConfig( "Current User: Default",
-                            Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+                            WORKER_BROWSER_GET_WEB_TAB_DATA_MESSAGE);
                 }
             }
         } catch (Exception e) {
             globalClass.problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage() + "\nSelect 'clear' from Settings->Browser.",
-                    Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+                    WORKER_BROWSER_GET_WEB_TAB_DATA_MESSAGE);
         }
 
 
         //Broadcast a message to be picked-up by the WebPage Activity:
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.setAction(WORKER_BROWSER_GET_WEB_TAB_DATA_MESSAGE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.putExtra(GlobalClass.EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED);
+        broadcastIntent.putExtra(GlobalClass.EXTRA_RESULT_TYPE_WEB_PAGE_TAB_MESSAGE, RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
 
