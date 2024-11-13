@@ -114,16 +114,16 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         gScrollView_ImportLog = getView().findViewById(R.id.scrollView_ImportLog);
 
 
-        if(globalClass.gbImportExecutionStarted && !globalClass.gbImportExecutionRunning) {
+        if(GlobalClass.gbImportExecutionStarted && !GlobalClass.gbImportExecutionRunning) {
             gProgressBar_ImportProgress.setProgress(0);
             gTextView_ImportProgressBarText.setText("0/0");
             gtextView_ImportLog.setText("");
-            globalClass.gsbImportExecutionLog = new StringBuilder();
-            globalClass.gbImportExecutionStarted = false;
-            globalClass.gbImportExecutionRunning = true;//This prevents import from starting again
+            GlobalClass.gsbImportExecutionLog = new StringBuilder();
+            GlobalClass.gbImportExecutionStarted = false;
+            GlobalClass.gbImportExecutionRunning = true;//This prevents import from starting again
                                                              // if the activity/fragment is restarted due to an orientation change, etc.
             //Initiate the file import via ImportActivityDataService:
-            globalClass.galImportFileList = viewModelImportActivity.alfiConfirmedFileImports; //Transfer to globalClass to avoid transaction limit.
+            GlobalClass.galImportFileList = viewModelImportActivity.alfiConfirmedFileImports; //Transfer to globalClass to avoid transaction limit.
 
             if(getContext() == null) return;
             String sCallerID = "Fragment_Import_6_ExecuteImport:initComponents()";
@@ -186,12 +186,12 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         } else {
             //If an import has been started...
             //Refresh the text and progress:
-            gProgressBar_ImportProgress.setProgress(globalClass.giImportExecutionProgressBarPercent);
-            gTextView_ImportProgressBarText.setText(globalClass.gsImportExecutionProgressBarText);
-            gtextView_ImportLog.setText(globalClass.gsbImportExecutionLog.toString());
+            gProgressBar_ImportProgress.setProgress(GlobalClass.giImportExecutionProgressBarPercent);
+            gTextView_ImportProgressBarText.setText(GlobalClass.gsImportExecutionProgressBarText);
+            gtextView_ImportLog.setText(GlobalClass.gsbImportExecutionLog.toString());
 
 
-            if(globalClass.gbImportExecutionFinished){
+            if(GlobalClass.gbImportExecutionFinished){
                 //If the user has returned to this fragment and the import is finished,
                 //  enable the buttons:
                 if(getView() != null) {
