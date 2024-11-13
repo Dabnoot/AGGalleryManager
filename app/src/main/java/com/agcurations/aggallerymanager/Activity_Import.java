@@ -18,7 +18,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.work.WorkManager;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -189,14 +188,14 @@ public class Activity_Import extends AppCompatActivity {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
             stackFragmentOrder.push(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION);
 
-        } else if(globalClass.gbImportExecutionRunning && !globalClass.gbImportExecutionFinished){
+        } else if(GlobalClass.gbImportExecutionRunning && !GlobalClass.gbImportExecutionFinished){
             //If an import operation has been started and is not finished, go to the execute
             //  fragment which will show the user the log.
             giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT;
             ViewPager2_Import.setCurrentItem(giStartingFragment, false);
             stackFragmentOrder.push(giStartingFragment);
 
-        } else if(globalClass.gbImportComicWebAnalysisRunning && !globalClass.gbImportComicWebAnalysisFinished){
+        } else if(GlobalClass.gbImportComicWebAnalysisRunning && !GlobalClass.gbImportComicWebAnalysisFinished){
             //If a comic web analysis operation has been started and is not finished, go to the appropriate
             // fragment.
             giStartingFragment = FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC;
@@ -317,8 +316,8 @@ public class Activity_Import extends AppCompatActivity {
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     if (result.getResultCode() == RESULT_OK) {
-                        fileListCustomAdapter.updateFileItemDetails(globalClass.galPreviewFileList);
-                        globalClass.galPreviewFileList = null; //Release memory.
+                        fileListCustomAdapter.updateFileItemDetails(GlobalClass.galPreviewFileList);
+                        GlobalClass.galPreviewFileList = null; //Release memory.
                     }
                 }
             });
@@ -388,7 +387,7 @@ public class Activity_Import extends AppCompatActivity {
 
         if(iNewImportMediaCatagory != viewModelImportActivity.iImportMediaCategory) {
             viewModelImportActivity.bImportCategoryChange = true; //Force user to select new import folder (in the event that they backtracked).
-            globalClass.gbImportExecutionStarted = false;
+            GlobalClass.gbImportExecutionStarted = false;
             if(GlobalClass.gbImportFolderAnalysisRunning){
                 GlobalClass.gbImportFolderAnalysisStop = true;
             }
@@ -657,8 +656,8 @@ public class Activity_Import extends AppCompatActivity {
         if (bItemSelectedForDeletion) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE, false);
         } else {
-            globalClass.gbImportExecutionStarted = true;
-            globalClass.gbImportExecutionFinished = false;
+            GlobalClass.gbImportExecutionStarted = true;
+            GlobalClass.gbImportExecutionFinished = false;
             giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
             ViewPager2_Import.setCurrentItem(giStartingFragment, false);
             stackFragmentOrder.clear();
@@ -667,8 +666,8 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ImportConfirmDelete(View v){
-        globalClass.gbImportExecutionStarted = true;
-        globalClass.gbImportExecutionFinished = false;
+        GlobalClass.gbImportExecutionStarted = true;
+        GlobalClass.gbImportExecutionFinished = false;
         giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
         ViewPager2_Import.setCurrentItem(giStartingFragment, false);
         stackFragmentOrder.clear();
@@ -676,8 +675,8 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ImportConfirmRepair(View v){ //todo: merge with "buttonNextClick_ImportConfirmDelete"?
-        globalClass.gbImportExecutionStarted = true;
-        globalClass.gbImportExecutionFinished = false;
+        GlobalClass.gbImportExecutionStarted = true;
+        GlobalClass.gbImportExecutionFinished = false;
         giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
         ViewPager2_Import.setCurrentItem(giStartingFragment, false);
         stackFragmentOrder.clear();
@@ -1225,7 +1224,7 @@ public class Activity_Import extends AppCompatActivity {
 
                 }
 
-                globalClass.galPreviewFileList = alPreviewFileList;
+                GlobalClass.galPreviewFileList = alPreviewFileList;
 
                 intentImportFilePreview.putExtras(b);
 
