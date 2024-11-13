@@ -17,10 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -104,8 +101,8 @@ public class Worker_LocalFileTransfer extends Worker {
 
         if(!GlobalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gbImportExecutionRunning = false;
+            GlobalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
 
         }
@@ -117,22 +114,22 @@ public class Worker_LocalFileTransfer extends Worker {
             uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, GlobalClass.BASE_TYPE_TEXT, sLogFileName);
         } catch (FileNotFoundException e) {
             sMessage = "Could not create log file at location " + GlobalClass.gUriLogsFolder + ".";
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gbImportExecutionRunning = false;
+            GlobalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
         }
         if(uriLogFile == null){
             sMessage = "Could not create log file at location " + GlobalClass.gUriLogsFolder + ".";
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gbImportExecutionRunning = false;
+            GlobalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
         }
         try { //Required for the log file.
             gosLogFile = GlobalClass.gcrContentResolver.openOutputStream(uriLogFile, "wt");
             if(gosLogFile == null){
                 sMessage = "Could not open output stream to log file at location " + GlobalClass.gUriLogsFolder + ".";
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                GlobalClass.gbImportExecutionRunning = false;
+                GlobalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
             gbwLogFile = new BufferedWriter(new OutputStreamWriter(gosLogFile));
@@ -149,8 +146,8 @@ public class Worker_LocalFileTransfer extends Worker {
                         false, 0,
                         false, "",
                         IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                GlobalClass.gbImportExecutionRunning = false;
+                GlobalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
@@ -178,8 +175,8 @@ public class Worker_LocalFileTransfer extends Worker {
                             false, 0,
                             false, "",
                             IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gbImportExecutionRunning = false;
+                    GlobalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
                 }
 
@@ -248,8 +245,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                 false, 0,
                                 false, "",
                                 IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                        globalClass.gbImportExecutionRunning = false;
-                        globalClass.gbImportExecutionFinished = true;
+                        GlobalClass.gbImportExecutionRunning = false;
+                        GlobalClass.gbImportExecutionFinished = true;
                         return Result.failure(DataErrorMessage(sMessage));
                     }
 
@@ -265,10 +262,10 @@ public class Worker_LocalFileTransfer extends Worker {
                             .setOnlyAlertOnce(true) //Alert once and then update the notification silently.
                             .setOngoing(false) //Prevents the user from swiping it off the notification area.
                             .setProgress(100, 0, false);
-                    giNotificationID = globalClass.iNotificationID;
-                    globalClass.iNotificationID++;
+                    giNotificationID = GlobalClass.iNotificationID;
+                    GlobalClass.iNotificationID++;
                     gNotification = gNotificationBuilder.build();
-                    globalClass.notificationManager.notify(giNotificationID, gNotification);
+                    GlobalClass.notificationManager.notify(giNotificationID, gNotification);
 
                     //Build progress data associated with this worker:
                     dataProgress = new Data.Builder()
@@ -302,27 +299,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                 //Get a user-friendly version of the source file path + filename:
                                 String sSourceFileUri = sJobFileRecordFields[RECORD_FIELD_INDEX_SOURCE_FILE_URI_INDEX];
                                 Uri uriSourceFile = Uri.parse(sSourceFileUri);
-                                String sUserFriendlySourceFileUri = sSourceFileUri;
-                                for(Map.Entry<String, String> entryStorageDef: GlobalClass.gtmStorageDeviceNames.entrySet()){
-                                    String sKey = entryStorageDef.getKey();
-                                    if(sKey.contains("/")){
-                                        sKey = sKey.substring(sKey.lastIndexOf("/"));
-                                        sKey = sKey.replace("/", "");
-                                    }
-                                    if(sUserFriendlySourceFileUri.contains(sKey)){
-                                        //Replace the cryptic storage location text with something the user is more likely to understand:
-                                        sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.replace(sKey, entryStorageDef.getValue());
-                                        break;
-                                    }
-                                }
-                                if(sUserFriendlySourceFileUri.contains("/")) {
-                                    sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.substring(sUserFriendlySourceFileUri.lastIndexOf("/"));
-                                    sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.replace("/", "");
-                                }
-                                sUserFriendlySourceFileUri = URLDecoder.decode(sUserFriendlySourceFileUri, StandardCharsets.UTF_8.toString());
-                                if(sUserFriendlySourceFileUri.contains(":")){
-                                    sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.replace(":", "://");
-                                }
+                                String sUserFriendlySourceFileUri = GlobalClass.GetUserFriendlyStorageName(sSourceFileUri);
 
 
                                 long lFileSize = Long.parseLong(sJobFileRecordFields[RECORD_FIELD_INDEX_SOURCE_FILE_SIZE_BYTES]);
@@ -442,10 +419,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         }
                                     }
 
-                                    String sUserFriendlyDestinationFolderUri = URLDecoder.decode(uriDestinationFolder.toString(), StandardCharsets.UTF_8.toString());
-                                    if(sUserFriendlyDestinationFolderUri.contains(":")) {
-                                        sUserFriendlyDestinationFolderUri = sUserFriendlyDestinationFolderUri.substring(sUserFriendlyDestinationFolderUri.lastIndexOf(":"));
-                                    }
+                                    String sUserFriendlyDestinationFolderUri = GlobalClass.GetUserFriendlyStorageName(uriDestinationFolder.toString());
 
                                     if(uriDestinationFolder == null){
                                         sMessage = "Could not create destination folder \"" + sJobFileRecordFields[RECORD_FIELD_INDEX_DESTINATION_FOLDER] + "\" for file \""
@@ -622,8 +596,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                         false, "",
                                         IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                 CloseNotification();
-                                globalClass.gbImportExecutionRunning = false;
-                                globalClass.gbImportExecutionFinished = true;
+                                GlobalClass.gbImportExecutionRunning = false;
+                                GlobalClass.gbImportExecutionFinished = true;
                                 return Result.failure(DataErrorMessage(sMessage));
                             }
                         }
@@ -649,8 +623,8 @@ public class Worker_LocalFileTransfer extends Worker {
                             false, 0,
                             false, "",
                             IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gbImportExecutionRunning = false;
+                    GlobalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
                 }
 
@@ -677,8 +651,8 @@ public class Worker_LocalFileTransfer extends Worker {
                         false, 0,
                         false, "",
                         IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                GlobalClass.gbImportExecutionRunning = false;
+                GlobalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
@@ -687,8 +661,8 @@ public class Worker_LocalFileTransfer extends Worker {
             gosLogFile.flush();
             gosLogFile.close();
 
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gbImportExecutionRunning = false;
+            GlobalClass.gbImportExecutionFinished = true;
             return Result.success(dataProgress);
 
         } catch (Exception e){
@@ -701,8 +675,8 @@ public class Worker_LocalFileTransfer extends Worker {
                     false, 0,
                     false, "",
                     IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gbImportExecutionRunning = false;
+            GlobalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
         }
 
@@ -720,7 +694,7 @@ public class Worker_LocalFileTransfer extends Worker {
         gNotificationBuilder.setContentText(sNotificationText)
                 .setProgress(100, iProgressBarValue, false);
         gNotification = gNotificationBuilder.build();
-        globalClass.notificationManager.notify(giNotificationID, gNotification);
+        GlobalClass.notificationManager.notify(giNotificationID, gNotification);
 
 
         globalClass.BroadcastProgress(false, "",
@@ -744,7 +718,7 @@ public class Worker_LocalFileTransfer extends Worker {
         gNotificationBuilder.setOngoing(false) //Let the user remove the notification from the notification bar.
                             .setProgress(0, 0,false); //Remove the progress bar from the notification.
         gNotification = gNotificationBuilder.build();
-        globalClass.notificationManager.notify(giNotificationID, gNotification);
+        GlobalClass.notificationManager.notify(giNotificationID, gNotification);
 
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
@@ -790,7 +764,7 @@ public class Worker_LocalFileTransfer extends Worker {
                 .setContentText(sNotificationText);
 
         gNotification = gNotificationBuilder.build();
-        globalClass.notificationManager.notify(giNotificationID, gNotification);
+        GlobalClass.notificationManager.notify(giNotificationID, gNotification);
 
         try {
             gbwLogFile.write(sMessage + "\n");
