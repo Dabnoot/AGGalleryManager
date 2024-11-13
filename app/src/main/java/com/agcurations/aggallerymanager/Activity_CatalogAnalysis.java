@@ -18,6 +18,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.RadioButton;
 import android.widget.Toast;
 
@@ -79,7 +80,12 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         viewModel_catalogAnalysis = new ViewModelProvider(this).get(ViewModel_CatalogAnalysis.class);
 
         stackFragmentOrder = new Stack<>();
-        giStartingFragment = FRAGMENT_CAT_ANALYSIS_0_ID_MEDIA_CATEGORY;
+        if(GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.RUNNING){
+            giStartingFragment = FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS;
+        } else {
+            giStartingFragment = FRAGMENT_CAT_ANALYSIS_0_ID_MEDIA_CATEGORY;
+        }
+        ViewPager2_CatalogAnalysis.setCurrentItem(giStartingFragment, false);
 
         //Configure a response receiver to listen for data response from Worker_Catalog_Analysis:
         IntentFilter filter = new IntentFilter(Worker_Catalog_Analysis.CATALOG_ANALYSIS_ACTION_RESPONSE);
@@ -104,7 +110,7 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
 
 
     @Override
-    public void onBackPressed() {
+    public void onBackPressed() { //todo.
 
         if (stackFragmentOrder.empty()) {
             gotoFinish();
@@ -137,6 +143,11 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     }
 
     public void buttonClick_Cancel(View v){
+        //Kill any file indexing workers that might be running:
+        WorkManager.getInstance(getApplicationContext())
+                .cancelAllWorkByTag(Worker_Catalog_Analysis.TAG_WORKER_CATALOG_VERIFICATION);
+        GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
+
         gotoFinish();
     }
 
@@ -146,10 +157,7 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
 
     public void gotoFinish(){
         //Code any pre-finish operations here.
-        //Kill any file indexing workers that might be running:
-        WorkManager.getInstance(getApplicationContext())
-                .cancelAllWorkByTag(Worker_Catalog_Analysis.TAG_WORKER_CATALOG_VERIFICATION);
-        GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
+
 
         finish();
     }
@@ -184,6 +192,15 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         } else {
             viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_M3U8;
         }
+
+        CheckBox checkBox_ResetFileIndex = findViewById(R.id.checkBox_ResetFileIndex);
+        if(checkBox_ResetFileIndex != null){
+            if(checkBox_ResetFileIndex.isChecked()){
+                //This allows the user to clear the file index in the event that the user has altered the filesystem manually.
+                GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(viewModel_catalogAnalysis.iMediaCategory).clear();
+            }
+        }
+
         GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.START_REQUESTED);
         ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
 

@@ -104,7 +104,9 @@ public class Fragment_Import_5b_ConfirmationRepair extends Fragment {
             alFileItemsDisplay = new ArrayList<>();
             for(ItemClass_File icf: alfi){
                 if(icf.iTypeFileFolderURL != ItemClass_File.TYPE_FOLDER){
-                    alFileItemsDisplay.add(icf);
+                    if(!icf.bSetSubItem) {
+                        alFileItemsDisplay.add(icf);
+                    }
                 }
             }
         }
@@ -244,14 +246,26 @@ public class Fragment_Import_5b_ConfirmationRepair extends Fragment {
                     || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
                         && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
                     //If this is a video download, get the thumbnail from the IRL and display it:
-                    String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
+                    String sURLThumbnail = alFileItemsDisplay.get(position).sURLThumbnail;
                     if(!sURLThumbnail.equals("")) {
                         Glide.with(getContext()).
                                 load(sURLThumbnail).
                                 into(ivFileType);
                     }
 
-                } else {
+                } else if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                        && alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_M3U8)){
+                    //If we are here, then we are in orphaned file recovery mode. This is because M3U8s should come from online,
+                    // not internally. Display the thumbnail:
+                    String sURIThumbnail = alFileItemsDisplay.get(position).sUriThumbnailFile;
+                    Uri uriThumbnail = Uri.parse(sURIThumbnail);
+                    if(!sURIThumbnail.equals("")) {
+                        Glide.with(getContext()).
+                                load(uriThumbnail).
+                                into(ivFileType);
+                    }
+
+                }else {
                     //Get the Uri of the file and create/display a thumbnail:
                     String sUri = alFileItemsDisplay.get(position).sUri;
                     Uri uri = Uri.parse(sUri);

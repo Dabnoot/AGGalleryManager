@@ -161,200 +161,212 @@ public class Worker_Import_ImportFiles extends Worker {
                 continue;
             }
 
+            String sFileName = GlobalClass.GetFileName(uriFileItemSource);
 
 
-            try {
-                ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
-                ciNew.sItemID = GlobalClass.getNewCatalogRecordID();
 
+
+
+            if(!(fileItem.bOrphanAssociatedWithCatalogItem && fileItem.bOrphanAssociatedCatalogItemIsMissingMedia)) {
+                //If this is not part of an orphaned file recovery, moving a file into proper position, ensure proper file name:
+                //Make sure the file name is not too long. If it is too long, shorten it. "Too long" is arbitrary here.
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 //Isolate the incoming file name:
-                String sFileName = GlobalClass.GetFileName(uriFileItemSource);
-                //Make sure the file name is not too long. If it is too long, shorten it. "Too long" is arbitrary here.
                 String sTempFileName = sFileName;
-                if(sTempFileName.length() > GlobalClass.AGGM_MAX_FILENAME_LENGTH){
+                if (sTempFileName.length() > GlobalClass.AGGM_MAX_FILENAME_LENGTH) {
                     //Limit the length of the filename:
                     String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sTempFileName);
-                    if(sBaseAndExtension.length == 2) {
+                    if (sBaseAndExtension.length == 2) {
                         sTempFileName = sBaseAndExtension[0].substring(0, GlobalClass.AGGM_MAX_FILENAME_LENGTH - sBaseAndExtension[1].length());
                         sTempFileName = sTempFileName.trim();   //Changing the length of the file name may put a
-                                                                // space as the starting character, and some OSs
-                                                                // don't like that.
+                        // space as the starting character, and some OSs
+                        // don't like that.
                         sTempFileName = sTempFileName + "." + sBaseAndExtension[1];
                     }
                 }
 
                 //Create unique filename, then jumble:
-                if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
+                if (fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER) {
                     //File name will already be jumbled, as this program placed the file in the holding folder.
                     sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, false);
                 } else {
                     sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, true);
                 }
+            }
 
-                //Write next behavior to the screen log:
-                sLogLine = fileItem.sFileOrFolderName + " will be imported.";
-                iFileCountProgressNumerator++;
-                iProgressBarValue = Math.round((iFileCountProgressNumerator / (float) iFileCountProgressDenominator) * 100);
-                globalClass.BroadcastProgress(true, sLogLine,
-                        true, iProgressBarValue,
-                        true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                        IMPORT_FILES_ACTION_RESPONSE);
+            //Write next behavior to the screen log:
+            sLogLine = fileItem.sFileOrFolderName + " will be imported.\n";
+            iFileCountProgressNumerator++;
+            iProgressBarValue = Math.round((iFileCountProgressNumerator / (float) iFileCountProgressDenominator) * 100);
+            globalClass.BroadcastProgress(true, sLogLine,
+                    true, iProgressBarValue,
+                    true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
+                    IMPORT_FILES_ACTION_RESPONSE);
 
-                String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
-                        uriFileItemSource.toString(),
-                        fileItem.sDestinationFolder,
-                        sFileName,
-                        fileItem.lSizeBytes,
-                        false,
-                        false);
+            String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
+                    uriFileItemSource.toString(),
+                    fileItem.sDestinationFolder,
+                    sFileName,
+                    fileItem.lSizeBytes,
+                    false,
+                    false);
 
-                sbJobFileRecords.append(sLine);
+            sbJobFileRecords.append(sLine);
+
+            if(!(fileItem.bOrphanAssociatedWithCatalogItem && fileItem.bOrphanAssociatedCatalogItemIsMissingMedia)) {
+                //If this is not a catalog repair operation moving a file into proper position,
+                //  add this newly identified catalog item to the database:
+
+                try {
+                    ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
+                    ciNew.sItemID = GlobalClass.getNewCatalogRecordID();
 
 
-                //Next add the data to the catalog file and memory:
 
-                //Create a timestamp to be used to create the data record:
-                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
 
-                ciNew.iMediaCategory = giMediaCategory;
-                ciNew.sFilename = sFileName;
-                ciNew.lSize = fileItem.lSizeBytes;
+                    //Next add the data to the catalog file and memory:
 
-                if(!fileItem.bMetadataDetected){
-                    //If the metadata for the file was not previously acquired during the folder examination, attempt to get the metadata here:
+                    //Create a timestamp to be used to create the data record:
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
 
-                    globalClass.BroadcastProgress(true, " Obtaining metadata for file... ",
-                            false, iProgressBarValue,
-                            false, "",
-                            IMPORT_FILES_ACTION_RESPONSE);
+                    ciNew.iMediaCategory = giMediaCategory;
+                    ciNew.sFilename = sFileName;
+                    ciNew.lSize = fileItem.lSizeBytes;
 
-                    if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if (!fileItem.bMetadataDetected) {
+                        //If the metadata for the file was not previously acquired during the folder examination, attempt to get the metadata here:
 
-                        if (fileItem.sMimeType.startsWith("video") ||
-                                (fileItem.sMimeType.equals("application/octet-stream") && fileItem.sExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
-                            try {
-                                mediaMetadataRetriever.setDataSource(getApplicationContext(), Uri.parse(fileItem.sUri));
-                            } catch (Exception e) {
-                                globalClass.BroadcastProgress(true, "Could not get metadata for video.\n" + e.getMessage(),
-                                        false, iProgressBarValue,
-                                        false, "",
-                                        IMPORT_FILES_ACTION_RESPONSE);
-                            }
-                            fileItem.sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                            fileItem.sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                            String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                            if (time != null) {
-                                fileItem.lVideoTimeInMilliseconds = Long.parseLong(time);
-                            }
-                        } else { //if it's not a video file, check to see if it's a gif:
-                            if (fileItem.sExtension.equals(".gif")) {
-                                //Get the duration of the gif image:
-                                Context activityContext = getApplicationContext();
+                        globalClass.BroadcastProgress(true, " Obtaining metadata for file... ",
+                                false, iProgressBarValue,
+                                false, "",
+                                IMPORT_FILES_ACTION_RESPONSE);
+
+                        if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+
+                            if (fileItem.sMimeType.startsWith("video") ||
+                                    (fileItem.sMimeType.equals("application/octet-stream") && fileItem.sExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                                 try {
-                                    pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), Uri.parse(fileItem.sUri));
-                                    fileItem.lVideoTimeInMilliseconds = gd.getDuration();
-                                    fileItem.sWidth = "" + gd.getIntrinsicWidth();
-                                    fileItem.sHeight = "" + gd.getIntrinsicHeight();
+                                    mediaMetadataRetriever.setDataSource(getApplicationContext(), Uri.parse(fileItem.sUri));
                                 } catch (Exception e) {
-                                    globalClass.BroadcastProgress(true, "Could not get metadata for gif.\n" + e.getMessage(),
+                                    globalClass.BroadcastProgress(true, "Could not get metadata for video.\n" + e.getMessage(),
                                             false, iProgressBarValue,
                                             false, "",
                                             IMPORT_FILES_ACTION_RESPONSE);
                                 }
+                                fileItem.sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                fileItem.sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                                if (time != null) {
+                                    fileItem.lVideoTimeInMilliseconds = Long.parseLong(time);
+                                }
+                            } else { //if it's not a video file, check to see if it's a gif:
+                                if (fileItem.sExtension.equals(".gif")) {
+                                    //Get the duration of the gif image:
+                                    Context activityContext = getApplicationContext();
+                                    try {
+                                        pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), Uri.parse(fileItem.sUri));
+                                        fileItem.lVideoTimeInMilliseconds = gd.getDuration();
+                                        fileItem.sWidth = "" + gd.getIntrinsicWidth();
+                                        fileItem.sHeight = "" + gd.getIntrinsicHeight();
+                                    } catch (Exception e) {
+                                        globalClass.BroadcastProgress(true, "Could not get metadata for gif.\n" + e.getMessage(),
+                                                false, iProgressBarValue,
+                                                false, "",
+                                                IMPORT_FILES_ACTION_RESPONSE);
+                                    }
+                                }
+                            }
+                        } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                            //Get the width and height of the image:
+                            try {
+                                InputStream input = getApplicationContext().getContentResolver().openInputStream(Uri.parse(fileItem.sUri));
+                                if (input != null) {
+                                    BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                                    onlyBoundsOptions.inJustDecodeBounds = true;
+                                    BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                                    input.close();
+                                    fileItem.sWidth = "" + onlyBoundsOptions.outWidth;
+                                    fileItem.sHeight = "" + onlyBoundsOptions.outHeight;
+                                }
+
+                            } catch (Exception e) {
+                                globalClass.BroadcastProgress(true, "Could not get metadata for image.\n" + e.getMessage(),
+                                        false, iProgressBarValue,
+                                        false, "",
+                                        IMPORT_FILES_ACTION_RESPONSE);
                             }
                         }
-                    } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                        //Get the width and height of the image:
-                        try {
-                            InputStream input = getApplicationContext().getContentResolver().openInputStream(Uri.parse(fileItem.sUri));
-                            if (input != null) {
-                                BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
-                                onlyBoundsOptions.inJustDecodeBounds = true;
-                                BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
-                                input.close();
-                                fileItem.sWidth = "" + onlyBoundsOptions.outWidth;
-                                fileItem.sHeight = "" + onlyBoundsOptions.outHeight;
-                            }
+                        globalClass.BroadcastProgress(true, "Metadata seek complete.\n",
+                                false, iProgressBarValue,
+                                false, "",
+                                IMPORT_FILES_ACTION_RESPONSE);
+                    }
 
-                        } catch (Exception e) {
-                            globalClass.BroadcastProgress(true, "Could not get metadata for image.\n" + e.getMessage(),
-                                    false, iProgressBarValue,
-                                    false, "",
-                                    IMPORT_FILES_ACTION_RESPONSE);
+                    ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
+                    ciNew.sDuration_Text = fileItem.sVideoTimeText;
+                    if (!fileItem.sWidth.equals("") && !fileItem.sHeight.equals("")) {
+                        ciNew.iWidth = Integer.parseInt(fileItem.sWidth);
+                        ciNew.iHeight = Integer.parseInt(fileItem.sHeight);
+                    }
+                    ciNew.sFolderRelativePath = fileItem.sDestinationFolder;
+                    ciNew.sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
+                    ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
+                    ciNew.aliTags = new ArrayList<>(fileItem.aliProspectiveTags);
+                    ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, ciNew.iMediaCategory);
+                    //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
+                    ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
+                    ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
+                    ciNew.dDatetime_Import = dTimeStamp;
+                    ciNew.iGrade = fileItem.iGrade;
+                    ciNew.sTitle = "" + fileItem.sTitle; //If this is a file from the holding folder, it may have an original, unshortened file name.
+                    ciNew.sGroupID = fileItem.sGroupID;
+
+                    if (!fileItem.sURL.equals("")) {
+                        ciNew.sSource = fileItem.sURL;
+                        //Prepare to delete any metadata file that might exist associated with this file.
+                        // This is different from the "delete metadata file" in an earlier section of
+                        // this code. The earlier is related to when the user has merely decided to
+                        // delete a media item, not to import it.
+
+                        Uri uriMetadataFile = Activity_Import.getHoldingFolderItemMetadataFileUri(uriFileItemSource);
+                        String sImageMetadataUri = uriMetadataFile.toString();
+                        if (!sImageMetadataUri.equals("")) {
+                            sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
+                                    sImageMetadataUri,
+                                    fileItem.sDestinationFolder,
+                                    fileItem.sFileOrFolderName,
+                                    fileItem.lMetadataFileSizeBytes,
+                                    true,
+                                    true);
+
+                            sbJobFileRecords.append(sLine);
+
+                            //iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
+                            //  Don't include metadata files in the file count to be processed as they can confuse the user.
                         }
                     }
-                    globalClass.BroadcastProgress(true, "Metadata seek complete.\n",
+
+                    //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
+                    ciNew = GlobalClass.validateCatalogItemData(ciNew); //todo: Systems gives notification that variable is assigned to itself. Test and resolve.
+                    if (ciNew.bIllegalDataFound) {
+                        globalClass.BroadcastProgress(true, ciNew.sIllegalDataNarrative,
+                                false, 0,
+                                false, "",
+                                IMPORT_FILES_ACTION_RESPONSE);
+                    }
+                    alci_NewCatalogItems.add(ciNew);
+
+                } catch (Exception e) {
+                    globalClass.BroadcastProgress(true, "Problem with copy/move operation. Operation complete.\n" + e.getMessage(),
                             false, iProgressBarValue,
                             false, "",
                             IMPORT_FILES_ACTION_RESPONSE);
+                    GlobalClass.gbImportExecutionRunning = false;
+                    GlobalClass.gbImportExecutionFinished = true;
+                    return Result.failure();
                 }
 
-                ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
-                ciNew.sDuration_Text = fileItem.sVideoTimeText;
-                if(!fileItem.sWidth.equals("") && !fileItem.sHeight.equals("")) {
-                    ciNew.iWidth = Integer.parseInt(fileItem.sWidth);
-                    ciNew.iHeight = Integer.parseInt(fileItem.sHeight);
-                }
-                ciNew.sFolderRelativePath = fileItem.sDestinationFolder;
-                ciNew.sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
-                ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
-                ciNew.aliTags = new ArrayList<>(fileItem.aliProspectiveTags);
-                ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, ciNew.iMediaCategory);
-                //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
-                ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
-                ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
-                ciNew.dDatetime_Import = dTimeStamp;
-                ciNew.iGrade = fileItem.iGrade;
-                ciNew.sTitle = "" + fileItem.sTitle; //If this is a file from the holding folder, it may have an original, unshortened file name.
-                ciNew.sGroupID = fileItem.sGroupID;
-
-                if(!fileItem.sURL.equals("")){
-                    ciNew.sSource = fileItem.sURL;
-                    //Prepare to delete any metadata file that might exist associated with this file.
-                    // This is different from the "delete metadata file" in an earlier section of
-                    // this code. The earlier is related to when the user has merely decided to
-                    // delete a media item, not to import it.
-
-                    Uri uriMetadataFile = Activity_Import.getHoldingFolderItemMetadataFileUri(uriFileItemSource);
-                    String sImageMetadataUri = uriMetadataFile.toString();
-                    if(!sImageMetadataUri.equals("")) {
-                        sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
-                                sImageMetadataUri,
-                                fileItem.sDestinationFolder,
-                                fileItem.sFileOrFolderName,
-                                fileItem.lMetadataFileSizeBytes,
-                                true,
-                                true);
-
-                        sbJobFileRecords.append(sLine);
-
-                        //iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
-                        //  Don't include metadata files in the file count to be processed as they can confuse the user.
-                    }
-                }
-
-                //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
-                ciNew = GlobalClass.validateCatalogItemData(ciNew); //todo: Systems gives notification that variable is assigned to itself. Test and resolve.
-                if(ciNew.bIllegalDataFound){
-                    globalClass.BroadcastProgress(true, ciNew.sIllegalDataNarrative,
-                            false, 0,
-                            false, "",
-                            IMPORT_FILES_ACTION_RESPONSE);
-                }
-                alci_NewCatalogItems.add(ciNew);
-
-
-            } catch (Exception e) {
-                globalClass.BroadcastProgress(true, "Problem with copy/move operation. Operation complete.\n" + e.getMessage(),
-                        false, iProgressBarValue,
-                        false, "",
-                        IMPORT_FILES_ACTION_RESPONSE);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
-                return Result.failure();
-            }
-
+            }//End if this is NOT an import of file(s) for repair of files that got misplaced (would only happen due to storage modification) (not new cat item creation).
 
         } //End fileItem processing loop.
 
@@ -411,8 +423,8 @@ public class Worker_Import_ImportFiles extends Worker {
                     false, iProgressBarValue,
                     false, "",
                     IMPORT_FILES_ACTION_RESPONSE);
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gbImportExecutionRunning = false;
+            GlobalClass.gbImportExecutionFinished = true;
             return Result.failure();
         }
         //Write next behavior to the screen log:
@@ -441,8 +453,8 @@ public class Worker_Import_ImportFiles extends Worker {
                 IMPORT_FILES_ACTION_RESPONSE);
 
 
-        globalClass.gbImportExecutionRunning = false;
-        globalClass.gbImportExecutionFinished = true;
+        GlobalClass.gbImportExecutionRunning = false;
+        GlobalClass.gbImportExecutionFinished = true;
         return Result.success();
     }
 

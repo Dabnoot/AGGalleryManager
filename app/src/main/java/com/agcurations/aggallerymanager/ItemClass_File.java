@@ -87,6 +87,7 @@ public class ItemClass_File implements Serializable {
     public String sMediaFolderRelativePath = ""; //Used by catalog analysis
     public boolean bOrphanAssociatedWithCatalogItem = false;
     public boolean bOrphanAssociatedCatalogItemIsMissingMedia = false;
+    public boolean bFileNameCounterToMediaItemJumbledName = false; //This field is for an orphaned file item which matches a catalog file name if the name were counter-Jumbled. Catalog Analysis only.
     public ArrayList<String> alsOrphanAssociatedCatalogItemIDs;
     public boolean bSetSubItem = false; //Set and used by catalog analysis to simplify determining
                                         // if an item belongs to a set, such as a comic or M3U8.

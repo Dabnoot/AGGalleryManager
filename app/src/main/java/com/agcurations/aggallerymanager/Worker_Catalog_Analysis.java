@@ -12,22 +12,17 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Predicate;
 
 public class Worker_Catalog_Analysis extends Worker {
 
@@ -54,6 +49,8 @@ public class Worker_Catalog_Analysis extends Worker {
     int giMediaCategory;
     int giAnalysisType;
 
+
+
     TreeMap<String, ItemClass_CatalogItem> gtmCatalogItemsMissing;
 
     public Worker_Catalog_Analysis(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -73,18 +70,20 @@ public class Worker_Catalog_Analysis extends Worker {
         String sMessage;
         if(giMediaCategory == -1){
             sMessage = "No catalog specified.";
-            LogThis("doWork()", sMessage, null);
+            SendLogLine(sMessage);
             GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
             return Result.failure();
         }
 
         if(GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.RUNNING){
-            sMessage = "Stopping Catalog Verification...\n";
-            LogThis("doWork()", sMessage, null);
-            GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOP_REQUESTED);
+            //Don't let more than one of these workers run at the same time.
             return Result.success();
         }
         GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.RUNNING);
+
+        int iProgressNumerator;
+        int iProgressDenominator;
+        int iProgressBarValue;
 
         String sAnalysisStartDateTime = GlobalClass.GetTimeStampFileSafe();
         BufferedWriter bwLogFile;
@@ -128,14 +127,10 @@ public class Worker_Catalog_Analysis extends Worker {
 
 
 
-            int iProgressNumerator = 0;
-            int iProgressDenominator = alsFolderNamesInUse.size();
-            int iProgressBarValue;
-
-            int iTotalFiles = 0;
+            iProgressNumerator = 0;
+            iProgressDenominator = alsFolderNamesInUse.size();
 
             StopWatch stopWatch = new StopWatch(false);
-            final boolean bRawReadWrite = false;
 
             if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.size() < 3){
                 for(int i = 0; i< 3; i++){
@@ -150,7 +145,7 @@ public class Worker_Catalog_Analysis extends Worker {
                 //If the directory index file does not exist, perform new indexing:
                 sMessage = GlobalClass.gsCatalogFolderNames[giMediaCategory] + " directory index does not exist in memory. " +
                         "Indexing " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " directory now. User may exit this part of the app and return when complete or to check progress.\n";
-                LogThis("doWork()", sMessage, null);
+                SendLogLine(sMessage);
 
                 for (String sFolderName : alsFolderNamesInUse) {
                     if (GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.STOP_REQUESTED) {
@@ -252,7 +247,6 @@ public class Worker_Catalog_Analysis extends Worker {
                             String sFileFullRelativePath = icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName;
                             GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).put(sFileFullRelativePath, icf);
                         }
-                        iTotalFiles += alicf_FileItemsInFolder.size();
                     }
 
                 } // End loop through all subfolders in the selected media directory.
@@ -336,15 +330,15 @@ public class Worker_Catalog_Analysis extends Worker {
 
                 //End search for catalog items with missing files.
 
-                //If there were any missing items, display a message to indicate that analysis mode has
-                // changed to search this program's selected media directory for the missing media:
-                if(gtmCatalogItemsMissing.size() > 0) {
-                    //Analyze Orphaned Files to see if any are a match.
-                    sMessage = "============================================================\n";
-                    sMessage = sMessage + "=========== ANALYZING ORPHANED FILES FOR MATCHES ===========\n\n";
-                    SendLogLine(sMessage);
-                    sbLogLines.append(sMessage);
-                }
+                //Display a message to indicate that analysis mode has changed to looking for
+                //  orphaned items:
+
+                //Analyze Orphaned Files to see if any are a match.
+                sMessage =            "============================================================\n";
+                sMessage = sMessage + "================== ANALYZING ORPHANED FILES ================\n\n";
+                SendLogLine(sMessage);
+                sbLogLines.append(sMessage);
+
 
                 //Analyze orphaned files:
 
@@ -367,30 +361,34 @@ public class Worker_Catalog_Analysis extends Worker {
                     // then loop through all of the file items (and m3u8 file items) to see if there
                     // is a match in the catalog:
                     iProgressNumerator = 0;
-                    iProgressDenominator = iTotalFiles;
+                    iProgressDenominator = GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).size();
 
                     int iFileItemCountInThisFolder = 0;
                     int iFileItemCountOrphanedInThisFolder = 0;
                     int iFileItemCountOrphanedInThisFolderButNameMatched = 0;
+                    int iFileItemCountOrphanedInThisFolderButNameMatchedJumbled = 0;
                     int iFileItemCountOrphanedMissingMatch = 0;
+                    int iFileItemCountOrphanedMissingMatchCounterJumbled = 0;
 
                     String sFirstPath;
                     String sCurrentFolder = "";
 
                     if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).size() > 0) {
                         if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).firstEntry() != null) {
-                            ItemClass_File icf_Temp = GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).firstEntry().getValue();
-                            if (icf_Temp != null) {
-                                sFirstPath = icf_Temp.sMediaFolderRelativePath;
-                                if (sFirstPath.contains(GlobalClass.gsFileSeparator)) {
-                                    sCurrentFolder = sFirstPath.substring(0, sFirstPath.indexOf(GlobalClass.gsFileSeparator));
-                                } else {
-                                    sCurrentFolder = sFirstPath; //Monitor which folder is being processed for better data reporting to the user.
+                            if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).firstEntry().getValue() != null) {
+                                ItemClass_File icf_Temp = GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).firstEntry().getValue();
+                                if (icf_Temp != null) {
+                                    sFirstPath = icf_Temp.sMediaFolderRelativePath;
+                                    if (sFirstPath.contains(GlobalClass.gsFileSeparator)) {
+                                        sCurrentFolder = sFirstPath.substring(0, sFirstPath.indexOf(GlobalClass.gsFileSeparator));
+                                    } else {
+                                        sCurrentFolder = sFirstPath; //Monitor which folder is being processed for better data reporting to the user.
+                                    }
+                                    sMessage = "\nReviewing folder: " + GlobalClass.gsCatalogFolderNames[giMediaCategory] +
+                                            GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + sCurrentFolder) + "...\n";
+                                    SendLogLine(sMessage);
+                                    sbLogLines.append(sMessage);
                                 }
-                                sMessage = "\nReviewing folder: " + GlobalClass.gsCatalogFolderNames[giMediaCategory] +
-                                        GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + sCurrentFolder) + "...\n";
-                                SendLogLine(sMessage);
-                                sbLogLines.append(sMessage);
                             }
                         }
                     }
@@ -411,6 +409,9 @@ public class Worker_Catalog_Analysis extends Worker {
                     // potential move. Therefore, all of these orphaned subitems need to be tracked.
                     // If the item is a member of an orphaned comic or m3u8 playlist, add it to
                     // the appropriate collection.
+
+
+                    ArrayList<String> alsRecognizedNonJumbledFileExtensions = GlobalClass.getListOfNonJumbledFileExtensions();
 
                     for(Map.Entry<String, ItemClass_File> entry_ItemInMediaFolder: GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).entrySet()){
 
@@ -446,15 +447,21 @@ public class Worker_Catalog_Analysis extends Worker {
                                     iFileItemCountInThisFolder,
                                     iFileItemCountOrphanedInThisFolder,
                                     iFileItemCountOrphanedInThisFolderButNameMatched,
+                                    iFileItemCountOrphanedInThisFolderButNameMatchedJumbled,
                                     iFileItemCountOrphanedMissingMatch,
+                                    iFileItemCountOrphanedMissingMatchCounterJumbled,
                                     sCurrentFolder);
 
                             bFolderSummaryCompleted = true;
-                            if(alOrphanedFileList.size() > GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS) break;
+                            if(GlobalClass.giCatalog_Analysis_Approx_Max_Results > 0) { //If we are not processing unlimited results...
+                                if (alOrphanedFileList.size() > GlobalClass.giCatalog_Analysis_Approx_Max_Results)
+                                    break;
+                            }
                             sCurrentFolder = sNextPath;
                             iFileItemCountInThisFolder = 0;
                             iFileItemCountOrphanedInThisFolder = 0;
                             iFileItemCountOrphanedInThisFolderButNameMatched = 0;
+                            iFileItemCountOrphanedInThisFolderButNameMatchedJumbled = 0;
 
                             sMessage = "\nReviewing folder: " + GlobalClass.gsCatalogFolderNames[giMediaCategory] +
                                     GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + sCurrentFolder) + "...\n";
@@ -466,7 +473,11 @@ public class Worker_Catalog_Analysis extends Worker {
 
 
                         //Check to see if this file is orphaned:
-                        if(!ssCatalogRelativeFullPaths.contains(entry_ItemInMediaFolder.getKey())) {
+                        if(!ssCatalogRelativeFullPaths.contains(entry_ItemInMediaFolder.getKey()) &&
+                                icf_FileItem.iTypeFileFolderURL != ItemClass_File.TYPE_FOLDER) { //Process Diagram Node: 0500
+                            //Don't test folders here, as ssCatalogRelativeFullPaths does not contain folder listings.
+                            //  ssCatalogRelativeFullPaths only contains file names.
+
 
                             //Check to see if this file is part of a set of files, such as a comic
                             // or an M3U8 playlist. These supporting files will not be listed in the
@@ -481,17 +492,17 @@ public class Worker_Catalog_Analysis extends Worker {
                                 if (!icf_FileItem.sFileOrFolderName.endsWith("m3u8")) {
                                     icf_FileItem.bSetSubItem = true;
                                 } else {
+
                                     icf_FileItem.bSetHeadItem = true;
-                                }
-                                if (icf_FileItem.sFileOrFolderName.contains("Adapted")) {
-                                    sMessage = "\nM3U8 'Adapted' filename in use:\t" +
-                                            GlobalClass.gsCatalogFolderNames[giMediaCategory] +
-                                            GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + icf_FileItem.sMediaFolderRelativePath) +
-                                            icf_FileItem.sFileOrFolderName + "\n";
-                                    SendLogLine(sMessage);
-                                    sbLogLines.append(sMessage);
-                                    icf_FileItem.bSetSubItem = true; //todo: ensure no more files "adapted"
-                                    icf_FileItem.bSetHeadItem = false;
+                                    //If this is a .msu8 file, go and find the folder item and set it as a subitem so the folder item
+                                    // doesn't show up as an item for orphan analysis: //todo: this should never be hit if we do not evaluate folders, as indicated with code
+                                    //  icf_FileItem.iTypeFileFolderURL != ItemClass_File.TYPE_FOLDER.
+                                    String sParentFolder = icf_FileItem.sMediaFolderRelativePath;
+                                    if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).containsKey(sParentFolder)){
+                                        ItemClass_File icf_M3U8ParentFolder = GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).get(sParentFolder);
+                                        icf_M3U8ParentFolder.bSetSubItem = true;
+                                    }
+
                                 }
 
                                 //Perform a quick check to see if we have looked-up this file's parent
@@ -510,7 +521,7 @@ public class Worker_Catalog_Analysis extends Worker {
                                         String sFileFullRelativePath = entry_ItemInMediaFolder1.getKey();
                                         if (sFileFullRelativePath.startsWith(sRelativePath)) {
                                             //This String represents an item that's part of the comic / m3u8.
-                                            if (sFileFullRelativePath.endsWith("m3u8") && !icf_FileItem.sFileOrFolderName.contains("Adapted")) {
+                                            if (sFileFullRelativePath.endsWith("m3u8")) {
                                                 //This is the m3u8 member. Check to see if it is assigned
                                                 //  to a catalog item.
                                                 if (ssCatalogRelativeFullPaths.contains(sFileFullRelativePath)) {
@@ -528,7 +539,8 @@ public class Worker_Catalog_Analysis extends Worker {
                                         continue;
                                     }
                                 }
-                            }
+
+                            } //End check if this is an orphaned m3u8 (loop continued if found not to be orphaned).
 
                             icf_FileItem.bIsOrphanedFile = true;
 
@@ -580,12 +592,22 @@ public class Worker_Catalog_Analysis extends Worker {
                                         SendLogLine(sMessage);
                                         sbLogLines.append(sMessage);
                                     }
+                                } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                                    //todo: Get video duration and resolution/height/width
+
+
                                 }
 
                                 icf_FileItem.sWidth = sWidth;
                                 icf_FileItem.sHeight = sHeight;
 
                                 iFileItemCountOrphanedInThisFolder++;
+
+                                String sAlternativeFileName = "";
+                                if(!icf_FileItem.sExtension.equals("") && alsRecognizedNonJumbledFileExtensions.contains(icf_FileItem.sExtension)){
+                                    //If this file name appears to be non-jumbled, consider an alternative, jumbled file name for comparison:
+                                    sAlternativeFileName = GlobalClass.JumbleFileName(icf_FileItem.sFileOrFolderName);
+                                }
 
                                 Set<String> ssCatItemsMissingMediaFinds = new HashSet<>();
                                 if (gtmCatalogItemsMissing != null) {
@@ -595,7 +617,9 @@ public class Worker_Catalog_Analysis extends Worker {
                                     if (gtmCatalogItemsMissing.size() > 0) {
                                         //Compare to catalog items missing items.
                                         for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogItemsMissing.entrySet()) {
-                                            if (entry.getValue().sFilename.equals(icf_FileItem.sFileOrFolderName)) {
+                                            if (entry.getValue().sFilename.equals(icf_FileItem.sFileOrFolderName) ||
+                                                entry.getValue().sFilename.equals(sAlternativeFileName)) {
+
                                                 sMessage = "\t\t\tA catalog item missing it's media is matched with this file. Expected location is: \n" +
                                                         "\t\t\t\t" + GlobalClass.gsCatalogFolderNames[giMediaCategory] +
                                                         GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + entry.getValue().sFolderRelativePath + GlobalClass.gsFileSeparator) +
@@ -607,6 +631,11 @@ public class Worker_Catalog_Analysis extends Worker {
                                                 ssCatItemsMissingMediaFinds.add(entry.getKey());
                                                 icf_FileItem.bOrphanAssociatedWithCatalogItem = true;
                                                 icf_FileItem.bOrphanAssociatedCatalogItemIsMissingMedia = true;
+                                                if(entry.getValue().sFilename.equals(sAlternativeFileName)){
+                                                    iFileItemCountOrphanedMissingMatchCounterJumbled++;
+                                                    icf_FileItem.bFileNameCounterToMediaItemJumbledName = true;
+                                                }
+
                                                 if (icf_FileItem.alsOrphanAssociatedCatalogItemIDs == null) {
                                                     icf_FileItem.alsOrphanAssociatedCatalogItemIDs = new ArrayList<>();
                                                 }
@@ -630,8 +659,16 @@ public class Worker_Catalog_Analysis extends Worker {
                                 boolean bFoundMatch = false;
                                 ArrayList<String> alsFileNameMatchPaths = new ArrayList<>();
                                 for (Map.Entry<String, ItemClass_CatalogItem> entry : GlobalClass.gtmCatalogLists.get(giMediaCategory).entrySet()) {
-                                    if (entry.getValue().sFilename.equals(icf_FileItem.sFileOrFolderName)) {
+                                    if (entry.getValue().sFilename.equals(icf_FileItem.sFileOrFolderName) ||
+                                            entry.getValue().sFilename.equals(sAlternativeFileName)) {
+
                                         iFileNameMatchCount++;
+
+                                        if(entry.getValue().sFilename.equals(sAlternativeFileName)) {
+                                            iFileItemCountOrphanedInThisFolderButNameMatchedJumbled++;
+                                            icf_FileItem.bFileNameCounterToMediaItemJumbledName = true;
+                                        }
+
                                         if (!bFoundMatch) {
                                             iFileItemCountOrphanedInThisFolderButNameMatched++;
                                             icf_FileItem.bOrphanAssociatedWithCatalogItem = true;
@@ -640,6 +677,16 @@ public class Worker_Catalog_Analysis extends Worker {
                                         if (icf_FileItem.sDestinationFolder.equals("")) {
                                             icf_FileItem.sDestinationFolder = entry.getValue().sFolderRelativePath; //Pre-select the first matching catalog item's folder.
                                         }
+
+                                        if(iFileNameMatchCount == 1){
+                                            //If a catalog item match was found, copy over the tags as prospective tags to allow better comparison.
+                                            icf_FileItem.aliProspectiveTags = entry.getValue().aliTags;
+                                        } else if(iFileNameMatchCount == 2){
+                                            //If there are more than one matching catalog item file name, clear the prospective tags to avoid confusion.
+                                            icf_FileItem.aliProspectiveTags = new ArrayList<>();
+                                        }
+
+
                                         if (ssCatItemsMissingMediaFinds.contains(entry.getKey())) {
                                             //We have already notified the user that the orphaned file matches this catalog items' media, and that
                                             //  this particular catalog item is in fact missing it's media at it's intended location.
@@ -652,19 +699,25 @@ public class Worker_Catalog_Analysis extends Worker {
                                         icf_FileItem.alsOrphanAssociatedCatalogItemIDs.add(entry.getKey());
                                         String sMatchPath = entry.getValue().sFolderRelativePath + GlobalClass.gsFileSeparator + entry.getValue().sFilename;
                                         alsFileNameMatchPaths.add(sMatchPath);
-                                    }
-                                }
+
+
+
+                                    } //End if file name match found.
+
+                                } //End loop through catalog items looking for file name match.
+
                                 icf_FileItem.iFileNameDuplicationCount = iFileNameMatchCount;
                                 if (bFoundMatch) {
                                     //Provide a message to the user that the file name was matched with one or more catalog file items:
                                     for (String sMatchPath : alsFileNameMatchPaths) {
-                                        sMessage = "\t\t\tFile name found for a catalog item at location:\t" +
+                                        sMessage = "\t\t\tThis orphaned file name matches with file name for catalog item at location:\t" +
                                                 GlobalClass.gsCatalogFolderNames[giMediaCategory] +
                                                 GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + sMatchPath) + "\n";
                                         SendLogLine(sMessage);
                                         sbLogLines.append(sMessage);
                                     }
                                 }
+
 
                             } //End if this file item is NOT a member of a set, such as a comic of M3U8 playlist.
 
@@ -681,10 +734,12 @@ public class Worker_Catalog_Analysis extends Worker {
                                 // that will cause this increment to skip if the file is not to be processed.
                         }
 
-                        if((alOrphanedFileList.size() > GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS) &&
-                                (icf_FileItem.iTypeFileFolderURL != ItemClass_File.TYPE_M3U8)){
-                            //Break if results are beyond threshhold and we are not in the middle of analysing a set.
-                            break;
+                        if(GlobalClass.giCatalog_Analysis_Approx_Max_Results > 0) { //If we are not processing unlimited results...
+                            if ((alOrphanedFileList.size() > GlobalClass.giCatalog_Analysis_Approx_Max_Results) &&
+                                    (icf_FileItem.iTypeFileFolderURL != ItemClass_File.TYPE_M3U8)) {
+                                //Break if results are beyond threshhold and we are not in the middle of analysing a set.
+                                break;
+                            }
                         }
 
                     } //End loop through all files.
@@ -695,7 +750,9 @@ public class Worker_Catalog_Analysis extends Worker {
                                 iFileItemCountInThisFolder,
                                 iFileItemCountOrphanedInThisFolder,
                                 iFileItemCountOrphanedInThisFolderButNameMatched,
+                                iFileItemCountOrphanedInThisFolderButNameMatchedJumbled,
                                 iFileItemCountOrphanedMissingMatch,
+                                iFileItemCountOrphanedMissingMatchCounterJumbled,
                                 sCurrentFolder);
                     }
 
@@ -756,13 +813,43 @@ public class Worker_Catalog_Analysis extends Worker {
                     SendLogLine(sMessage);
                     sbLogLines.append(sMessage);
 
+                    //Orphaned files with catalog matches:
+                    //Orphaned files with catalog matches, duplicating data:
+                    //Orphaned files with "catalog matches that are missing their data":
+                    int iOrphanedFilesWithCatalogMatches = 0;
+                    int iOrphanedFilesWithCatalogMatchesDuplicateData = 0;
+                    int iOrphanedFilesWithCatalogMatchesMissingData = 0;
+                    for(ItemClass_File icf:alOrphanedFileList){
+                        if(!icf.bSetSubItem){
+                            iOrphanedFilesWithCatalogMatches++;
+                            if(icf.bOrphanAssociatedWithCatalogItem){
+                                if(!icf.bOrphanAssociatedCatalogItemIsMissingMedia){
+                                    iOrphanedFilesWithCatalogMatchesDuplicateData++;
+                                } else {
+                                    iOrphanedFilesWithCatalogMatchesMissingData++;
+                                }
+                            }
+                        } else {
+                            Log.d("Worker_Catalog_Verification:" + "doWork()", "Odd orphaned listing - subitem."); //todo: remove if not applicable.
+                        }
+                    }
 
-                    if(iOrphanedItemCount > GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS){
-                        sMessage = "-\n";
-                        sMessage = sMessage + "Analysis result limit set to " + GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS + ", but continues until the end of a folder is reached.\n" +
-                                "- For more results, resolve the existing orphaned files and run the analysis again.\n\n";
+                    if(iOrphanedItemCount > 0){
+                        sMessage = "- Of the orphaned files, " + iOrphanedFilesWithCatalogMatchesDuplicateData + " of those files are duplicates of files in proper storage for catalog items.\n";
+                        sMessage = sMessage + "- Of the orphaned files, " + iOrphanedFilesWithCatalogMatchesMissingData + " of those files align with catalog items missing their data.\n";
                         SendLogLine(sMessage);
                         sbLogLines.append(sMessage);
+                    }
+
+
+                    if(GlobalClass.giCatalog_Analysis_Approx_Max_Results > 0) { //If we are not processing unlimited results...
+                        if (iOrphanedItemCount > GlobalClass.giCatalog_Analysis_Approx_Max_Results) {
+                            sMessage = "-\n";
+                            sMessage = sMessage + "Analysis result limit set to " + GlobalClass.giCatalog_Analysis_Approx_Max_Results + ", but continues until the end of a folder is reached.\n" +
+                                    "- For more results, resolve the existing orphaned files and run the analysis again.\n\n";
+                            SendLogLine(sMessage);
+                            sbLogLines.append(sMessage);
+                        }
                     }
 
                     sMessage = "------------------------------------------------------\n\n";
@@ -1022,12 +1109,7 @@ public class Worker_Catalog_Analysis extends Worker {
                             continue;
                         }
 
-                        //Identify the two file names, *.m3u8 and *_SAF_Adapted.m3u8.
                         String sM3U8_FileName = ci.sFilename;
-                        if(sM3U8_FileName.contains(GlobalClass.gsSAF_Adapted_M3U8_Suffix)){
-                            sM3U8_FileName = sM3U8_FileName.replace(GlobalClass.gsSAF_Adapted_M3U8_Suffix, "");
-                        }
-                        String sM3U8_SAF_FileName = sFileNameAndExtension[0] + GlobalClass.gsSAF_Adapted_M3U8_Suffix + "." + sFileNameAndExtension[1];
 
                         //Determine if the file exists before continuing:
                         // TreeMap<String, ItemClass_File>.
@@ -1036,73 +1118,11 @@ public class Worker_Catalog_Analysis extends Worker {
                         String sRelativeFullPath = ci.sFolderRelativePath + GlobalClass.gsFileSeparator + sM3U8_FileName;
                         boolean bM3U8_File_Found = GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).containsKey(sRelativeFullPath);
 
-                        sRelativeFullPath = ci.sFolderRelativePath + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
-                        boolean bM3U8_SAF_File_Found = GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).containsKey(sRelativeFullPath);
-
-                        //Create the base path that should be used within the SAF-adapted m3U8 file:
                         String sUpdatedM3U8BasePath = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                 + GlobalClass.gsFileSeparator + ci.sFolderRelativePath;
 
-                        //Look for the SAF-Adapted M3U8 file:
-                        String sM3U8_SAF_Uri = sUpdatedM3U8BasePath
-                                + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
-
-                        //todo: remove the below 'if' structure once all M3U8s are up-to-date.
-
-                        if(!bM3U8_File_Found && bM3U8_SAF_File_Found ) {
-                            //Copy the SAF file to the name of the plain m3u8 file.
-                            try {
-                                //Create the parent folder uri:
-                                Uri uriParentFolder = Uri.parse(sUpdatedM3U8BasePath);
-                                //Create the M3U8 file:
-                                Uri uriM3U8File = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolder, GlobalClass.BASE_TYPE_TEXT, sM3U8_FileName);
-                                if(uriM3U8File != null){
-                                    InputStream isSourceFile = null;
-                                    OutputStream osDestinationFile = null;
-
-                                    try {
-                                        Uri uriM3U8_SAF = Uri.parse(sM3U8_SAF_Uri);
-                                        isSourceFile = GlobalClass.gcrContentResolver.openInputStream(uriM3U8_SAF);
-                                        osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8File);
-
-                                        if (isSourceFile != null && osDestinationFile != null) {
-                                            byte[] bucket = new byte[32 * 1024];
-                                            int bytesRead = 0;
-                                            while (bytesRead != -1) {
-                                                bytesRead = isSourceFile.read(bucket); //-1, 0, or more
-                                                if (bytesRead > 0) {
-                                                    osDestinationFile.write(bucket, 0, bytesRead);
-                                                }
-                                            }
-                                        }
-
-                                    } catch (Exception e) {
-                                        sMessage = "\nProblem creating copy of M3U8 SAF file.";
-                                        SendLogLine(sMessage);
-                                        sbLogLines.append(sMessage);
-
-                                    } finally {
-                                        if (isSourceFile != null)
-                                            isSourceFile.close();
-                                        if (osDestinationFile != null)
-                                            osDestinationFile.close();
-                                    }
-                                } else {
-                                    sMessage = "\nProblem creating copy of SAF m3u8 file.";
-                                    SendLogLine(sMessage);
-                                    sbLogLines.append(sMessage);
-                                }
-
-                            } catch (Exception e) {
-                                sMessage = "\nProblem creating copy of SAF m3u8 file.";
-                                SendLogLine(sMessage);
-                                sbLogLines.append(sMessage);
-                            }
-
-                        }
-
-                        if (!bM3U8_File_Found && !bM3U8_SAF_File_Found) {
+                        if (!bM3U8_File_Found) {
                             als_M3U8_CatItems_Missing_Playlist.add(tmEntry.getKey());
                             iM3U8ProblemItemCount++;
                             sMessage = "\n" + iM3U8ProblemItemCount + ". Could not find m3u8 file for Catalog item ID " + ci.sItemID + "\n";
@@ -1125,7 +1145,7 @@ public class Worker_Catalog_Analysis extends Worker {
                                 sMessage = "\n" + iM3U8ProblemItemCount + ". Catalog item ID " + ci.sItemID + " does not have an m3u8 file.\n";
                                 SendLogLine(sMessage);
                                 sbLogLines.append(sMessage);
-                                //todo: delete all non-SAF-adapted m3u8 files after there are no occurrences in which the SAF file is not found.
+
                             } else {
                                 byteM3U8_File = GlobalClass.readAllBytes(isM3U8);
                                 isM3U8.close();
@@ -1174,10 +1194,7 @@ public class Worker_Catalog_Analysis extends Worker {
                                     }
                                 } catch (Exception e) {
                                     sMessage = "Problem processing and/or writing to updated M3U8 file: " + e.getMessage() + "\n";
-                                    globalClass.BroadcastProgress(true, sMessage,
-                                            false, 0,
-                                            false, "",
-                                            GlobalClass.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE);
+                                    SendLogLine(sMessage);
                                 }
                             } else {
                                 //Count the M3U8 segment files listed in the M3U8 file, and check to make sure those files exist:
@@ -1217,23 +1234,10 @@ public class Worker_Catalog_Analysis extends Worker {
 
                         } //End if the M3U8 file bytes not null.
 
-
-                        if(ci.sFilename.contains(GlobalClass.gsSAF_Adapted_M3U8_Suffix)){
-                            ci.sFilename = sM3U8_FileName;
-                            bWriteCatalogFile = true; //Tell the catalog to use the non-SAF named file.
-                            //todo: remove after M3U8 'SAF' no longer in use.
-                        }
-
                     } //End if this is an M3U8.
 
                 } //End for loop going through Catalog video items.
 
-                if(bWriteCatalogFile){
-                    sMessage = "\nWriting catalog file...";
-                    SendLogLine(sMessage);
-                    sbLogLines.append(sMessage);
-                    globalClass.CatalogDataFile_UpdateCatalogFile(giMediaCategory, "Updating Videos catalog file...");
-                }
 
                 //Print summary:
 
@@ -1311,8 +1315,21 @@ public class Worker_Catalog_Analysis extends Worker {
 
         //todo: report the time it took to complete the operation.
 
+
+
         sMessage = "Catalog Verification complete.";
-        LogThis("doWork()", sMessage, null);
+        SendLogLine(sMessage);
+
+        if(gsbLogBuffer.length() > 0) {
+            //We are nearing completion, ensure that all data from the log is sent:
+            //Because sending of this data is periodic, there may be some data not sent
+            //  by the last call to SendLogLine() if the time did not perfectly align on a "tick".
+            globalClass.BroadcastProgress(true, gsbLogBuffer.toString(),
+                    false, 0,
+                    false, "",
+                    CATALOG_ANALYSIS_ACTION_RESPONSE);
+        }
+
         GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.FINISHED);
         globalClass.BroadcastProgress(false, "",
                 true, 100,
@@ -1326,7 +1343,9 @@ public class Worker_Catalog_Analysis extends Worker {
                                                     int iFileItemCountInFolder,
                                                     int iFileItemCountOrphanedInThisFolder,
                                                     int iFileItemCountOrphanedInThisFolderButNameMatched,
+                                                    int iFileItemCountOrphanedInThisFolderButNameMatchedJumbled,
                                                     int iFileItemCountOrphanedMissingMatch,
+                                                    int iFileItemCountOrphanedMissingMatchCounterJumbled,
                                                     String sCurrentFolder){
         //If there were orphaned files in this folder, display a summary for the folder:
         String sMessage;
@@ -1353,6 +1372,11 @@ public class Worker_Catalog_Analysis extends Worker {
                 SendLogLine(sMessage);
                 sbLogLines.append(sMessage);
             }
+            if(iFileItemCountOrphanedInThisFolderButNameMatchedJumbled > 0){
+                sMessage = "- Some of the file names matched file names with catalog items if the file names were jumbled. " + iFileItemCountOrphanedInThisFolderButNameMatchedJumbled + " matches were found.\n";
+                SendLogLine(sMessage);
+                sbLogLines.append(sMessage);
+            }
 
             if(iFileItemCountOrphanedMissingMatch > 0){
                 sMessage = "- \t\t" + iFileItemCountOrphanedMissingMatch + " of the orphaned files matched catalog items' missing media file names.\n";
@@ -1360,6 +1384,12 @@ public class Worker_Catalog_Analysis extends Worker {
                 sbLogLines.append(sMessage);
             } else {
                 sMessage = "- None of these orphaned file names matched file names with catalog items which are missing their media.\n";
+                SendLogLine(sMessage);
+                sbLogLines.append(sMessage);
+            }
+
+            if(iFileItemCountOrphanedMissingMatchCounterJumbled > 0){
+                sMessage = "- \t\t" + iFileItemCountOrphanedMissingMatchCounterJumbled + " of the orphaned files matched catalog items' missing media file names, if the file names were not Jumbled.\n";
                 SendLogLine(sMessage);
                 sbLogLines.append(sMessage);
             }
@@ -1373,27 +1403,25 @@ public class Worker_Catalog_Analysis extends Worker {
     }
 
 
+    double gdLastLogDelivery = 0d;
+    StringBuilder gsbLogBuffer = new StringBuilder();
 
     private void SendLogLine(String sLogLine){
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(CATALOG_ANALYSIS_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.putExtra(GlobalClass.LOG_LINE_STRING, sLogLine);
-        broadcastIntent.putExtra(GlobalClass.UPDATE_LOG_BOOLEAN, true);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-    }
 
-    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
-        String sMessage = sMainMessage;
-        if(sExtraErrorMessage != null){
-            sMessage = sMessage + " " + sExtraErrorMessage;
+        gsbLogBuffer.append(sLogLine);
+
+        double dCurrentTime = GlobalClass.GetTimeStampDouble();
+        double dtDiff = dCurrentTime - gdLastLogDelivery;
+        float fDeliveryPeriodSeconds = 1.0f;
+        double dSecConv = fDeliveryPeriodSeconds * .000001d;
+        if(dtDiff > dSecConv) {
+            globalClass.BroadcastProgress(true, gsbLogBuffer.toString(),
+                    false, 0,
+                    false, "",
+                    CATALOG_ANALYSIS_ACTION_RESPONSE);
+            gsbLogBuffer.setLength(0);
+            gdLastLogDelivery = dCurrentTime;
         }
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        globalClass.BroadcastProgress(true, sMessage,
-                false, 0,
-                false, "",
-                CATALOG_ANALYSIS_ACTION_RESPONSE);
-        Log.d("Worker_Catalog_Verification:" + sRoutine, sMessage);
     }
 
 

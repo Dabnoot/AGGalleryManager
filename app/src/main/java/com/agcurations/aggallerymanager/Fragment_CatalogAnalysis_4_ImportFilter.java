@@ -37,16 +37,17 @@ public class Fragment_CatalogAnalysis_4_ImportFilter extends Fragment {
         }
 
         AppCompatCheckBox acCheckBox_ReviewOrphansWOMatch = getView().findViewById(R.id.acCheckBox_ReviewOrphansWOMatch);
-        AppCompatCheckBox acCheckBox_ReviewOrphansWMatchWMedia = getView().findViewById(R.id.acCheckBox_ReviewOrphansWMatchWMedia);
         AppCompatCheckBox acCheckBox_ReviewOrphansWMatchWOMedia = getView().findViewById(R.id.acCheckBox_ReviewOrphansWMatchWOMedia);
+        AppCompatCheckBox acCheckBox_ReviewOrphansWMatchWMedia = getView().findViewById(R.id.acCheckBox_ReviewOrphansWMatchWMedia);
 
         String sOrphansWOMatch_Label = "Without catalog matches (" + Activity_CatalogAnalysis.giOrphansWOMatch + " items)";
-        String sOrphansWMatchWMedia_Label = "With catalog matches not missing media (" + Activity_CatalogAnalysis.giOrphansWMatchWMedia + " items)";
         String sOrphansWMatchWOMedia_Label = "With catalog matches missing their media (" + Activity_CatalogAnalysis.giOrphansWMatchWOMedia + " items)";
+        String sOrphansWMatchWMedia_Label = "With catalog matches not missing media (" + Activity_CatalogAnalysis.giOrphansWMatchWMedia + " items)\n" +
+                                            "These are orphaned files duplicating files already in catalog storage.";
 
         acCheckBox_ReviewOrphansWOMatch.setText(sOrphansWOMatch_Label);
-        acCheckBox_ReviewOrphansWMatchWMedia.setText(sOrphansWMatchWMedia_Label);
         acCheckBox_ReviewOrphansWMatchWOMedia.setText(sOrphansWMatchWOMedia_Label);
+        acCheckBox_ReviewOrphansWMatchWMedia.setText(sOrphansWMatchWMedia_Label);
 
     }
 }

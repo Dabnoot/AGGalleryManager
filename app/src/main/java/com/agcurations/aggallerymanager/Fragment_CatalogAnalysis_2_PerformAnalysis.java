@@ -37,8 +37,6 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
 
     Button gButton_AnalysisImportSelect;
 
-    GlobalClass globalClass;
-
     public Fragment_CatalogAnalysis_2_PerformAnalysis() {
         // Required empty public constructor
     }
@@ -56,8 +54,6 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
         if(getActivity() != null) {
             //Instantiate the ViewModel sharing data between fragments:
             viewModel_catalogAnalysis = new ViewModelProvider(getActivity()).get(ViewModel_CatalogAnalysis.class);
-
-            globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
 
         //Configure a response receiver to listen for updates from the Data Service:
@@ -115,7 +111,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
             gProgressBar_AnalysisProgress.setProgress(0);
             gTextView_AnalysisProgressBarText.setText("0/0");
             gtextView_AnalysisLog.setText("");
-            globalClass.gsbAnalysisExecutionLog = new StringBuilder();
+            GlobalClass.gsbCatalogAnalysis_ExecutionLog = new StringBuilder();
 
             if(getContext() == null) return;
             String sCallerID = "Fragment_CatalogAnalysis_2_PerformAnalysis:initComponents()";
@@ -136,9 +132,9 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
         } else {
             //If an Analysis has been started...
             //Refresh the text and progress:
-            gProgressBar_AnalysisProgress.setProgress(globalClass.giAnalysisExecutionProgressBarPercent);
-            gTextView_AnalysisProgressBarText.setText(globalClass.gsAnalysisExecutionProgressBarText);
-            gtextView_AnalysisLog.setText(globalClass.gsbAnalysisExecutionLog.toString());
+            gProgressBar_AnalysisProgress.setProgress(GlobalClass.giCatalogAnalysis_ProgressBarPercent);
+            gTextView_AnalysisProgressBarText.setText(GlobalClass.gsCatalogAnalysis_ProgressBarText);
+            gtextView_AnalysisLog.setText(GlobalClass.gsbCatalogAnalysis_ExecutionLog.toString());
 
 
             if(GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.FINISHED){
@@ -189,7 +185,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     sLogLine = intent.getStringExtra(GlobalClass.LOG_LINE_STRING);
                     if(sLogLine != null) {
                         if (gtextView_AnalysisLog != null) {
-                            gtextView_AnalysisLog.append(sLogLine);
+                            gtextView_AnalysisLog.setText(GlobalClass.gsbCatalogAnalysis_ExecutionLog.toString());
                             //Execute delayed scroll down since this broadcast listener is not on the UI thread:
                             final Handler handler = new Handler(Looper.getMainLooper());
                             handler.postDelayed(new Runnable() {
@@ -217,20 +213,15 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     }
                 }
                 if(bUpdatePercentComplete){
-                    int iAmountComplete;
-                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
                     if(gProgressBar_AnalysisProgress != null) {
-                        gProgressBar_AnalysisProgress.setProgress(iAmountComplete);
+                        gProgressBar_AnalysisProgress.setProgress(GlobalClass.giCatalogAnalysis_ProgressBarPercent);
                     }
                 }
                 if(bUpdateProgressBarText){
-                    String sProgressBarText;
-                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
                     if(gTextView_AnalysisProgressBarText != null) {
-                        gTextView_AnalysisProgressBarText.setText(sProgressBarText);
+                        gTextView_AnalysisProgressBarText.setText(GlobalClass.gsCatalogAnalysis_ProgressBarText);
                     }
                 }
-
 
                 //Check to see if this is a response from the Catalog Analysis worker:
                 boolean bGetCatalogAnalysisFileItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE, false);
@@ -241,11 +232,6 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                 if (bGetCatalogAnalysisMissingItemsResponse) {
                     gButton_AnalysisImportSelect.setEnabled(true);
                 }
-
-                /*boolean bGetCatalogAnalysisNoItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_CAT_ANALYSIS_NO_ITEMS_RESPONSE, false);
-                if(bGetCatalogAnalysisNoItemsResponse){
-                    //Catalog Analysis has completed, but no catalog items missing media or orphaned files were found.
-                }*/
 
 
             }

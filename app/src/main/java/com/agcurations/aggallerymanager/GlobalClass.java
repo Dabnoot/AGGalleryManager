@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -253,20 +254,23 @@ public class GlobalClass extends Application {
     public static StringBuilder gsbImportExecutionLog = new StringBuilder();
     public static int giImportExecutionProgressBarPercent = 0;
     public static String gsImportExecutionProgressBarText = "";
+
     //Variables related to catalog analysis:
-    public static StringBuilder gsbAnalysisExecutionLog = new StringBuilder();
+    public static StringBuilder gsbCatalogAnalysis_ExecutionLog = new StringBuilder();
+    public static int giCatalogAnalysis_ProgressBarPercent = 0;
+    public static String gsCatalogAnalysis_ProgressBarText = "";
     public static StringBuilder gsbUpdateExecutionLog = new StringBuilder();
-    public static int giAnalysisExecutionProgressBarPercent = 0;
-    public static String gsAnalysisExecutionProgressBarText = "";
     public static int giUpdateExecutionProgressBarPercent = 0;
     public static String gsUpdateExecutionProgressBarText = "";
+    public static int giCatalog_Analysis_Approx_Max_Results = 100;
+
     //Variables to control starting of comic web address analysis:
     // These variables prevent the system/user from starting another analysis until an existing
     // operation is finished.
     public static boolean gbImportComicWebAnalysisRunning = false;
     public static boolean gbImportComicWebAnalysisFinished = false;
 
-    public static final int CATALOG_ANALYSIS_APPROX_MAX_RESULTS = 100;
+
 
     //==============================
     // Global variables for working with the File Deletion Utility internal to this program:
@@ -825,6 +829,35 @@ public class GlobalClass extends Application {
             Log.d("GlobalClass:IsDirEmpty()", "Problem querying folder.");
         }
         return EMPTY;
+    }
+
+
+    public static String GetUserFriendlyStorageName(String sStoragePath) throws UnsupportedEncodingException {
+
+        for(Map.Entry<String, String> entryStorageDef: GlobalClass.gtmStorageDeviceNames.entrySet()){
+            String sKey = entryStorageDef.getKey();
+            if(sKey.contains("/")){
+                sKey = sKey.substring(sKey.lastIndexOf("/"));
+                sKey = sKey.replace("/", "");
+            }
+            if(sStoragePath.contains(sKey)){
+                //Replace the cryptic storage location text with something the user is more likely to understand:
+                sStoragePath = sStoragePath.replace(sKey, entryStorageDef.getValue());
+                break;
+            }
+        }
+        if(sStoragePath.contains("/")) {
+            sStoragePath = sStoragePath.substring(sStoragePath.lastIndexOf("/"));
+            sStoragePath = sStoragePath.replace("/", "");
+        }
+
+        sStoragePath = URLDecoder.decode(sStoragePath, StandardCharsets.UTF_8.toString());
+
+        if(sStoragePath.contains(":")){
+            sStoragePath = sStoragePath.replace(":", "://");
+        }
+
+        return sStoragePath;
     }
 
 
@@ -2946,7 +2979,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_WEBPAGE_TAB_DATA_ADDRESS = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_ADDRESS";
     public static final String EXTRA_WEBPAGE_TAB_DATA_TITLE = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_TITLE";
     public static final String EXTRA_WEBPAGE_TAB_DATA_FAVICON_ADDRESS = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_FAVICON_ADDRESS";
-    public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowser.extra.RESULT_TYPE";
+    public static final String EXTRA_RESULT_TYPE_WEB_PAGE_TAB_MESSAGE = "com.agcurations.webbrowser.extra.RESULT_TYPE";
 
     public static String gsBrowserAddressClipboard = "";
 
@@ -3442,26 +3475,32 @@ public class GlobalClass extends Application {
 
     }
 
+    public static ArrayList<String> getListOfNonJumbledFileExtensions(){
+        ArrayList<String> alsRecognizedNonJumbledFileExtensions = new ArrayList<>();
+
+        alsRecognizedNonJumbledFileExtensions.add(".mp4");
+        alsRecognizedNonJumbledFileExtensions.add(".webm");
+        alsRecognizedNonJumbledFileExtensions.add(".wmv");
+        alsRecognizedNonJumbledFileExtensions.add(".avi");
+        alsRecognizedNonJumbledFileExtensions.add(".mov");
+        alsRecognizedNonJumbledFileExtensions.add(".mkv");
+        alsRecognizedNonJumbledFileExtensions.add(".flv");
+        alsRecognizedNonJumbledFileExtensions.add(".ogg");
+        alsRecognizedNonJumbledFileExtensions.add(".jpg");
+        alsRecognizedNonJumbledFileExtensions.add(".jpeg");
+        alsRecognizedNonJumbledFileExtensions.add(".gif");
+        alsRecognizedNonJumbledFileExtensions.add(".tiff");
+        alsRecognizedNonJumbledFileExtensions.add(".png");
+        alsRecognizedNonJumbledFileExtensions.add(".bmp");
+        alsRecognizedNonJumbledFileExtensions.add(".ts");
+
+        return alsRecognizedNonJumbledFileExtensions;
+    }
+
     public static boolean isJumbled(String sFilename){
 
-        ArrayList<String> alsRecognizedFileExtensions = new ArrayList<>();
+        ArrayList<String> alsRecognizedFileExtensions = getListOfNonJumbledFileExtensions();
         boolean bExtensionRecognized = false;
-
-        alsRecognizedFileExtensions.add(".mp4");
-        alsRecognizedFileExtensions.add(".webm");
-        alsRecognizedFileExtensions.add(".wmv");
-        alsRecognizedFileExtensions.add(".avi");
-        alsRecognizedFileExtensions.add(".mov");
-        alsRecognizedFileExtensions.add(".mkv");
-        alsRecognizedFileExtensions.add(".flv");
-        alsRecognizedFileExtensions.add(".ogg");
-        alsRecognizedFileExtensions.add(".jpg");
-        alsRecognizedFileExtensions.add(".jpeg");
-        alsRecognizedFileExtensions.add(".gif");
-        alsRecognizedFileExtensions.add(".tiff");
-        alsRecognizedFileExtensions.add(".png");
-        alsRecognizedFileExtensions.add(".bmp");
-        alsRecognizedFileExtensions.add(".ts");
 
         for(String sExtension: alsRecognizedFileExtensions){
             if(sFilename.toLowerCase(Locale.ROOT).endsWith(sExtension.toLowerCase(Locale.ROOT))){
@@ -3709,6 +3748,19 @@ public class GlobalClass extends Application {
                     gsbDeleteFilesExecutionLog.append(sLogLine);
                 }
                 break;
+            case Worker_Catalog_Analysis.CATALOG_ANALYSIS_ACTION_RESPONSE:
+                if (bUpdatePercentComplete) {
+                    giCatalogAnalysis_ProgressBarPercent = iAmountComplete;
+                }
+                if (bUpdateProgressBarText) {
+                    //Preserve progress bar text for the event of a screen rotation, or activity looses focus:
+                    gsCatalogAnalysis_ProgressBarText = sProgressBarText;
+                }
+                if (bUpdateLog) {
+                    //Preserve the log for the event of a screen rotation, or activity looses focus:
+                    gsbCatalogAnalysis_ExecutionLog.append(sLogLine);
+                }
+                break;
         }
 
         //Broadcast a message to be picked-up by an Activity:
@@ -3801,7 +3853,7 @@ public class GlobalClass extends Application {
     //If the option to individualize M3U8 video segment playback is selected,
     //  create an array of the individual video segment files and feed
     //  them into the ExoPlayer as a playlist.
-    //  There was an issue during coding and testing an SAF-adapted M3U8
+    //  There was an issue during coding and testing an M3U8
     //  in which the program would freeze the entire tablet causing the
     //  need for a hard reset. If this happens again, a coder can change the
     //  buffer amount (in onCreate), or configure this boolean to be

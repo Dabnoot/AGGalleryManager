@@ -41,9 +41,9 @@ public class Fragment_CatalogAnalysis_3_TrimOrImport extends Fragment {
         RadioButton radioButton_ReviewOrphanedFiles = getView().findViewById(R.id.radioButton_ReviewOrphanedFiles);
 
         int iOrphanedItemCount = Activity_CatalogAnalysis.giOrphansWOMatch +
-                Activity_CatalogAnalysis.giOrphansWMatchWMedia +
-                Activity_CatalogAnalysis.giOrphansWMatchWOMedia;
-        String sOrphanLabel = "Review orphaned files (" + iOrphanedItemCount + " items)" + "\n(Files in catalog storage but without catalog data)";
+                Activity_CatalogAnalysis.giOrphansWMatchWOMedia +
+                Activity_CatalogAnalysis.giOrphansWMatchWMedia;
+        String sOrphanLabel = "Review orphaned files (" + iOrphanedItemCount + " items)";
         radioButton_ReviewOrphanedFiles.setText(sOrphanLabel);
 
         RadioButton radioButton_ReviewCatalogItemsMissingMedia = getView().findViewById(R.id.radioButton_ReviewCatalogItemsMissingMedia);
