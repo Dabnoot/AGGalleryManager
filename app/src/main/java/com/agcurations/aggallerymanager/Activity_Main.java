@@ -169,6 +169,7 @@ public class Activity_Main extends AppCompatActivity {
         filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
         filter.addAction(GlobalClass.BROADCAST_CATALOG_FILES_MAINTENANCE);
+        filter.addAction(Worker_Catalog_Analysis.CATALOG_ANALYSIS_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mainActivityDataServiceResponseReceiver, filter);
