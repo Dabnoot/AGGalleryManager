@@ -41,4 +41,6 @@ public class ViewModel_ImportActivity extends ViewModel {
     public boolean bImportingOrphanedFiles = false;
     public boolean bImportingOrphanedFilesRepairMode = false;
 
+    //Create an array of keys that allow program to locate image links:
+    public ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators;
 }

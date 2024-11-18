@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
@@ -24,15 +25,17 @@ import androidx.work.WorkerParameters;
 
 public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
-    public static final String TAG_WORKER_IMPORT_COMICANALYZEHTML = "com.agcurations.aggallermanager.tag_worker_import_comicanalyzehtml";
+    public static final String TAG_WORKER_IMPORT_COMIC_ANALYZE_HTML = "com.agcurations.aggallermanager.tag_worker_import_comic_analyze_html";
 
-    //String gsAddress;
-    String gsIntentActionFilter;
+    public static final String WEB_COMIC_ANALYSIS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.WEB_COMIC_ANALYSIS_ACTION_RESPONSE";
+
+    public static final String EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_web_data_locator_al_key";
+
+    String gsDataRecordKey;
 
     public Worker_Import_ComicAnalyzeHTML(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        //gsAddress = getInputData().getString(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
-        gsIntentActionFilter = Fragment_Import_1c_ComicWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_COMIC_WEB_DETECT;
+        gsDataRecordKey = getInputData().getString(EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY);
     }
 
     @NonNull
@@ -45,10 +48,32 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         globalClass.BroadcastProgress(true, "Searching webpage for target data...",
                 false, 0,
                 false, "",
-                gsIntentActionFilter);
+                WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+
+        //Get the data needed by this worker:
+        if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+            globalClass.BroadcastProgress(true, "Data transfer to Comic Analysis worker incomplete: timeout.",
+                    false, 0,
+                    false, "",
+                    WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+            return Result.failure();
+        }
+        GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+        ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators = GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey);
+        GlobalClass.gtmComicWebDataLocators.remove(gsDataRecordKey);
+        GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+
+        if(alWebComicDataLocators == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Comic Analysis worker incomplete: no data.",
+                    false, 0,
+                    false, "",
+                    WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+            return Result.failure();
+        }
 
         ItemClass_WebComicDataLocator icWebDataLocator = null;
-        for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators){
+
+        for(ItemClass_WebComicDataLocator icWCDL: alWebComicDataLocators){
             if(icWCDL.bHostNameMatchFound){
                 icWebDataLocator = icWCDL;
                 break;
@@ -58,7 +83,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             globalClass.BroadcastProgress(true, "This webpage is incompatible at this time.",
                     false, 0,
                     false, "",
-                    gsIntentActionFilter);
+                    WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
             return Result.failure();
         }
 
@@ -97,7 +122,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         globalClass.BroadcastProgress(true, "Textual searches complete. Parsing HTML...",
                 false, 0,
                 false, "",
-                gsIntentActionFilter);
+                WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
 
         //Note: DocumentBuilderFactory.newInstance().newDocumentBuilder().parse....
         //  does not work well to parse this html. Modern html interpreters accommodate
@@ -118,7 +143,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             node = pageParser.clean(sHTML);
         } catch (Exception e){
             sMessage = "Problem with HTML parser. Try again?\n" + e.getMessage();
-            globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
+            globalClass.problemNotificationConfig(sMessage, WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
             return Result.failure();
         }
         //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
@@ -130,12 +155,11 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
         //Broadcast a message to be picked-up by the caller:
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(gsIntentActionFilter);
+        broadcastIntent.setAction(WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         String sTitle = "";
         String sComicDescription = "";
-        String sComicThumbnailURL = "";
         String sComicParodies = "";
         String sComicCharacters = "";
         String sRawTextTags = "";
@@ -175,9 +199,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         //First array element is for comic title.
         //Elements 1-8 are data block results.
         //Last array element is for error message.
-        for (int i = 0; i < j; i++) {
-            sReturnData[i] = "";
-        }
+        Arrays.fill(sReturnData, "");
 
         String sComicTitle = "";
 
@@ -210,7 +232,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 //===
                 //== Get comic title ===
                 //===
-                BroadcastProgress_ComicDetails("Looking for comic title...", gsIntentActionFilter);
+                BroadcastProgress_ComicDetails("Looking for comic title...", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                 String sxPathExpression;
                 sxPathExpression = snH_Comic_Title_xPathExpression;
                 //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
@@ -229,7 +251,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
                 //Attempt to determine the inclusion of "parodies", "characters", "tags", etc
                 //  in the info blocks:
-                BroadcastProgress_ComicDetails("Looking for comic data info blocks (parodies, characters, tags, etc)...", gsIntentActionFilter);
+                BroadcastProgress_ComicDetails("Looking for comic data info blocks (parodies, characters, tags, etc)...", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                 sxPathExpression = snH_Comic_Data_Blocks_xPE;
                 //Use an xPathExpression (similar to RegEx) to look for the data in the html/xml:
                 //TCFN = 'tag-container field-name' html class used by n%Hen%tai web pages.
@@ -314,7 +336,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 //===
 
                 //Decypher the rest of the comic page image URLs to be used in a later step of the import:
-                BroadcastProgress_ComicDetails("Looking for listing of comic pages...", gsIntentActionFilter);
+                BroadcastProgress_ComicDetails("Looking for listing of comic pages...", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                 sxPathExpression = snH_Comic_Page_Thumbs_xPE;
                 Object[] objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
                 //Check to see if we found anything:
@@ -336,7 +358,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //  be downloaded from a slightly different address and filename, hence the convoluted processing below.
                     for (Object objsTagNodeThumbnail : objsTagNodeThumbnails) {
                         String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName("data-src");
-                        BroadcastProgress_ComicDetails(sImageAddress + "\n", gsIntentActionFilter); //Broadcast progress
+                        BroadcastProgress_ComicDetails(sImageAddress + "\n", WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //Broadcast progress
                         String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
                         sImageFilename = sImageFilename.replace("t", ""); //Get rid of the 't', presummably for "thumbnail".
                         String[] sSplit = sImageFilename.split("\\.");
@@ -356,13 +378,13 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
                 if(tmFileIndexImageExtension.size() == 0){
                     String sMsg = "Problem identifying comic page images on this webpage.";
-                    BroadcastProgress_ComicDetails(sMsg, gsIntentActionFilter);
+                    BroadcastProgress_ComicDetails(sMsg, WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                     broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                     broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                    globalClass.gbImportComicWebAnalysisRunning = false;
-                    globalClass.gbImportComicWebAnalysisFinished = true;
+                    GlobalClass.gbImportComicWebAnalysisRunning = false;
+                    GlobalClass.gbImportComicWebAnalysisFinished = true;
                     return Result.failure();
                 }
                 //Page addresses should now be acquired.
@@ -393,7 +415,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //Get the size of the image and add it to the total size of the comic:
                     if (bGetOnlineSize) {
                         URL urlPage = new URL(sImageDownloadAddress);
-                        BroadcastProgress_ComicDetails("Getting file size data for " + sImageDownloadAddress, gsIntentActionFilter); //Broadcast progress
+                        BroadcastProgress_ComicDetails("Getting file size data for " + sImageDownloadAddress, WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //Broadcast progress
                         //URLConnection connection = urlPage.openConnection();
                         try{
                             HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
@@ -412,7 +434,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                             connection.disconnect();
                         } catch (java.net.SocketTimeoutException e) {
                             sMessage = "Could not get image size due to timeout. " + e.getMessage();
-                            BroadcastProgress_ComicDetails(sMessage , gsIntentActionFilter);
+                            BroadcastProgress_ComicDetails(sMessage , WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                         }
                     }
                 }
@@ -421,7 +443,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     lProjectedComicSize = lAveragePageSize * iComicPages;
 
                     String sCleanedProjectedSize = GlobalClass.CleanStorageSize(lProjectedComicSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
-                    BroadcastProgress_ComicDetails("Average page size is " + lAveragePageSize + " bytes. Total comic size projected to be " + sCleanedProjectedSize + ".", gsIntentActionFilter);
+                    BroadcastProgress_ComicDetails("Average page size is " + lAveragePageSize + " bytes. Total comic size projected to be " + sCleanedProjectedSize + ".", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                 } else {
 
                 }
@@ -443,23 +465,23 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         }
                     } catch (Exception e) {
                         sMessage = "Could not get image height/width data. " + e.getMessage();
-                        BroadcastProgress_ComicDetails(sMessage , gsIntentActionFilter);
+                        BroadcastProgress_ComicDetails(sMessage , WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                     }
 
                 }
-                BroadcastProgress_ComicDetails("HTML examination complete. Click 'Next' to continue.", gsIntentActionFilter); //todo, merge with !bProblem
+                BroadcastProgress_ComicDetails("HTML examination complete. Click 'Next' to continue.", WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //todo, merge with !bProblem
 
 
             } catch (Exception e) {
                 sMessage = e.getMessage();
-                BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMessage, gsIntentActionFilter);
+                BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMessage, WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                 //sendBroadcast(broadcastIntent);
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                globalClass.gbImportComicWebAnalysisRunning = false;
-                globalClass.gbImportComicWebAnalysisFinished = true;
+                GlobalClass.gbImportComicWebAnalysisRunning = false;
+                GlobalClass.gbImportComicWebAnalysisFinished = true;
                 return Result.failure();
             }
 
@@ -475,7 +497,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 if(icWebDataLocator.bSeriesFlag){
                     //The user is considering importing a series listing from this webpage.
                     //Get title:
-                    BroadcastProgress_ComicDetails("Looking for comic title...", gsIntentActionFilter);
+                    BroadcastProgress_ComicDetails("Looking for comic title...", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                     String sxPathExpression;
                     sxPathExpression = "//a[@class='link link-hover']";
                     //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
@@ -490,7 +512,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     sTitle = GlobalClass.cleanHTMLCodedCharacters(sTitle);
 
                     //Get description:
-                    BroadcastProgress_ComicDetails("Looking for comic description...", gsIntentActionFilter);
+                    BroadcastProgress_ComicDetails("Looking for comic description...", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                     sxPathExpression = "//body/div/main/div[1]/div[2]/div[4]/div/div[1]/div[1]/react-island/div/div[1]";
                     //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
                     {
@@ -544,7 +566,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //Verify that there are the same number of chapter listings and links:
                     if(alsChapterListing.size() != alsChapterLinkListing.size()){
                         sMessage = "Trouble identifying same count comic chapters and links to chapters.";
-                        BroadcastProgress_ComicDetails("\n" + sMessage, gsIntentActionFilter); //Broadcast progress
+                        BroadcastProgress_ComicDetails("\n" + sMessage, WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //Broadcast progress
                         Data data = new Data.Builder().putString("FAILURE_REASON", sMessage).build();
                         return Result.failure(data);
                     }
@@ -553,7 +575,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //  since this is a worker in another thread, must be careful.
                     if(!globalClass.WaitForObjectReady(GlobalClass.gabComicSeriesArrayAvailable, 2)) {
                         sMessage = "Wait time for ComicSeriesArray to become available exceeded. Worker terminated.";
-                        BroadcastProgress_ComicDetails("\n" + sMessage, gsIntentActionFilter); //Broadcast progress
+                        BroadcastProgress_ComicDetails("\n" + sMessage, WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //Broadcast progress
                         Data data = new Data.Builder().putString("FAILURE_REASON", sMessage).build();
                         return Result.failure(data);
                     }
@@ -579,7 +601,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //===
 
                     //Attempt to get the comic title from the WebPage html:
-                    BroadcastProgress_ComicDetails("Looking for comic title...", gsIntentActionFilter);
+                    BroadcastProgress_ComicDetails("Looking for comic title...", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                     String sxPathExpression;
                     sxPathExpression = "//a[@class='link-pri link-hover']";
                     //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
@@ -639,7 +661,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //===
 
                     //Decypher the comic page image URLs to be used in a later step of the import:
-                    BroadcastProgress_ComicDetails("Looking for listing of comic pages...", gsIntentActionFilter);
+                    BroadcastProgress_ComicDetails("Looking for listing of comic pages...", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                     sxPathExpression = "//img[@class='w-full h-full']/@src";
                     Object[] objsTagNodePageImageAddresses = node.evaluateXPath(sxPathExpression);
                     //Check to see if we found anything:
@@ -648,7 +670,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         Integer iPageNumber = 0;
                         for (Object objTagNotePageImageAddress : objsTagNodePageImageAddresses) {
                             String sImageAddress = (String) objTagNotePageImageAddress;
-                            BroadcastProgress_ComicDetails(sImageAddress + "\n", gsIntentActionFilter); //Broadcast progress
+                            BroadcastProgress_ComicDetails(sImageAddress + "\n", WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //Broadcast progress
                             iPageNumber++;
                             tmFileIndexAndAddress.put(iPageNumber, sImageAddress);//Put the thumbnail image address in with the file extension.
                         }
@@ -656,13 +678,13 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
                     if (tmFileIndexAndAddress.size() == 0) {
                         String sMsg = "Problem identifying comic page images on this webpage.";
-                        BroadcastProgress_ComicDetails(sMsg, gsIntentActionFilter);
+                        BroadcastProgress_ComicDetails(sMsg, WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                         broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                         broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                        globalClass.gbImportComicWebAnalysisRunning = false;
-                        globalClass.gbImportComicWebAnalysisFinished = true;
+                        GlobalClass.gbImportComicWebAnalysisRunning = false;
+                        GlobalClass.gbImportComicWebAnalysisFinished = true;
                         return Result.failure();
                     }
                     //Page addresses should now be acquired.
@@ -696,7 +718,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         //Get the size of the image and add it to the total size of the comic:
                         if (bGetOnlineSize) {
                             URL urlPage = new URL(sImageAddress);
-                            BroadcastProgress_ComicDetails("Getting file size data for " + sImageAddress, gsIntentActionFilter); //Broadcast progress
+                            BroadcastProgress_ComicDetails("Getting file size data for " + sImageAddress, WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //Broadcast progress
                             try {
                                 //URLConnection connection = urlPage.openConnection();
                                 HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
@@ -717,7 +739,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                                 connection.disconnect();
                             } catch (java.net.SocketTimeoutException e) {
                                 sMessage = "Could not get image size due to timeout. " + e.getMessage();
-                                BroadcastProgress_ComicDetails(sMessage , gsIntentActionFilter);
+                                BroadcastProgress_ComicDetails(sMessage , WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                             }
                         }
                     }
@@ -727,7 +749,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         lProjectedComicSize = lAveragePageSize * iComicPages;
 
                         String sCleanedProjectedSize = GlobalClass.CleanStorageSize(lProjectedComicSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
-                        BroadcastProgress_ComicDetails("Average page size is " + lAveragePageSize + " bytes. Total comic size projected to be " + sCleanedProjectedSize + ".", gsIntentActionFilter);
+                        BroadcastProgress_ComicDetails("Average page size is " + lAveragePageSize + " bytes. Total comic size projected to be " + sCleanedProjectedSize + ".", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                     } else {
 
                     }
@@ -736,14 +758,14 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
             } catch (Exception e) {
                 String sMsg = e.getMessage();
-                BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMsg, gsIntentActionFilter);
+                BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMsg, WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
                 //sendBroadcast(broadcastIntent);
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                globalClass.gbImportComicWebAnalysisRunning = false;
-                globalClass.gbImportComicWebAnalysisFinished = true;
+                GlobalClass.gbImportComicWebAnalysisRunning = false;
+                GlobalClass.gbImportComicWebAnalysisFinished = true;
                 return Result.failure();
             }
 
@@ -755,12 +777,12 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             broadcastIntent.putExtra(GlobalClass.COMIC_DETAILS_SUCCESS, true);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
         } else {
-            BroadcastProgress_ComicDetails("No comic pages found.", gsIntentActionFilter);
+            BroadcastProgress_ComicDetails("No comic pages found.", WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
         }
 
 
-        globalClass.gbImportComicWebAnalysisRunning = false;
-        globalClass.gbImportComicWebAnalysisFinished = true;
+        GlobalClass.gbImportComicWebAnalysisRunning = false;
+        GlobalClass.gbImportComicWebAnalysisFinished = true;
 
 
 
@@ -841,13 +863,14 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             Intent broadcastIntent_ComicWebDetectResponse = new Intent();
             broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, true);
             broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE, alicf_ComicDownloadFileItems);
-            broadcastIntent_ComicWebDetectResponse.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+            broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS, icWebDataLocator.sAddress); //Place this here so that the result is recognized by the receiver. Could be concurrent analysis' ongoing.
+            broadcastIntent_ComicWebDetectResponse.setAction(WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
             broadcastIntent_ComicWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_ComicWebDetectResponse);
         }
 
 
-        BroadcastProgress_ComicDetails("HTML examination complete. Click 'Next' to continue.", gsIntentActionFilter); //todo, merge with !bProblem
+        BroadcastProgress_ComicDetails("HTML examination complete. Click 'Next' to continue.", WEB_COMIC_ANALYSIS_ACTION_RESPONSE); //todo, merge with !bProblem
 
         return Result.success();
     }

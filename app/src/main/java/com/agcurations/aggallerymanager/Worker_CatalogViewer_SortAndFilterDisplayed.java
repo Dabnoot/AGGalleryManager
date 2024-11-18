@@ -17,12 +17,9 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
     public static final String TAG_WORKER_CATALOGVIEWER_SORTANDFILTERDISPLAYED = "com.agcurations.aggallermanager.tag_worker_catalogviewer_sortandfilterdisplayed";
 
     public static final String CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE";
-    
-    String gsIntentActionFilter;
 
     public Worker_CatalogViewer_SortAndFilterDisplayed(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        gsIntentActionFilter = Fragment_Import_1c_ComicWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_COMIC_WEB_DETECT; //todo: I don't think this is right.
     }
 
     @NonNull

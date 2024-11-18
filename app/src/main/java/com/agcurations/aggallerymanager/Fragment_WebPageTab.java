@@ -1,10 +1,10 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
-import android.content.ClipData;
-import android.content.ClipboardManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -14,11 +14,11 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
 import android.util.Log;
@@ -36,7 +36,6 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -50,6 +49,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Objects;
 
 
 public class Fragment_WebPageTab extends Fragment {
@@ -78,6 +79,17 @@ public class Fragment_WebPageTab extends Fragment {
 
     private ImageButton gImageButton_Back;
     private ImageButton gImageButton_Forward;
+
+    private ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators;
+
+    private String gsCustomDownloadPrompt = "";
+    private final int CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT = 1;
+    private final int CUSTOM_DOWNLOAD_OPTION_YES_NO = 2;
+    private int giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
+
+    private int giMediaCategory = -1;
+
+    ResponseReceiver_WebPageTab responseReceiver_WebPageTab;
 
     public Fragment_WebPageTab() {
         //Empty constructor
@@ -111,6 +123,14 @@ public class Fragment_WebPageTab extends Fragment {
         gals_ResourceRequests = new ArrayList<>();
 
         ConfigureHTMLWatcher();
+
+        //Configure a response receiver for this web page tab to capture data from workers, specifically the comic web detect worker
+        //  to accelerate detection and import of comics that are part of a collection.
+        responseReceiver_WebPageTab = new ResponseReceiver_WebPageTab();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Import_ComicAnalyzeHTML.WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        LocalBroadcastManager.getInstance(getActivity().getApplicationContext()).registerReceiver(responseReceiver_WebPageTab,filter);
 
         ApplicationLogWriter("OnCreate End.");
     }
@@ -386,16 +406,40 @@ public class Fragment_WebPageTab extends Fragment {
                     if(getContext() == null){
                         return;
                     }
-                    /*ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clipData = ClipData.newPlainText(GlobalClass.IMPORT_REQUEST_FROM_INTERNAL_BROWSER, gsWebAddress);
-                    clipboard.setPrimaryClip(clipData);*/
 
                     GlobalClass.gsBrowserAddressClipboard = gsWebAddress;
 
-                    //Send the user to the Import Activity:
-                    GlobalClass.giSelectedCatalogMediaCategory = -1; //Don't know the type of media selected.
-                    Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
-                    startActivity(intentImportGuided);
+                    GlobalClass.giSelectedCatalogMediaCategory = giMediaCategory; //Sometimes know the media category if the site was properly detected.
+
+                    if(gsCustomDownloadPrompt.equals("")) {
+                        //Send the user to the Import Activity:
+                        Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
+                        startActivity(intentImportGuided);
+
+                    } else {
+                        //Else, if there is a custom prompt, show it to the user and then perform their need:
+                        Context context = getContext();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AlertDialogCustomStyle);
+                        builder.setTitle("Import");
+                        builder.setMessage(gsCustomDownloadPrompt);
+
+                        builder.setPositiveButton("Yes", (dialog, id) -> {
+                            dialog.dismiss();
+                            Toast.makeText(context, "No action", Toast.LENGTH_SHORT).show();
+                        });
+                        builder.setNegativeButton("No", (dialog, id) -> {
+                            dialog.dismiss();
+                            if(giCustomDownloadOptions != CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT) {
+                                //Send the user to the Import Activity:
+                                Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
+                                startActivity(intentImportGuided);
+                            }
+                        });
+
+                        AlertDialog adConfirmationDialog = builder.create();
+                        adConfirmationDialog.show();
+                    }
+
                 }
             });
         }
@@ -576,6 +620,7 @@ public class Fragment_WebPageTab extends Fragment {
     @Override
     public void onDestroy() {
         destroyWebView();
+        LocalBroadcastManager.getInstance(requireActivity().getApplicationContext()).unregisterReceiver(responseReceiver_WebPageTab);
         super.onDestroy();
     }
 
@@ -610,10 +655,10 @@ public class Fragment_WebPageTab extends Fragment {
     private WebViewClient getNewWebViewClient(){
         return new WebViewClient() {
             @Override
-            public void onPageFinished(WebView view, String url) {
+            public void onPageFinished(WebView view, String sAddress) {
 
                 //Get cookie. Sometimes needed when requesting a resource download according to some sources.
-                //String sCookie = CookieManager.getInstance().getCookie(url);
+                //String sCookie = CookieManager.getInstance().getCookie(sAddress);
                 //GlobalClass.gsCookie = sCookie;
 
                 //Trigger update of the favicon address....
@@ -646,21 +691,21 @@ public class Fragment_WebPageTab extends Fragment {
                 //================================================================
 
 
-
+                //Configure back/forward buttons:
                 for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
                     ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPagesForCurrentUser.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                         icwptd.sTabTitle = sTitle;
                         if(icwptd.stackBackHistory.size() > 0){
                             String sTopofBackStack = icwptd.stackBackHistory.peek();
-                            if(!sTopofBackStack.equals(url)){
-                                icwptd.stackBackHistory.push(url);
+                            if(!sTopofBackStack.equals(sAddress)){
+                                icwptd.stackBackHistory.push(sAddress);
                                 //Show the back button as enabled:
                                 if(getActivity() == null) return;
                                 gImageButton_Back.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.color_browser_fragment_button_enabled, getActivity().getTheme())));
                             }
                         } else {
-                            icwptd.stackBackHistory.push(url);
+                            icwptd.stackBackHistory.push(sAddress);
                         }
 
                         Activity_Browser activity_browser = (Activity_Browser) getActivity();
@@ -674,6 +719,105 @@ public class Fragment_WebPageTab extends Fragment {
                         break;
                     }
                 }
+
+
+                //========================
+                //== Pre-import checks
+                //===========
+
+                gsCustomDownloadPrompt = "";
+                giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
+                giMediaCategory = -1;
+
+                //Check to see if this is a comic site and if the user has downloaded a related comic.
+                //  If so, prep to allow the user to download and group the comic.
+                galWebComicDataLocators = GlobalClass.getComicWebDataKeys();
+                //Evaluate if an address matches a pattern:
+                ItemClass_WebComicDataLocator icWCDL_Match = null;
+                for(ItemClass_WebComicDataLocator icWCDL: galWebComicDataLocators) {
+                    String sNonExplicitAddress = icWCDL.sHostnameRegEx;
+                    String sRegexExpression = sNonExplicitAddress.replace("%", "");
+                    if (sAddress.matches(sRegexExpression)) {
+                        icWCDL.bHostNameMatchFound = true;
+                        icWCDL.sAddress = sAddress;  //Passing this item here so that this icWCDL can be passed to a processing worker,
+                                                    //  and those results passed back and identified by the address.
+                        icWCDL_Match = icWCDL;
+                        break;
+                    }
+                }
+                if(icWCDL_Match == null){
+                    //If no match was found, return.
+                    return;
+                }
+
+                //If we are here, this is a comic import site.
+                giMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+
+                String sComicSeriesIDStartString = icWCDL_Match.sComicSeriesIDStartString.replace("%", ""); //Remove obfuscating chars.
+
+                //Get the ID of the comic from this website:
+                String sComicSeriesID = "";
+                if (!sComicSeriesIDStartString.equals("")) {
+                    //If data has been provided internally to search for a series...
+                    if(sAddress.startsWith(sComicSeriesIDStartString)){
+                        //If this item appears to be a potential comic series entry. Check the ID.
+                        sComicSeriesID = sAddress.substring(sComicSeriesIDStartString.length());
+                        sComicSeriesID = sComicSeriesID.substring(0, sComicSeriesID.indexOf("/"));
+                    }
+                }
+
+                //Look to see if this item is already located in the catalog..
+                //  Move this check to a worker if it takes too long.
+                boolean bItemInCatalog = false;
+                String sMatchingCatalogItemID = "";
+                String sCatalogItem_Address;
+                String sCatalogItemWebComicID = "";
+                for (Map.Entry<String, ItemClass_CatalogItem>
+                        entry : GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+
+                    if (!entry.getValue().alsApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)) {
+                        //Don't notify the user that there are existing, matching catalog items if those items
+                        //  are not approved for this user.
+                        continue;
+                    }
+
+                    sCatalogItem_Address = entry.getValue().sSource;
+                    if(sCatalogItem_Address.equals(sAddress)){      //Check every item to ensure no exact match.
+                        bItemInCatalog = true;
+                    }
+                    //Determine if this address is part of a collection:
+                    if(sMatchingCatalogItemID.equals("")) { //Only find a matching comic series item once to grab group ID and tags.
+                        if (!sComicSeriesID.equals("")) {
+                            //If data has been provided internally to search for a series...
+                            if (sCatalogItem_Address.startsWith(sComicSeriesIDStartString)) {
+                                //If this item appears to be a potential comic series entry. Get the catalog item ID. It doesn't have to match the chapter, just any member of the collection.
+                                sCatalogItemWebComicID = sCatalogItem_Address.substring(sComicSeriesIDStartString.length());
+                                sCatalogItemWebComicID = sCatalogItemWebComicID.substring(0, sCatalogItemWebComicID.indexOf("/"));
+                                if (sComicSeriesID.equals(sCatalogItemWebComicID)) {
+                                    sMatchingCatalogItemID = entry.getKey();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(bItemInCatalog){
+                    gsCustomDownloadPrompt = "This comic exists in the catalog. Would you like to proceed with the import activity?";
+                    giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
+                    return;
+                }
+
+                if(!sMatchingCatalogItemID.equals("")){
+
+                    gsCustomDownloadPrompt = "This comic has been identified as belonging to a collection in the catalog.\n" +
+                            " Title: " + Objects.requireNonNull(GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(sMatchingCatalogItemID)).sTitle + "\n" +
+                            " Would you like to add this item to the collection, applying the same group ID and tags?";
+                    giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_YES_NO;
+                }
+
+
+
+
             }
 
             @Override
@@ -911,6 +1055,34 @@ public class Fragment_WebPageTab extends Fragment {
 
     }
 
+
+    @SuppressWarnings("unchecked")
+    public class ResponseReceiver_WebPageTab extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            //Get boolean indicating that an error may have occurred:
+            boolean bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+
+            if (bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response to request to get comic downloads from html:
+                boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
+                if (bGetComicDownloadsResponse) {
+                    ArrayList<ItemClass_File> alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
+
+
+                }
+
+            }
+
+
+        }
+    }
 
 
 }

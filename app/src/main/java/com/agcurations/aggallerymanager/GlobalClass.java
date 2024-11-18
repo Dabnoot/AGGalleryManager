@@ -267,6 +267,8 @@ public class GlobalClass extends Application {
     //Variables to control starting of comic web address analysis:
     // These variables prevent the system/user from starting another analysis until an existing
     // operation is finished.
+    public static AtomicBoolean gabComicWebAnalysDataTMAvailable = new AtomicBoolean(true);
+    public static TreeMap<String, ArrayList<ItemClass_WebComicDataLocator>> gtmComicWebDataLocators = new TreeMap<>();
     public static boolean gbImportComicWebAnalysisRunning = false;
     public static boolean gbImportComicWebAnalysisFinished = false;
 
@@ -1063,6 +1065,12 @@ public class GlobalClass extends Application {
         dialog.show();
     }
 
+    /**
+     *
+     * @param abIsReady AtomicBoolean to monitor for readiness. Routine returns when true.
+     * @param iMaxWaitTimeMinutes How long to wait before a "failure".
+     * @return Returns true if ready. Returns false if max wait time exceeded.
+     */
     public boolean WaitForObjectReady(AtomicBoolean abIsReady, int iMaxWaitTimeMinutes){
         int iMaxWaitTimeSeconds = iMaxWaitTimeMinutes * 60;
         long lMaxWaitTimeMS = iMaxWaitTimeSeconds * 1000L;
@@ -3820,10 +3828,7 @@ public class GlobalClass extends Application {
 
 
     //Create an array of keys that allow program to locate video links:
-    ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
-
-    //Create an array of keys that allow program to locate image links:
-    ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators;
+    public static ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
 
     //Array to allow passing of web comic series analysis data:
     public static AtomicBoolean gabComicSeriesArrayAvailable = new AtomicBoolean(true);
@@ -3832,6 +3837,62 @@ public class GlobalClass extends Application {
     public static boolean gbComicAutoDetect = true; //Automatically Detect/Analyze webpage contents once page has loaded.
 
     public static final int DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
+
+
+    public static ArrayList<ItemClass_WebComicDataLocator> getComicWebDataKeys(){
+
+        //Tools:
+        // https://regex101.com/
+        // https://www.freeformatter.com/xpath-tester.html
+
+        ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators = new ArrayList<>();
+        ItemClass_WebComicDataLocator itemClass_webComicDataLocator;
+
+        itemClass_webComicDataLocator =
+                FormWebImageSeriesDataLocator("^h%ttps:\\/\\/n%hen%tai\\.n%et\\/(.*)",
+                        null);
+        itemClass_webComicDataLocator.sShortName = "nH"; //For hard-coded behavior differentiation
+        alWebComicDataLocators.add(itemClass_webComicDataLocator);
+
+
+        itemClass_webComicDataLocator =
+                FormWebImageSeriesDataLocator("^ht%tps:\\/\\/man%gapa%rk.io\\/(.*)",
+                        null);
+        itemClass_webComicDataLocator.sComicSeriesIDStartString = "ht%tps://man%gapa%rk.io/title/";
+        //https://mangapark.io/title/10049-en-hikaru-no-go/64697-vol-22-ch-175
+        itemClass_webComicDataLocator.sShortName = "MP"; //For hard-coded behavior differentiation
+        alWebComicDataLocators.add(itemClass_webComicDataLocator);
+
+        return alWebComicDataLocators;
+    }
+
+    private static ItemClass_WebComicDataLocator FormWebImageSeriesDataLocator(String sNonExplicitAddress, String[][] sSearchKeys){
+        //Include parenthesis in sNonExplicitAddress to obscure the web address so that searchboottss cannot find it.
+        String sExplicitAddress = sNonExplicitAddress.replace("%","");
+        ItemClass_WebComicDataLocator itemClass_webComicDataLocator = new ItemClass_WebComicDataLocator(sExplicitAddress);  //Re-create the data locator, clearing-out any found data.
+        itemClass_webComicDataLocator.alComicDownloadSearchKeys = new ArrayList<>();
+
+        if(sSearchKeys != null) {
+            for (String[] sFields : sSearchKeys) {
+                if (sFields.length == 2) {
+                    //SxPathExpression Search Key
+                    itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
+                            new ItemClass_ComicDownloadSearchKey(
+                                    sFields[0], sFields[1]));
+                } else if (sFields.length == 3) {
+                    //Text Search Key
+                    itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
+                            new ItemClass_ComicDownloadSearchKey(
+                                    sFields[0], sFields[1], sFields[2]));
+                }
+            }
+        }
+        return itemClass_webComicDataLocator;
+    }
+
+
+
+
 
     //=====================================================================================
     //===== Catalog Analysis Options ================================================================

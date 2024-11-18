@@ -34,8 +34,6 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
     public static final String EXTRA_ARRAY_INT_TAGS = "com.agcurations.aggallerymanager.extra.array_int_tags";
 
 
-    String gsIntentActionFilter;
-
     public String gsIncomingData_FileName;
     public String gsIncomingData_FileNameFilter;
     public int giIncomingData_Height;
@@ -48,7 +46,6 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
 
     public Worker_Catalog_Adjaceny_Analyzer(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        gsIntentActionFilter = Fragment_Import_1c_ComicWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_COMIC_WEB_DETECT;
 
         gsIncomingData_FileName = workerParams.getInputData().getString(EXTRA_STRING_FILENAME);
         gsIncomingData_FileNameFilter = workerParams.getInputData().getString(EXTRA_STRING_FILENAME_FILTER);

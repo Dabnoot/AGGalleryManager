@@ -52,7 +52,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
     public final MutableLiveData<String> gmLiveDataStringHTML = new MutableLiveData<>(); //Used to assist with move of HTML data out of the webview.
 
-    private ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
+    private ResponseReceiver_ComicWebDetect responseReceiver_ComicWebDetect;
 
     private String gsUnknownAddress = "UNKNOWN_ADDRESS";
     private ArrayList<String> galsRequestedResources;
@@ -80,12 +80,12 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
         }
 
         //Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_COMIC_WEB_DETECT);
+        IntentFilter filter = new IntentFilter(Worker_Import_ComicAnalyzeHTML.WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
+        responseReceiver_ComicWebDetect = new ResponseReceiver_ComicWebDetect();
 
         if(getContext() != null) {
-            LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(responseReceiver_ComicWebDetect, filter);
         }
 
     }
@@ -135,7 +135,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                 //String sCookie = CookieManager.getInstance().getCookie(url);
                 //Evaluate if an address matches a pattern:
                 boolean bWebComicDataLocatorNotFound = true;
-                for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                for(ItemClass_WebComicDataLocator icWCDL: viewModelImportActivity.alWebComicDataLocators) {
                     String sNonExplicitAddress = icWCDL.sHostnameRegEx;
                     String sRegexExpression = sNonExplicitAddress.replace("%", "");
                     if (url.matches(sRegexExpression)) {
@@ -147,7 +147,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                 }
                 if(bWebComicDataLocatorNotFound){
                     //Set the "unknown" WebComicDataLocator as "the one".
-                    for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                    for(ItemClass_WebComicDataLocator icWCDL: viewModelImportActivity.alWebComicDataLocators) {
                         if (icWCDL.sHostnameRegEx.matches(gsUnknownAddress)) {
                             //icWCDL.sCookie = sCookie;
                             //GlobalClass.gsCookie = sCookie;
@@ -281,6 +281,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     }
 
 
+    @SuppressWarnings("unchecked")
     @Override
     public void onResume() {
         super.onResume();
@@ -301,12 +302,23 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                                             //  pre-loaded the editText with data, so onChanged for the editText
                                             //  never fires.
                     }
-                    for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                    for(ItemClass_WebComicDataLocator icWCDL: viewModelImportActivity.alWebComicDataLocators) {
                         if (icWCDL.bHostNameMatchFound) {
                             icWCDL.sHTML = sHTML;
                             break;
                         }
                     }
+
+                    String sDataRecordKey = GlobalClass.getNewCatalogRecordID();
+                    if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+                        Toast.makeText(getContext(), "Web data transfer unavailble.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                    //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
+                    //  depending on how fast the system might attempt to do it.
+                    GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, (ArrayList<ItemClass_WebComicDataLocator>) viewModelImportActivity.alWebComicDataLocators.clone());
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
                     if(getContext() == null) return;
                     SetTextStatusMessage("Analyzing HTML...");
@@ -315,10 +327,11 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                     Data dataComicAnalyzeHTML = new Data.Builder()
                             .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putString(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY, sDataRecordKey)
                             .build();
                     OneTimeWorkRequest otwrComicAnalyzeHTML = new OneTimeWorkRequest.Builder(Worker_Import_ComicAnalyzeHTML.class)
                             .setInputData(dataComicAnalyzeHTML)
-                            .addTag(Worker_Import_ComicAnalyzeHTML.TAG_WORKER_IMPORT_COMICANALYZEHTML) //To allow finding the worker later.
+                            .addTag(Worker_Import_ComicAnalyzeHTML.TAG_WORKER_IMPORT_COMIC_ANALYZE_HTML) //To allow finding the worker later.
                             .build();
                     WorkManager.getInstance(getContext()).enqueue(otwrComicAnalyzeHTML);
 
@@ -343,7 +356,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     @Override
     public void onDestroy() {
         if (getContext() != null) {
-            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(responseReceiver_ComicWebDetect);
         }
         super.onDestroy();
     }
@@ -359,11 +372,11 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
         String sAddressCandidate = gEditText_WebAddress.getText().toString();
         if(sAddressCandidate.length() > 0) {
 
-            InitializeWebDataLocators();
+            viewModelImportActivity.alWebComicDataLocators = GlobalClass.getComicWebDataKeys();
 
             //Evaluate if an address matches a pattern:
             boolean bWebComicDataLocatorNotFound = true;
-            for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+            for(ItemClass_WebComicDataLocator icWCDL: viewModelImportActivity.alWebComicDataLocators) {
                 String sNonExplicitAddress = icWCDL.sHostnameRegEx;
                 String sRegexExpression = sNonExplicitAddress.replace("%", "");
                 if (sAddressCandidate.matches(sRegexExpression)) {
@@ -376,7 +389,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
             }
             if(bWebComicDataLocatorNotFound){
                 //Set the "unknown" WebComicDataLocator as "the one".
-                for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                for(ItemClass_WebComicDataLocator icWCDL: viewModelImportActivity.alWebComicDataLocators) {
                     if (icWCDL.sHostnameRegEx.matches(gsUnknownAddress)) {
                         bAddressOK = true;
                         icWCDL.bHostNameMatchFound = true;
@@ -394,59 +407,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
         }
     }
 
-    private void InitializeWebDataLocators(){
-        //Re-Populate comic data locator structure (clears any previously-found data):
 
-        //Tools:
-        // https://regex101.com/
-        // https://www.freeformatter.com/xpath-tester.html
-
-        globalClass.galWebComicDataLocators = new ArrayList<>();
-        ItemClass_WebComicDataLocator itemClass_webComicDataLocator;
-
-        itemClass_webComicDataLocator =
-                FormWebImageSeriesDataLocator("^h%ttps:\\/\\/n%hen%tai\\.n%et\\/(.*)",
-                        null);
-        itemClass_webComicDataLocator.sShortName = "nH"; //For hard-coded behavior differentiation
-        globalClass.galWebComicDataLocators.add(itemClass_webComicDataLocator);
-
-
-        itemClass_webComicDataLocator =
-                FormWebImageSeriesDataLocator("^ht%tps:\\/\\/man%gapa%rk.io\\/(.*)",
-                        null);
-        itemClass_webComicDataLocator.sShortName = "MP"; //For hard-coded behavior differentiation
-        if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE_SERIES){
-            itemClass_webComicDataLocator.bSeriesFlag = true;
-        }
-        globalClass.galWebComicDataLocators.add(itemClass_webComicDataLocator);
-
-
-    }
-
-
-    private ItemClass_WebComicDataLocator FormWebImageSeriesDataLocator(String sNonExplicitAddress, String[][] sSearchKeys){
-        //Include parenthesis in sNonExplicitAddress to obscure the web address so that searchboottss cannot find it.
-        String sExplicitAddress = sNonExplicitAddress.replace("%","");
-        ItemClass_WebComicDataLocator itemClass_webComicDataLocator = new ItemClass_WebComicDataLocator(sExplicitAddress);  //Re-create the data locator, clearing-out any found data.
-        itemClass_webComicDataLocator.alComicDownloadSearchKeys = new ArrayList<>();
-
-        if(sSearchKeys != null) {
-            for (String[] sFields : sSearchKeys) {
-                if (sFields.length == 2) {
-                    //SxPathExpression Search Key
-                    itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
-                            new ItemClass_ComicDownloadSearchKey(
-                                    sFields[0], sFields[1]));
-                } else if (sFields.length == 3) {
-                    //Text Search Key
-                    itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
-                            new ItemClass_ComicDownloadSearchKey(
-                                    sFields[0], sFields[1], sFields[2]));
-                }
-            }
-        }
-        return itemClass_webComicDataLocator;
-    }
 
 
     private void SetTextStatusMessage(String sMessage){
@@ -496,8 +457,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     //========================= Receiver ======================================
 
     @SuppressWarnings("unchecked")
-    public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
-        public static final String IMPORT_RESPONSE_COMIC_WEB_DETECT = "com.agcurations.aggallerymanager.intent.action.IMPORT_RESPONSE_COMIC_WEB_DETECT";
+    public class ResponseReceiver_ComicWebDetect extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
