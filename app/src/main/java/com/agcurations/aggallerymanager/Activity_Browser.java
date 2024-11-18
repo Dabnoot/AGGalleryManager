@@ -208,7 +208,7 @@ public class Activity_Browser extends AppCompatActivity {
                     }
 
                     gsNewTabSequenceHelper = null; //Clear the helper, new tab creation order reset.
-                    Toast.makeText(getApplicationContext(), "New tab (" + iTabCount + ")...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "New tab (" + (iTabCount + 1) + ")...", Toast.LENGTH_SHORT).show();  //Add one because we are imminently opening a new tab.
                     CreateNewTab("");
                 }
             });
@@ -326,7 +326,7 @@ public class Activity_Browser extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
                 return;
             } else if(iTabCount >= iTabWarningCount) {
-                String sMessage = iTabCount + " tabs loaded.";
+                String sMessage = (iTabCount + 1) + " tabs loaded."; //Add one because we are imminently opening a new tab.
                 Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
             }
 
