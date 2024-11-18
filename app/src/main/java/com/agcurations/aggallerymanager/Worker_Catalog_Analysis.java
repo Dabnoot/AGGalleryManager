@@ -34,6 +34,7 @@ public class Worker_Catalog_Analysis extends Worker {
     public static final int ANALYSIS_TYPE_M3U8 = 3;
 
     public static final String CATALOG_ANALYSIS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_ANALYSIS_ACTION_RESPONSE";
+
     public static final String EXTRA_BOOL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE"; //Used to flag in a listener.
     public static final String EXTRA_AL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE"; //ArrayList of response data
     public static final String EXTRA_BOOL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE"; //Used to flag in a listener.
