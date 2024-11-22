@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
@@ -40,16 +41,10 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
     @NonNull
     @Override
-    @SuppressWarnings("unchecked")
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
         String sMessage;
-
-        globalClass.BroadcastProgress(true, "Searching webpage for target data...",
-                false, 0,
-                false, "",
-                WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
 
         //Get the data needed by this worker:
         if(gsDataRecordKey == null){
@@ -68,17 +63,23 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         }
 
         GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
-        ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators = (ArrayList<ItemClass_WebComicDataLocator>)GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey).clone();
-        GlobalClass.gtmComicWebDataLocators.remove(gsDataRecordKey);
-        GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
-
-        if(alWebComicDataLocators == null){
+        if(GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey) == null) {
             globalClass.BroadcastProgress(true, "Data transfer to Comic Analysis worker incomplete: no data.",
                     false, 0,
                     false, "",
                     WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+            GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
             return Result.failure();
         }
+        ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators = new ArrayList<>(Objects.requireNonNull(GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey)));
+        GlobalClass.gtmComicWebDataLocators.remove(gsDataRecordKey);
+        GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+
+
+        globalClass.BroadcastProgress(true, "Searching webpage for target data...",
+                false, 0,
+                false, "",
+                WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
 
         ItemClass_WebComicDataLocator icWebDataLocator = null;
 

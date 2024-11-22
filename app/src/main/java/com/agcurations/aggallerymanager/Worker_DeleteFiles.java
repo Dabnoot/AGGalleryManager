@@ -67,7 +67,6 @@ public class Worker_DeleteFiles extends Worker {
 
     @NonNull
     @Override
-    @SuppressWarnings("unchecked")
     public Result doWork() {
 
         Data dataProgress;
@@ -77,7 +76,7 @@ public class Worker_DeleteFiles extends Worker {
         GlobalClass.gabGeneralFileDeletionRunning.set(true);
 
         //Get a copy of the list of log files from GlobalClass:
-        ArrayList<ItemClass_File> alicf_FilesToDelete = (ArrayList<ItemClass_File>) GlobalClass.galicf_FilesToDeleteDataTransfer.clone();
+        ArrayList<ItemClass_File> alicf_FilesToDelete = new ArrayList<>(GlobalClass.galicf_FilesToDeleteDataTransfer);
         GlobalClass.galicf_FilesToDeleteDataTransfer.clear();
 
         //Count the files to be deleted:

@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
@@ -48,7 +49,6 @@ public class Worker_Import_ImportFiles extends Worker {
 
     @NonNull
     @Override
-    @SuppressWarnings("unchecked")
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
@@ -86,8 +86,8 @@ public class Worker_Import_ImportFiles extends Worker {
 
         GlobalClass.gabImportFileListTMAvailable.set(false);
         ArrayList<ItemClass_File> alFileList = null;
-        if((ArrayList<ItemClass_File>)GlobalClass.gtmalImportFileList.get(gsDataLocatorKey) != null) {
-            alFileList = (ArrayList<ItemClass_File>) GlobalClass.gtmalImportFileList.get(gsDataLocatorKey).clone();
+        if(GlobalClass.gtmalImportFileList.get(gsDataLocatorKey) != null) {
+            alFileList = new ArrayList<>(Objects.requireNonNull(GlobalClass.gtmalImportFileList.get(gsDataLocatorKey)));
             GlobalClass.gtmComicWebDataLocators.remove(gsDataLocatorKey);
         }
         GlobalClass.gabImportFileListTMAvailable.set(true);

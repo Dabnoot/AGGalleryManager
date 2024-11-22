@@ -113,9 +113,8 @@ public class Activity_LogViewer extends AppCompatActivity {
     //   Button Routines
     //=======================
 
-    @SuppressWarnings("unchecked")
     public void button_Delete(View v) {
-        GlobalClass.galicf_FilesToDeleteDataTransfer = (ArrayList<ItemClass_File>) viewModel_fragment_logViewer.alicf_LogFiles.clone();
+        GlobalClass.galicf_FilesToDeleteDataTransfer = new ArrayList<>(viewModel_fragment_logViewer.alicf_LogFiles);
         GlobalClass.gabGeneralFileDeletionStart.set(true);
         viewPager_LogViewer.setCurrentItem(FRAGMENT_LOG_VIEWER_1A_EXECUTE_DELETE, false);
         stackFragmentOrder.push(viewPager_LogViewer.getCurrentItem());

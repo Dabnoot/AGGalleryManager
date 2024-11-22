@@ -134,7 +134,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             GlobalClass.gabImportFileListTMAvailable.set(false);
             //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
             //  depending on how fast the system might attempt to do it.
-            GlobalClass.gtmalImportFileList.put(sDataRecordKey, (ArrayList<ItemClass_File>) viewModelImportActivity.alfiConfirmedFileImports.clone());//Transfer to globalClass to avoid transaction limit.
+            GlobalClass.gtmalImportFileList.put(sDataRecordKey, new ArrayList<>(viewModelImportActivity.alfiConfirmedFileImports));//Transfer to globalClass to avoid transaction limit.
             GlobalClass.gabImportFileListTMAvailable.set(true);
 
 

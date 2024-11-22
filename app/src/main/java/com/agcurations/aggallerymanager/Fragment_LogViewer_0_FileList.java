@@ -218,7 +218,7 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
 
                 }
             }
-            viewModel_fragment_logViewer.alicf_LogFiles = (ArrayList<ItemClass_File>) alicf_LogFiles.clone();
+            viewModel_fragment_logViewer.alicf_LogFiles = new ArrayList<>(alicf_LogFiles);
             gButton_Delete.setEnabled(bEnabled);
         }
 

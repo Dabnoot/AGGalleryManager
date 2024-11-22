@@ -280,8 +280,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                 "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
     }
 
-
-    @SuppressWarnings("unchecked")
     @Override
     public void onResume() {
         super.onResume();
@@ -317,7 +315,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                     GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
                     //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
                     //  depending on how fast the system might attempt to do it.
-                    GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, (ArrayList<ItemClass_WebComicDataLocator>) viewModelImportActivity.alWebComicDataLocators.clone());
+                    GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, new ArrayList<>(viewModelImportActivity.alWebComicDataLocators));
                     GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
                     if (getContext() == null) return;
