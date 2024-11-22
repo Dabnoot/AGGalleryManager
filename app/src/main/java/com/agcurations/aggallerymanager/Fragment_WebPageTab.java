@@ -49,12 +49,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
@@ -98,6 +97,7 @@ public class Fragment_WebPageTab extends Fragment {
     private final int CUSTOM_DOWNLOAD_OPTION_YES_IMPORT_TO_COLLECTION = 3;
     private int giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
     private String gsPageHTML = "";
+    private LinearProgressIndicator gLinearProgressIndicator_DLInspection;
 
     private int giMediaCategory = -1;
 
@@ -168,7 +168,6 @@ public class Fragment_WebPageTab extends Fragment {
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
-    @SuppressWarnings("unchecked")
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ApplicationLogWriter("OnViewCreated start.");
@@ -178,6 +177,8 @@ public class Fragment_WebPageTab extends Fragment {
 
         gWebView = getView().findViewById(R.id.videoEnabledWebView_tabWebView);
         gEditText_Address = getView().findViewById(R.id.editText_Address);
+
+        gLinearProgressIndicator_DLInspection = getView().findViewById(R.id.linearProgressIndicator_DLInspection);
 
         if(giThisFragmentHashCode == 0){
             giThisFragmentHashCode = this.hashCode();
@@ -483,7 +484,7 @@ public class Fragment_WebPageTab extends Fragment {
                                             GlobalClass.gabImportFileListTMAvailable.set(false);
                                             //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
                                             //  depending on how fast the system might attempt to do it.
-                                            GlobalClass.gtmalImportFileList.put(sDataRecordKey, (ArrayList<ItemClass_File>) icWCDL.alicf_ComicDownloadFileItems.clone());//Transfer to globalClass to avoid transaction limit.
+                                            GlobalClass.gtmalImportFileList.put(sDataRecordKey, new ArrayList<>(icWCDL.alicf_ComicDownloadFileItems));//Transfer to globalClass to avoid transaction limit.
                                             GlobalClass.gabImportFileListTMAvailable.set(true);
 
                                             GlobalClass.gsbImportExecutionLog = new StringBuilder();
@@ -960,7 +961,6 @@ public class Fragment_WebPageTab extends Fragment {
 
     }
 
-    @SuppressWarnings("unchecked")
     private void ConfigureHTMLWatcher(){
 
         final Observer<String> observerStringHTML = new Observer<String>() {
@@ -976,7 +976,7 @@ public class Fragment_WebPageTab extends Fragment {
                 int iFoundLinkLocationStart = 0;
                 int iFoundLinkLocationEnd;
                 String sFaviconAddress = "";
-                do {
+                /*do {
                     iFoundLinkLocationStart = sHTML.indexOf("<link", iFoundLinkLocationStart + 1);
                     if (iFoundLinkLocationStart < 0) continue;
                     iFoundLinkLocationEnd = sHTML.indexOf(">", iFoundLinkLocationStart);
@@ -1034,6 +1034,38 @@ public class Fragment_WebPageTab extends Fragment {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                }*/
+                if(!bFaviconAddressFound){
+
+                    int iFoundFavStringStart = sHTML.indexOf("favicon.ico", iFoundLinkLocationStart + 1);
+                    if(iFoundFavStringStart > 0){
+                        int iStartDQuote = 0;
+                        //Locate the start of the link:
+                        String sSubString;
+
+                        for(iFoundLinkLocationStart = iFoundFavStringStart; iFoundLinkLocationStart > 0; iFoundLinkLocationStart--){
+                            sSubString = sHTML.substring(iFoundLinkLocationStart, iFoundLinkLocationStart + 1);
+                            if (sSubString.equals("\"")){
+                                break;
+                            }
+                        }
+                        iFoundLinkLocationEnd = sHTML.indexOf("\"", iFoundLinkLocationStart + 1);
+                        if(iFoundLinkLocationEnd > 0){
+                            sFaviconAddress = sHTML.substring(iFoundLinkLocationStart + 1, iFoundLinkLocationEnd);
+                        }
+                        try {
+                            URL url = new URL(gsWebAddress);
+                            String sHostPrefix = gsWebAddress.substring(0, gsWebAddress.indexOf("/"));
+                            String sHost = sHostPrefix + "//" + url.getHost();
+                            if(!sFaviconAddress.startsWith(sHost)){
+                                sFaviconAddress = sHost + sFaviconAddress;
+                                bFaviconAddressFound = true;
+                            }
+                        } catch (Exception ignored){
+
+                        }
+                    }
+
                 }
                 if(bFaviconAddressFound){
                     Activity_Browser activity_browser = (Activity_Browser) getActivity();
@@ -1092,6 +1124,7 @@ public class Fragment_WebPageTab extends Fragment {
                     //If no match was found, return.
                     return;
                 }
+
                 if(gsPageHTML.equals("")){
                     return;
                 }
@@ -1161,6 +1194,7 @@ public class Fragment_WebPageTab extends Fragment {
                     return;
                 }
 
+                //Reaching this point is very quick. ~0.06s with 1200 catalog items.
                 if(!gsMatchingCatalogItemID.equals("")){
 
                     gsCustomDownloadPrompt = "This comic has been identified as belonging to a collection in the catalog.\n" +
@@ -1179,7 +1213,7 @@ public class Fragment_WebPageTab extends Fragment {
                     //  depending on how fast the system might attempt to do it.
                     ArrayList<ItemClass_WebComicDataLocator> alicwcd = new ArrayList<>();
                     alicwcd.add(icWCDL_Match);
-                    GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, (ArrayList<ItemClass_WebComicDataLocator>) alicwcd.clone());
+                    GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, alicwcd);
                     GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
                     String sCallerID = "Fragment_WebPageTab:WebViewClient.onPageFinished()";
@@ -1195,6 +1229,10 @@ public class Fragment_WebPageTab extends Fragment {
                             .build();
                     WorkManager.getInstance(gContext).enqueue(otwrComicAnalyzeHTML);
 
+                    if( gLinearProgressIndicator_DLInspection != null){
+                        gLinearProgressIndicator_DLInspection.setVisibility(View.VISIBLE);
+                        gLinearProgressIndicator_DLInspection.setProgress(0);
+                    }
                 }
 
             }
@@ -1225,6 +1263,9 @@ public class Fragment_WebPageTab extends Fragment {
                 boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
                 if (bGetComicDownloadsResponse) {
 
+                    //Look to see if this is a progress message:
+
+
                     //Look to see if this is a response to a known item to this web tab:
                     String sDataRelatedURLAddress = intent.getStringExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
                     if(sDataRelatedURLAddress != null && galWebComicDataLocators != null) { //todo: why does galWebComicDataLocators sometimes appear as Null?
@@ -1233,10 +1274,15 @@ public class Fragment_WebPageTab extends Fragment {
                                 icWCDL.alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
                                 //Set color of the download icon to be green:
                                 SetDownloadButtonState(READY);
+                                gLinearProgressIndicator_DLInspection.setProgress(0);
+                                gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
                                 break;
                             }
                         }
                     }
+
+
+
                 }
 
             }
