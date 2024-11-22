@@ -55,6 +55,10 @@
         <item>@color/md_white_1000</item>
     </array>
 
+    <color name="color_download_ready">#4CAF50</color>
+    <color name="color_download_normal">#efefef</color>
+    <color name="color_download_duplicate">#FFC107</color>
+
     <!-- google's material design colours from
         http://www.google.com/design/spec/style/color.html#color-ui-color-palette -->
 

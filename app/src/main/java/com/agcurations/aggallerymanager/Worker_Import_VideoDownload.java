@@ -36,20 +36,25 @@ public class Worker_Import_VideoDownload extends Worker {
     public static final String TAG_WORKER_IMPORT_VIDEODOWNLOAD = "com.agcurations.aggallermanager.tag_worker_import_videodownload";
 
     public static final String IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE";
+
+    public static final String EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_import_files_locator_al_key";
     
     public static final String VIDEO_DLID_AND_SEQUENCE_FILE_NAME = "DLID_And_Sequence.txt";
     public static final int DOWNLOAD_TYPE_SINGLE = 1;
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
 
     String gsAddress;
+    String gsDataLocatorKey;
     
     public Worker_Import_VideoDownload(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         gsAddress = getInputData().getString(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
+        gsDataLocatorKey = getInputData().getString(EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY);
     }
 
     @NonNull
     @Override
+    @SuppressWarnings("unchecked")
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
@@ -68,7 +73,38 @@ public class Worker_Import_VideoDownload extends Worker {
         long lProgressDenominator;
         int iProgressBarValue = 0;
 
-        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
+        //Get the data needed by this worker:
+        if(gsDataLocatorKey == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Video Download worker incomplete: no data key.",
+                    false, 0,
+                    false, "",
+                    IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+            return Result.failure();
+        }
+        if(!globalClass.WaitForObjectReady(GlobalClass.gabImportFileListTMAvailable, 1)){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Video Download worker incomplete: timeout.",
+                    false, 0,
+                    false, "",
+                    IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+            return Result.failure();
+        }
+
+        GlobalClass.gabImportFileListTMAvailable.set(false);
+        ArrayList<ItemClass_File> alFileList = null;
+        if((ArrayList<ItemClass_File>)GlobalClass.gtmalImportFileList.get(gsDataLocatorKey) != null) {
+            alFileList = (ArrayList<ItemClass_File>) GlobalClass.gtmalImportFileList.get(gsDataLocatorKey).clone();
+            GlobalClass.gtmComicWebDataLocators.remove(gsDataLocatorKey);
+        }
+        GlobalClass.gabImportFileListTMAvailable.set(true);
+
+        if(alFileList == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Video Download worker incomplete: no data.",
+                    false, 0,
+                    false, "",
+                    IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+            return Result.failure();
+        }
+
         ItemClass_File icfDownloadItem = alFileList.get(0);
         //Use file count as progress denominator:
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
@@ -148,8 +184,8 @@ public class Worker_Import_VideoDownload extends Worker {
                         false, iProgressBarValue,
                         true, "Operation halted.",
                         IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                GlobalClass.gabImportExecutionRunning.set(false);
+                GlobalClass.gabImportExecutionFinished.set(true);
                 return Result.failure();
             } else {
                 globalClass.BroadcastProgress(true, "Destination folder created: " + sUserFriendlySequenceFolder + "\n",
@@ -221,8 +257,8 @@ public class Worker_Import_VideoDownload extends Worker {
                             false, iProgressBarValue,
                             true, "Operation halted.",
                             IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure();
                 } else {
                     globalClass.BroadcastProgress(true, "Destination folder created: " + sUserFriendlySequenceFolder + "\n",
@@ -432,8 +468,8 @@ public class Worker_Import_VideoDownload extends Worker {
                             false, iProgressBarValue,
                             true, "Halted.",
                             IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure(DataErrorMessage(sMessage));
                 }
                 request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " VideoID " + ciNew.sItemID)
@@ -501,8 +537,8 @@ public class Worker_Import_VideoDownload extends Worker {
                             true, iProgressBarValue,
                             true, sMessage,
                             IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure();
                 }
                 OutputStream osM3U8File = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8, "wt");
@@ -512,8 +548,8 @@ public class Worker_Import_VideoDownload extends Worker {
                             true, iProgressBarValue,
                             true, sMessage,
                             IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure();
                 }
                 BufferedWriter bwM3U8File = new BufferedWriter(new OutputStreamWriter(osM3U8File));
@@ -547,8 +583,8 @@ public class Worker_Import_VideoDownload extends Worker {
                 if (uriVideoFinalDestinationFolder == null) {
                     sMessage = "Could not locate video final destination folder " + ciNew.sFolderRelativePath + " in " +
                             GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure(DataErrorMessage(sMessage));
                 }
 
@@ -559,15 +595,15 @@ public class Worker_Import_VideoDownload extends Worker {
                 if (uriDLIDFileSequenceFile == null) {
                     sMessage = "Could not create file to record download ID sequencing: " + VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +
                             uriVideoFinalDestinationFolder;
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure(DataErrorMessage(sMessage));
                 }
                 OutputStream osDLIDFileSequenceFile = GlobalClass.gcrContentResolver.openOutputStream(uriDLIDFileSequenceFile, "wt");
                 if (osDLIDFileSequenceFile == null) {
                     sMessage = "Could not open output stream to file " + uriDLIDFileSequenceFile;
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure(DataErrorMessage(sMessage));
                 }
                 BufferedWriter bwDLIDFileSequenceFile;
@@ -637,9 +673,9 @@ public class Worker_Import_VideoDownload extends Worker {
                     true, "Operation halted.",
                     IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
         }
-        
-        globalClass.gbImportExecutionRunning = false;
-        globalClass.gbImportExecutionFinished = true;
+
+        GlobalClass.gabImportExecutionRunning.set(false);
+        GlobalClass.gabImportExecutionFinished.set(true);
         return Result.success();
     }
 

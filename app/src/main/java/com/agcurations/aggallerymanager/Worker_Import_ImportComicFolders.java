@@ -26,12 +26,16 @@ public class Worker_Import_ImportComicFolders extends Worker {
     public static final String TAG_WORKER_IMPORT_IMPORTCOMICFOLDERS = "com.agcurations.aggallermanager.tag_worker_import_importcomicfolders";
 
     public static final String IMPORT_COMIC_FOLDERS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE";
-    
+
+    public static final String EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_import_files_locator_al_key";
+
     int giMoveOrCopy;
+    String gsDataLocatorKey;
 
     public Worker_Import_ImportComicFolders(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         giMoveOrCopy = getInputData().getInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
+        gsDataLocatorKey = getInputData().getString(EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY);
     }
 
     @NonNull
@@ -56,7 +60,41 @@ public class Worker_Import_ImportComicFolders extends Worker {
         int iProgressBarValue = 0;
         long lTotalImportSize = 0L;
 
-        ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>)globalClass.galImportFileList.clone();
+
+        //Get the data needed by this worker:
+        if(gsDataLocatorKey == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Comic Folders worker incomplete: no data key.",
+                    false, 0,
+                    false, "",
+                    IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
+            return Result.failure();
+        }
+        if(!globalClass.WaitForObjectReady(GlobalClass.gabImportFileListTMAvailable, 1)){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Comic Folders worker incomplete: timeout.",
+                    false, 0,
+                    false, "",
+                    IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
+            return Result.failure();
+        }
+
+        GlobalClass.gabImportFileListTMAvailable.set(false);
+        ArrayList<ItemClass_File> alFileList = null;
+        if((ArrayList<ItemClass_File>)GlobalClass.gtmalImportFileList.get(gsDataLocatorKey) != null) {
+            alFileList = (ArrayList<ItemClass_File>) GlobalClass.gtmalImportFileList.get(gsDataLocatorKey).clone();
+            GlobalClass.gtmComicWebDataLocators.remove(gsDataLocatorKey);
+        }
+        GlobalClass.gabImportFileListTMAvailable.set(true);
+
+        if(alFileList == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Comic Folders worker incomplete: no data.",
+                    false, 0,
+                    false, "",
+                    IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
+            return Result.failure();
+        }
+
+
+
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
@@ -364,8 +402,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     false, iProgressBarValue,
                     false, "",
                     IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.failure();
         }
         //Write next behavior to the screen log:
@@ -394,8 +432,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
 
-        globalClass.gbImportExecutionRunning = false;
-        globalClass.gbImportExecutionFinished = true;
+        GlobalClass.gabImportExecutionRunning.set(false);
+        GlobalClass.gabImportExecutionFinished.set(true);
         return Result.success();
     }
 

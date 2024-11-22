@@ -9,17 +9,25 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.util.Log;
 import android.view.KeyEvent;
@@ -63,6 +71,7 @@ public class Fragment_WebPageTab extends Fragment {
     private TextInputEditText gEditText_Address;
 
     public String gsWebAddress = "";
+    public String gsMatchingCatalogItemID = "";
 
     ArrayList<String> gals_ResourceRequests;
 
@@ -80,12 +89,15 @@ public class Fragment_WebPageTab extends Fragment {
     private ImageButton gImageButton_Back;
     private ImageButton gImageButton_Forward;
 
+    ImageButton gImageButton_ImportContent;
+
     private ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators;
 
     private String gsCustomDownloadPrompt = "";
     private final int CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT = 1;
-    private final int CUSTOM_DOWNLOAD_OPTION_YES_NO = 2;
+    private final int CUSTOM_DOWNLOAD_OPTION_YES_IMPORT_TO_COLLECTION = 3;
     private int giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
+    private String gsPageHTML = "";
 
     private int giMediaCategory = -1;
 
@@ -147,8 +159,16 @@ public class Fragment_WebPageTab extends Fragment {
 
     int iWebViewNavigationHeight_Original;
 
+    Context gContext;
+    @Override
+    public void onAttach(@NonNull Context context) {
+        gContext = context;
+        super.onAttach(context);
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
+    @SuppressWarnings("unchecked")
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ApplicationLogWriter("OnViewCreated start.");
@@ -263,11 +283,6 @@ public class Fragment_WebPageTab extends Fragment {
                         MotionEvent.ACTION_BUTTON_RELEASE
                 };*/
 
-                boolean bDebugTopBarSlide = false;
-                if(bDebugTopBarSlide) Log.d("onTouch:", sActionEnum[action]);
-
-
-
                 if( action == MotionEvent.ACTION_MOVE) {
 
                     int iHistorySize = event.getHistorySize();
@@ -283,7 +298,6 @@ public class Fragment_WebPageTab extends Fragment {
                         fDeltaY = event.getHistoricalY(0, 0) - event.getY(0);
 
                     }
-                    if(bDebugTopBarSlide) Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " fLPDeltaY: " + fLPDeltaY);
 
                     fLPY = event.getY();
                     if(
@@ -294,8 +308,6 @@ public class Fragment_WebPageTab extends Fragment {
                     }
 
                     fLPDeltaY = fDeltaY;
-
-                    if(bDebugTopBarSlide) Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " History: " + event.getHistorySize() + " Y: " + event.getY());
 
                     Activity_Browser activity_browser = (Activity_Browser) getActivity();
                     int iBrowserTopBarHeight_Current = 0;
@@ -397,15 +409,12 @@ public class Fragment_WebPageTab extends Fragment {
         });
 
 
-        ImageButton imageButton_ImportContent = getView().findViewById(R.id.imageButton_ImportContent);
-        if (imageButton_ImportContent != null) {
-            imageButton_ImportContent.setOnClickListener(new View.OnClickListener() {
+        gImageButton_ImportContent = getView().findViewById(R.id.imageButton_ImportContent);
+        if (gImageButton_ImportContent != null) {
+            gImageButton_ImportContent.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     //Paste the current URL to the internal clipboard:
-                    if(getContext() == null){
-                        return;
-                    }
 
                     GlobalClass.gsBrowserAddressClipboard = gsWebAddress;
 
@@ -418,19 +427,104 @@ public class Fragment_WebPageTab extends Fragment {
 
                     } else {
                         //Else, if there is a custom prompt, show it to the user and then perform their need:
-                        Context context = getContext();
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AlertDialogCustomStyle);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(gContext, R.style.AlertDialogCustomStyle);
                         builder.setTitle("Import");
                         builder.setMessage(gsCustomDownloadPrompt);
 
                         builder.setPositiveButton("Yes", (dialog, id) -> {
                             dialog.dismiss();
-                            Toast.makeText(context, "No action", Toast.LENGTH_SHORT).show();
+                            if(GlobalClass.gabImportExecutionRunning.get()) {
+                                Toast.makeText(gContext, "An import operation is currently in progress. Please wait for completion and reinitiate this import.", Toast.LENGTH_SHORT).show();
+                            } else {
+
+                                if (giCustomDownloadOptions == CUSTOM_DOWNLOAD_OPTION_YES_IMPORT_TO_COLLECTION) {
+                                    //The user has been prompted that this item is believed to be a member to a collection,
+                                    //  and they clicked 'Yes' to import it to be a member of that collection.
+                                    //  Determine the associated WebComicDataLocator:
+                                    for (ItemClass_WebComicDataLocator icWCDL : galWebComicDataLocators) {
+                                        if (icWCDL.sAddress.equals(gsWebAddress) && icWCDL.alicf_ComicDownloadFileItems != null) {
+
+                                            //This is the data associated with this webpage.
+
+                                            //Set the destination for all file items:
+                                            GlobalClass.AssignDestinationFolders(icWCDL.alicf_ComicDownloadFileItems, giMediaCategory);
+
+                                            //Copy the group ID, tags and other data from the found catalog match:
+                                            ItemClass_CatalogItem icci_Match = GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(gsMatchingCatalogItemID);
+                                            if (icci_Match != null && icWCDL.alicf_ComicDownloadFileItems.size() > 0) {
+                                                ItemClass_File icf_zero = icWCDL.alicf_ComicDownloadFileItems.get(0);
+                                                if (icf_zero.aliProspectiveTags != null) {
+                                                    if (icf_zero.aliProspectiveTags.size() == 0) {
+                                                        icf_zero.aliProspectiveTags = icci_Match.aliTags;
+                                                    }
+                                                }
+                                                if (!icci_Match.sGroupID.equals("")) {
+                                                    icf_zero.sGroupID = icci_Match.sGroupID;
+                                                } else {
+                                                    //If there is no group ID, create one and assign it.
+                                                    String sGroupID = GlobalClass.getNewGroupID();
+                                                    icci_Match.sGroupID = sGroupID;
+                                                    icf_zero.sGroupID = sGroupID;
+                                                    ItemClass_CatalogItem icci_Match2 = GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(gsMatchingCatalogItemID);
+                                                    //todo: confirm that a new group ID sticks, and then delete the above line (assuming pass-by-reference works).
+                                                    Toast.makeText(gContext, "New group ID generated. New item will be grouped with matching catalog item.", Toast.LENGTH_SHORT).show();
+                                                    globalClass.CatalogDataFile_UpdateCatalogFile(giMediaCategory, "Saving...");
+                                                    //todo: confirm that a new group ID sticks.
+                                                }
+                                            }
+
+
+                                            //Set the data needed by the worker:
+                                            String sDataRecordKey = GlobalClass.getNewCatalogRecordID(); //Not actually getting a new catalog item ID, just using it to generate a unique ID for data tagging.
+                                            if (!globalClass.WaitForObjectReady(GlobalClass.gabImportFileListTMAvailable, 1)) {
+                                                Toast.makeText(getContext(), "Data transfer to worker unavailble. Operation halted.", Toast.LENGTH_SHORT).show();
+                                                return;
+                                            }
+                                            GlobalClass.gabImportFileListTMAvailable.set(false);
+                                            //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
+                                            //  depending on how fast the system might attempt to do it.
+                                            GlobalClass.gtmalImportFileList.put(sDataRecordKey, (ArrayList<ItemClass_File>) icWCDL.alicf_ComicDownloadFileItems.clone());//Transfer to globalClass to avoid transaction limit.
+                                            GlobalClass.gabImportFileListTMAvailable.set(true);
+
+                                            GlobalClass.gsbImportExecutionLog = new StringBuilder();
+                                            GlobalClass.gabImportExecutionRunning.set(true);
+
+                                            String sCallerID = "Fragment_WebPageTab.[ImportToCollection]";
+                                            double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                                            //Start the webcomic import worker:
+                                            Data dataImportComicWebFiles = new Data.Builder()
+                                                    .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                                                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                                                    .putString(Worker_Import_ImportComicWebFiles.EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY, sDataRecordKey)
+                                                    .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, icWCDL.sAddress)
+                                                    .build();
+                                            OneTimeWorkRequest otwrImportComicWebFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicWebFiles.class)
+                                                    .setInputData(dataImportComicWebFiles)
+                                                    .addTag(Worker_Import_ImportComicWebFiles.TAG_WORKER_IMPORT_IMPORTCOMICWEBFILES) //To allow finding the worker later.
+                                                    .build();
+                                            WorkManager.getInstance(gContext).enqueue(otwrImportComicWebFiles);
+
+                                            break;
+
+                                        } //End if icWCDL.sAddress.equals(gsWebAddress).
+
+                                    } //End loop throu galWebComicDataLocators.
+
+                                } else {
+
+                                    //If the user is here due to clicking 'Yes' despite an item already existing in the catalog,
+                                    //  send the user to the Import Activity:
+                                    Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
+                                    startActivity(intentImportGuided);
+                                }
+
+                            } //End if/else structure for (GlobalClass.gabImportExecutionRunning.get()).
                         });
                         builder.setNegativeButton("No", (dialog, id) -> {
                             dialog.dismiss();
-                            if(giCustomDownloadOptions != CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT) {
-                                //Send the user to the Import Activity:
+                            if(giCustomDownloadOptions == CUSTOM_DOWNLOAD_OPTION_YES_IMPORT_TO_COLLECTION) {
+                                //If the user has clicked "No" to option of importing a collection item to the catalog,
+                                // send the user to the Import Activity (otherwise they will have clicked outside the alert dialog, thus cancelling):
                                 Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
                                 startActivity(intentImportGuided);
                             }
@@ -438,11 +532,14 @@ public class Fragment_WebPageTab extends Fragment {
 
                         AlertDialog adConfirmationDialog = builder.create();
                         adConfirmationDialog.show();
-                    }
 
-                }
-            });
-        }
+                    } //End 'if there is a custom download prompt set'. This is for recognized catalog items.
+
+                } //End onClick for the Import button.
+
+            }); //End gImageButton_ImportContent.setOnClickListener.
+
+        } //End if (gImageButton_ImportContent != null).
 
         gImageButton_Back = getView().findViewById(R.id.imageButton_Back);
         if (gImageButton_Back != null) {
@@ -572,6 +669,7 @@ public class Fragment_WebPageTab extends Fragment {
                         String sAddress = icwptd.sAddress;
                         gEditText_Address.setText(sAddress);
                         gsWebAddress = sAddress;
+
                         gWebView.gsTabID = icwptd.sTabID;
 
                         if(icwptd.stackBackHistory.size() > 1){
@@ -661,6 +759,10 @@ public class Fragment_WebPageTab extends Fragment {
                 //String sCookie = CookieManager.getInstance().getCookie(sAddress);
                 //GlobalClass.gsCookie = sCookie;
 
+                if(!gsWebAddress.equals(sAddress)){
+                    Toast.makeText(gContext, "Start address not the same as finished address.", Toast.LENGTH_SHORT).show();
+                }
+
                 //Trigger update of the favicon address....
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
@@ -719,104 +821,6 @@ public class Fragment_WebPageTab extends Fragment {
                         break;
                     }
                 }
-
-
-                //========================
-                //== Pre-import checks
-                //===========
-
-                gsCustomDownloadPrompt = "";
-                giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
-                giMediaCategory = -1;
-
-                //Check to see if this is a comic site and if the user has downloaded a related comic.
-                //  If so, prep to allow the user to download and group the comic.
-                galWebComicDataLocators = GlobalClass.getComicWebDataKeys();
-                //Evaluate if an address matches a pattern:
-                ItemClass_WebComicDataLocator icWCDL_Match = null;
-                for(ItemClass_WebComicDataLocator icWCDL: galWebComicDataLocators) {
-                    String sNonExplicitAddress = icWCDL.sHostnameRegEx;
-                    String sRegexExpression = sNonExplicitAddress.replace("%", "");
-                    if (sAddress.matches(sRegexExpression)) {
-                        icWCDL.bHostNameMatchFound = true;
-                        icWCDL.sAddress = sAddress;  //Passing this item here so that this icWCDL can be passed to a processing worker,
-                                                    //  and those results passed back and identified by the address.
-                        icWCDL_Match = icWCDL;
-                        break;
-                    }
-                }
-                if(icWCDL_Match == null){
-                    //If no match was found, return.
-                    return;
-                }
-
-                //If we are here, this is a comic import site.
-                giMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
-
-                String sComicSeriesIDStartString = icWCDL_Match.sComicSeriesIDStartString.replace("%", ""); //Remove obfuscating chars.
-
-                //Get the ID of the comic from this website:
-                String sComicSeriesID = "";
-                if (!sComicSeriesIDStartString.equals("")) {
-                    //If data has been provided internally to search for a series...
-                    if(sAddress.startsWith(sComicSeriesIDStartString)){
-                        //If this item appears to be a potential comic series entry. Check the ID.
-                        sComicSeriesID = sAddress.substring(sComicSeriesIDStartString.length());
-                        sComicSeriesID = sComicSeriesID.substring(0, sComicSeriesID.indexOf("/"));
-                    }
-                }
-
-                //Look to see if this item is already located in the catalog..
-                //  Move this check to a worker if it takes too long.
-                boolean bItemInCatalog = false;
-                String sMatchingCatalogItemID = "";
-                String sCatalogItem_Address;
-                String sCatalogItemWebComicID = "";
-                for (Map.Entry<String, ItemClass_CatalogItem>
-                        entry : GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-
-                    if (!entry.getValue().alsApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)) {
-                        //Don't notify the user that there are existing, matching catalog items if those items
-                        //  are not approved for this user.
-                        continue;
-                    }
-
-                    sCatalogItem_Address = entry.getValue().sSource;
-                    if(sCatalogItem_Address.equals(sAddress)){      //Check every item to ensure no exact match.
-                        bItemInCatalog = true;
-                    }
-                    //Determine if this address is part of a collection:
-                    if(sMatchingCatalogItemID.equals("")) { //Only find a matching comic series item once to grab group ID and tags.
-                        if (!sComicSeriesID.equals("")) {
-                            //If data has been provided internally to search for a series...
-                            if (sCatalogItem_Address.startsWith(sComicSeriesIDStartString)) {
-                                //If this item appears to be a potential comic series entry. Get the catalog item ID. It doesn't have to match the chapter, just any member of the collection.
-                                sCatalogItemWebComicID = sCatalogItem_Address.substring(sComicSeriesIDStartString.length());
-                                sCatalogItemWebComicID = sCatalogItemWebComicID.substring(0, sCatalogItemWebComicID.indexOf("/"));
-                                if (sComicSeriesID.equals(sCatalogItemWebComicID)) {
-                                    sMatchingCatalogItemID = entry.getKey();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if(bItemInCatalog){
-                    gsCustomDownloadPrompt = "This comic exists in the catalog. Would you like to proceed with the import activity?";
-                    giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
-                    return;
-                }
-
-                if(!sMatchingCatalogItemID.equals("")){
-
-                    gsCustomDownloadPrompt = "This comic has been identified as belonging to a collection in the catalog.\n" +
-                            " Title: " + Objects.requireNonNull(GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(sMatchingCatalogItemID)).sTitle + "\n" +
-                            " Would you like to add this item to the collection, applying the same group ID and tags?";
-                    giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_YES_NO;
-                }
-
-
-
 
             }
 
@@ -950,12 +954,13 @@ public class Fragment_WebPageTab extends Fragment {
     class JavaScriptInterfaceGetHTML {
 
         @JavascriptInterface
-        public void showHTML(String html) { //THIS ITEM IS USED. IGNORE THE WARNING.
+        public void showHTML(String html) {
             gmLiveDataStringHTML.postValue(html);
         }
 
     }
 
+    @SuppressWarnings("unchecked")
     private void ConfigureHTMLWatcher(){
 
         final Observer<String> observerStringHTML = new Observer<String>() {
@@ -963,6 +968,8 @@ public class Fragment_WebPageTab extends Fragment {
             public void onChanged(String sHTML) {
                 //Enter here when an assigned String is changed.
                 //In particular, we enter here when a web page has finished loading.
+
+                gsPageHTML = sHTML;
 
                 //Find the favicon address:
                 boolean bFaviconAddressFound = false;
@@ -1046,6 +1053,150 @@ public class Fragment_WebPageTab extends Fragment {
                     }
                 }
 
+                //========================
+                //== Pre-import checks
+                //===========
+
+                gsCustomDownloadPrompt = "";
+                giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
+                gsMatchingCatalogItemID = "";
+                giMediaCategory = -1;
+
+                //Set color of the download icon to be grey:
+                SetDownloadButtonState(NORMAL);
+
+                //Check to see if this is a comic site and if the user has downloaded a related comic.
+                //  If so, prep to allow the user to download and group the comic.
+                galWebComicDataLocators = GlobalClass.getComicWebDataKeys();
+                //Evaluate if an address matches a pattern:
+                ItemClass_WebComicDataLocator icWCDL_Match = null;
+                for(ItemClass_WebComicDataLocator icWCDL: galWebComicDataLocators) {
+                    String sNonExplicitAddress = icWCDL.sHostnameRegEx;
+                    String sRegexExpression = sNonExplicitAddress.replace("%", "");
+                    if (gsWebAddress.matches(sRegexExpression)) {
+                        icWCDL.bHostNameMatchFound = true;
+                        if(icWCDL.sAddress.equals(gsWebAddress)){
+                            if(icWCDL.alicf_ComicDownloadFileItems != null){
+                                //Data for this web page has already been acquired.
+                                SetDownloadButtonState(READY);
+                            }
+                        }
+                        icWCDL.sAddress = gsWebAddress;  //Passing this item here so that this icWCDL can be passed to a processing worker,
+                        //  and those results passed back and identified by the address.
+                        icWCDL.alicf_ComicDownloadFileItems = null;
+                        icWCDL_Match = icWCDL;
+                        break;
+                    }
+                }
+                if(icWCDL_Match == null){
+                    //If no match was found, return.
+                    return;
+                }
+                if(gsPageHTML.equals("")){
+                    return;
+                }
+                icWCDL_Match.sHTML = gsPageHTML;
+
+                //If we are here, this is a comic import site.
+                giMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+
+                String sComicSeriesIDStartString = icWCDL_Match.sComicSeriesIDStartString.replace("%", ""); //Remove obfuscating chars.
+
+                //Get the ID of the comic from this website:
+                String sComicSeriesID = "";
+                if (!sComicSeriesIDStartString.equals("")) {
+                    //If data has been provided internally to search for a series...
+                    if(gsWebAddress.startsWith(sComicSeriesIDStartString)){
+                        //If this item appears to be a potential comic series entry. Check the ID.
+                        sComicSeriesID = gsWebAddress.substring(sComicSeriesIDStartString.length());
+                        int iLastSlashIndex = sComicSeriesID.indexOf("/");
+                        if(iLastSlashIndex > 0) {
+                            sComicSeriesID = sComicSeriesID.substring(0, sComicSeriesID.indexOf("/"));
+                        } else {
+                            //We do not recognize this format webaddress, therefore leave the routine.
+                            //  No match will be found within the catalog.
+                            return;
+                        }
+                    }
+                }
+
+                //Look to see if this item is already located in the catalog..
+                //  Move this check to a worker if it takes too long.
+                boolean bItemInCatalog = false;
+                String sCatalogItem_Address;
+                String sCatalogItemWebComicID = "";
+                for (Map.Entry<String, ItemClass_CatalogItem>
+                        entry : GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+
+                    if (!entry.getValue().alsApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)) {
+                        //Don't notify the user that there are existing, matching catalog items if those items
+                        //  are not approved for this user.
+                        continue;
+                    }
+
+                    sCatalogItem_Address = entry.getValue().sSource;
+                    if(sCatalogItem_Address.equals(gsWebAddress)){      //Check every item to ensure no exact match.
+                        bItemInCatalog = true;
+                    }
+                    //Determine if this address is part of a collection:
+                    if(gsMatchingCatalogItemID.equals("")) { //Only find a matching comic series item once to grab group ID and tags.
+                        if (!sComicSeriesID.equals("")) {
+                            //If data has been provided internally to search for a series...
+                            if (sCatalogItem_Address.startsWith(sComicSeriesIDStartString)) {
+                                //If this item appears to be a potential comic series entry. Get the catalog item ID. It doesn't have to match the chapter, just any member of the collection.
+                                sCatalogItemWebComicID = sCatalogItem_Address.substring(sComicSeriesIDStartString.length());
+                                sCatalogItemWebComicID = sCatalogItemWebComicID.substring(0, sCatalogItemWebComicID.indexOf("/"));
+                                if (sComicSeriesID.equals(sCatalogItemWebComicID)) {
+                                    gsMatchingCatalogItemID = entry.getKey();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(bItemInCatalog){
+                    gsCustomDownloadPrompt = "This comic exists in the catalog. Would you like to proceed with the import activity?";
+                    giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
+                    SetDownloadButtonState(DUPLICATE);
+                    return;
+                }
+
+                if(!gsMatchingCatalogItemID.equals("")){
+
+                    gsCustomDownloadPrompt = "This comic has been identified as belonging to a collection in the catalog.\n" +
+                            "Title: " + Objects.requireNonNull(GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(gsMatchingCatalogItemID)).sTitle + "\n" +
+                            "Would you like to add this item to the collection, applying the same group ID and tags?";
+                    giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_YES_IMPORT_TO_COLLECTION;
+
+                    //Fire off a worker to get the comic details:
+                    String sDataRecordKey = GlobalClass.getNewCatalogRecordID(); //Not actually getting a new catalog item ID, just using it to generate a unique ID for data tagging.
+                    if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+                        Toast.makeText(gContext, "Web data transfer unavailble.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                    //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
+                    //  depending on how fast the system might attempt to do it.
+                    ArrayList<ItemClass_WebComicDataLocator> alicwcd = new ArrayList<>();
+                    alicwcd.add(icWCDL_Match);
+                    GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, (ArrayList<ItemClass_WebComicDataLocator>) alicwcd.clone());
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+
+                    String sCallerID = "Fragment_WebPageTab:WebViewClient.onPageFinished()";
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                    Data dataComicAnalyzeHTML = new Data.Builder()
+                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putString(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY, sDataRecordKey)
+                            .build();
+                    OneTimeWorkRequest otwrComicAnalyzeHTML = new OneTimeWorkRequest.Builder(Worker_Import_ComicAnalyzeHTML.class)
+                            .setInputData(dataComicAnalyzeHTML)
+                            .addTag(Worker_Import_ComicAnalyzeHTML.TAG_WORKER_IMPORT_COMIC_ANALYZE_HTML) //To allow finding the worker later.
+                            .build();
+                    WorkManager.getInstance(gContext).enqueue(otwrComicAnalyzeHTML);
+
+                }
+
             }
         };
 
@@ -1073,15 +1224,51 @@ public class Fragment_WebPageTab extends Fragment {
                 //Check to see if this is a response to request to get comic downloads from html:
                 boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
                 if (bGetComicDownloadsResponse) {
-                    ArrayList<ItemClass_File> alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
 
-
+                    //Look to see if this is a response to a known item to this web tab:
+                    String sDataRelatedURLAddress = intent.getStringExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
+                    if(sDataRelatedURLAddress != null && galWebComicDataLocators != null) { //todo: why does galWebComicDataLocators sometimes appear as Null?
+                        for (ItemClass_WebComicDataLocator icWCDL : galWebComicDataLocators) {
+                            if (icWCDL.sAddress.matches(sDataRelatedURLAddress)) {
+                                icWCDL.alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
+                                //Set color of the download icon to be green:
+                                SetDownloadButtonState(READY);
+                                break;
+                            }
+                        }
+                    }
                 }
 
             }
 
 
         }
+
+    } //End Broadcast Receiver class definition.
+
+    private final int NORMAL = 1;
+    private final int READY = 2;
+    private final int DUPLICATE = 3;
+    private void SetDownloadButtonState(int iColor){
+        int iColorInt;
+        if(iColor == NORMAL) {
+            iColorInt = ContextCompat.getColor(gContext, R.color.color_download_normal);
+        } else if(iColor == READY){
+            iColorInt = ContextCompat.getColor(gContext, R.color.color_download_ready);
+        } else {
+            iColorInt = ContextCompat.getColor(gContext, R.color.color_download_duplicate);
+        }
+        //Set color of the download icon to be grey:
+        Drawable d1 = AppCompatResources.getDrawable(gContext, R.drawable.download);
+        if (d1 == null) {
+            return;
+        }
+        Drawable drawable = d1.mutate();
+        drawable.setColorFilter(new PorterDuffColorFilter(iColorInt, PorterDuff.Mode.SRC_IN));
+        if (gImageButton_ImportContent != null) {
+            gImageButton_ImportContent.setImageDrawable(drawable);
+        }
+
     }
 
 

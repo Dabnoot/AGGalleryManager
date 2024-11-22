@@ -23,6 +23,7 @@ public class ItemClass_WebComicDataLocator implements Serializable {
 
     ArrayList<ItemClass_ComicDownloadSearchKey> alComicDownloadSearchKeys;
 
+    ArrayList<ItemClass_File> alicf_ComicDownloadFileItems = null; //Added explicitly to accommodate download of a known collection item via browser web page tab.
 
 
 }

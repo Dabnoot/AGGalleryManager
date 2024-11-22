@@ -24,6 +24,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 
@@ -98,7 +99,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     }
 
 
-
+    @SuppressWarnings("unchecked")
     public void initComponents(){
 
         //Init progress:
@@ -114,16 +115,28 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         gScrollView_ImportLog = getView().findViewById(R.id.scrollView_ImportLog);
 
 
-        if(GlobalClass.gbImportExecutionStarted && !GlobalClass.gbImportExecutionRunning) {
+        if(GlobalClass.gabImportExecutionStarted.get() && !GlobalClass.gabImportExecutionRunning.get()) {
             gProgressBar_ImportProgress.setProgress(0);
             gTextView_ImportProgressBarText.setText("0/0");
             gtextView_ImportLog.setText("");
             GlobalClass.gsbImportExecutionLog = new StringBuilder();
-            GlobalClass.gbImportExecutionStarted = false;
-            GlobalClass.gbImportExecutionRunning = true;//This prevents import from starting again
+            GlobalClass.gabImportExecutionStarted.set(false);
+            GlobalClass.gabImportExecutionRunning.set(true);//This prevents import from starting again
                                                              // if the activity/fragment is restarted due to an orientation change, etc.
+
             //Initiate the file import via ImportActivityDataService:
-            GlobalClass.galImportFileList = viewModelImportActivity.alfiConfirmedFileImports; //Transfer to globalClass to avoid transaction limit.
+            //Set the data needed by the worker:
+            String sDataRecordKey = GlobalClass.getNewCatalogRecordID(); //Not actually getting a new catalog item ID, just using it to generate a unique ID for data tagging.
+            if(!globalClass.WaitForObjectReady(GlobalClass.gabImportFileListTMAvailable, 1)){
+                Toast.makeText(getContext(), "Data transfer to worker unavailble. Operation halted.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            GlobalClass.gabImportFileListTMAvailable.set(false);
+            //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
+            //  depending on how fast the system might attempt to do it.
+            GlobalClass.gtmalImportFileList.put(sDataRecordKey, (ArrayList<ItemClass_File>) viewModelImportActivity.alfiConfirmedFileImports.clone());//Transfer to globalClass to avoid transaction limit.
+            GlobalClass.gabImportFileListTMAvailable.set(true);
+
 
             if(getContext() == null) return;
             String sCallerID = "Fragment_Import_6_ExecuteImport:initComponents()";
@@ -134,6 +147,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                     Data dataImportComicFolders = new Data.Builder()
                             .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putString(Worker_Import_ImportComicFolders.EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY, sDataRecordKey)
                             .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, viewModelImportActivity.iImportMethod)
                             .build();
                     OneTimeWorkRequest otwrImportComicFolders = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicFolders.class)
@@ -147,6 +161,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                     Data dataImportComicWebFiles = new Data.Builder()
                             .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putString(Worker_Import_ImportComicWebFiles.EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY, sDataRecordKey)
                             .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, viewModelImportActivity.sWebAddress)
                             .build();
                     OneTimeWorkRequest otwrImportComicWebFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicWebFiles.class)
@@ -162,6 +177,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 Data dataVideoDownload = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                         .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putString(Worker_Import_VideoDownload.EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY, sDataRecordKey)
                         .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, viewModelImportActivity.sWebAddress)
                         .build();
                 OneTimeWorkRequest otwrVideoDownload = new OneTimeWorkRequest.Builder(Worker_Import_VideoDownload.class)
@@ -174,6 +190,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 Data dataImportFiles = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                         .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putString(Worker_Import_ImportFiles.EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY, sDataRecordKey)
                         .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, viewModelImportActivity.iImportMethod)
                         .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory)
                         .build();
@@ -191,7 +208,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             gtextView_ImportLog.setText(GlobalClass.gsbImportExecutionLog.toString());
 
 
-            if(GlobalClass.gbImportExecutionFinished){
+            if(GlobalClass.gabImportExecutionFinished.get()){
                 //If the user has returned to this fragment and the import is finished,
                 //  enable the buttons:
                 if(getView() != null) {

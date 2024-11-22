@@ -200,10 +200,10 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
 
             if(tmHoldingFolderRecordData_ApprovedFiles.size() == 0){
-                GlobalClass.gbImportFolderAnalysisRunning = false;
-                GlobalClass.gbImportFolderAnalysisFinished = true;
+                GlobalClass.gabImportFolderAnalysisRunning.set(false);
+                GlobalClass.gabImportFolderAnalysisFinished.set(true);
                 sMessage = "No files found in the holding folder.";
-                globalClass.gsbImportFolderAnalysisLog.append(sMessage);
+                GlobalClass.gsbImportFolderAnalysisLog.append(sMessage);
                 globalClass.problemNotificationConfig(sMessage, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                 return Result.success();
             }
@@ -220,7 +220,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
             //Process the holding folder entries:
             for(Map.Entry<String, String[]> HoldingFolderEntry: tmHoldingFolderRecordData_ApprovedFiles.entrySet()){
 
-                if(GlobalClass.gbImportFolderAnalysisStop){
+                if(GlobalClass.gabImportFolderAnalysisStop.get()){
                     break;
                 }
 
@@ -346,10 +346,10 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
 
         }catch (Exception e){
-            GlobalClass.gbImportFolderAnalysisRunning = false;
-            GlobalClass.gbImportFolderAnalysisFinished = true;
+            GlobalClass.gabImportFolderAnalysisRunning.set(false);
+            GlobalClass.gabImportFolderAnalysisFinished.set(true);
             sMessage = "Problem during Worker_Import_GetHoldingFolderDirectoryContents: " + e.getMessage();
-            globalClass.gsbImportFolderAnalysisLog.append(sMessage);
+            GlobalClass.gsbImportFolderAnalysisLog.append(sMessage);
             globalClass.problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
             return Result.failure();
         }
@@ -363,15 +363,15 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
 
         //Set finished and broadcast so that the fragment knows that we are done.
-        GlobalClass.gbImportFolderAnalysisFinished = true;
+        GlobalClass.gabImportFolderAnalysisFinished.set(true);
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
                 true, lProgressNumerator + "/" + lProgressDenominator,
                 Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
-        GlobalClass.gbImportFolderAnalysisRunning = false;
-        if(GlobalClass.gbImportFolderAnalysisStop) {
-            GlobalClass.gbImportFolderAnalysisStop = false;
+        GlobalClass.gabImportFolderAnalysisRunning.set(false);
+        if(GlobalClass.gabImportFolderAnalysisStop.get()) {
+            GlobalClass.gabImportFolderAnalysisStop.set(false);
         }
 
         return Result.success();

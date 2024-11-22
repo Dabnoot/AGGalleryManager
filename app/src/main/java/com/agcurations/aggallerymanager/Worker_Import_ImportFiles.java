@@ -30,15 +30,20 @@ public class Worker_Import_ImportFiles extends Worker {
 
     public static final String EXTRA_BOOL_REPAIR_MODE_OPTION = "com.agcurations.aggallerymanager.extra.BOOL_REPAIR_MODE_OPTION";
 
+    public static final String EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_import_files_locator_al_key";
+
     int giMoveOrCopy;
     int giMediaCategory;
     boolean bRepairMode = false;
+
+    String gsDataLocatorKey;
 
     public Worker_Import_ImportFiles(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         giMoveOrCopy = getInputData().getInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
         giMediaCategory = getInputData().getInt(GlobalClass.EXTRA_MEDIA_CATEGORY, -1);
         bRepairMode = getInputData().getBoolean(EXTRA_BOOL_REPAIR_MODE_OPTION, false);
+        gsDataLocatorKey = getInputData().getString(EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY);
     }
 
     @NonNull
@@ -63,7 +68,37 @@ public class Worker_Import_ImportFiles extends Worker {
 
         int iMetadata_File_Count = 0;
 
-        ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>)globalClass.galImportFileList.clone();
+        //Get the data needed by this worker:
+        if(gsDataLocatorKey == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Files worker incomplete: no data key.",
+                    false, 0,
+                    false, "",
+                    IMPORT_FILES_ACTION_RESPONSE);
+            return Result.failure();
+        }
+        if(!globalClass.WaitForObjectReady(GlobalClass.gabImportFileListTMAvailable, 1)){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Files worker incomplete: timeout.",
+                    false, 0,
+                    false, "",
+                    IMPORT_FILES_ACTION_RESPONSE);
+            return Result.failure();
+        }
+
+        GlobalClass.gabImportFileListTMAvailable.set(false);
+        ArrayList<ItemClass_File> alFileList = null;
+        if((ArrayList<ItemClass_File>)GlobalClass.gtmalImportFileList.get(gsDataLocatorKey) != null) {
+            alFileList = (ArrayList<ItemClass_File>) GlobalClass.gtmalImportFileList.get(gsDataLocatorKey).clone();
+            GlobalClass.gtmComicWebDataLocators.remove(gsDataLocatorKey);
+        }
+        GlobalClass.gabImportFileListTMAvailable.set(true);
+
+        if(alFileList == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Files worker incomplete: no data.",
+                    false, 0,
+                    false, "",
+                    IMPORT_FILES_ACTION_RESPONSE);
+            return Result.failure();
+        }
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
@@ -361,8 +396,8 @@ public class Worker_Import_ImportFiles extends Worker {
                             false, iProgressBarValue,
                             false, "",
                             IMPORT_FILES_ACTION_RESPONSE);
-                    GlobalClass.gbImportExecutionRunning = false;
-                    GlobalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure();
                 }
 
@@ -423,8 +458,8 @@ public class Worker_Import_ImportFiles extends Worker {
                     false, iProgressBarValue,
                     false, "",
                     IMPORT_FILES_ACTION_RESPONSE);
-            GlobalClass.gbImportExecutionRunning = false;
-            GlobalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.failure();
         }
         //Write next behavior to the screen log:
@@ -453,8 +488,8 @@ public class Worker_Import_ImportFiles extends Worker {
                 IMPORT_FILES_ACTION_RESPONSE);
 
 
-        GlobalClass.gbImportExecutionRunning = false;
-        GlobalClass.gbImportExecutionFinished = true;
+        GlobalClass.gabImportExecutionRunning.set(false);
+        GlobalClass.gabImportExecutionFinished.set(true);
         return Result.success();
     }
 

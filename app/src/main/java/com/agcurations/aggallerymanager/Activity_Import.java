@@ -181,7 +181,7 @@ public class Activity_Import extends AppCompatActivity {
         stackFragmentOrder = new Stack<>();
 
 
-        if(GlobalClass.gbImportFolderAnalysisRunning && !GlobalClass.gbImportFolderAnalysisFinished){
+        if(GlobalClass.gabImportFolderAnalysisRunning.get() && !GlobalClass.gabImportFolderAnalysisFinished.get()){
             //If a folder analysis operation has been started and is not finished, go to the storage
             // location fragment which should show the analysis progress.
             giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
@@ -189,14 +189,14 @@ public class Activity_Import extends AppCompatActivity {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
             stackFragmentOrder.push(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION);
 
-        } else if(GlobalClass.gbImportExecutionRunning && !GlobalClass.gbImportExecutionFinished){
+        } else if(GlobalClass.gabImportExecutionRunning.get() && !GlobalClass.gabImportExecutionFinished.get()){
             //If an import operation has been started and is not finished, go to the execute
             //  fragment which will show the user the log.
             giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT;
             ViewPager2_Import.setCurrentItem(giStartingFragment, false);
             stackFragmentOrder.push(giStartingFragment);
 
-        } else if(GlobalClass.gbImportComicWebAnalysisRunning && !GlobalClass.gbImportComicWebAnalysisFinished){
+        } else if(GlobalClass.gabImportComicWebAnalysisRunning.get() && !GlobalClass.gabImportComicWebAnalysisFinished.get()){
             //If a comic web analysis operation has been started and is not finished, go to the appropriate
             // fragment.
             giStartingFragment = FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC;
@@ -266,6 +266,7 @@ public class Activity_Import extends AppCompatActivity {
 
     @SuppressWarnings("unchecked")
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
+        //This receiver receives messages that potentially contain lists of files.
         public static final String IMPORT_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT_DATA_SERVICE";
 
         @Override
@@ -388,9 +389,9 @@ public class Activity_Import extends AppCompatActivity {
 
         if(iNewImportMediaCatagory != viewModelImportActivity.iImportMediaCategory) {
             viewModelImportActivity.bImportCategoryChange = true; //Force user to select new import folder (in the event that they backtracked).
-            GlobalClass.gbImportExecutionStarted = false;
-            if(GlobalClass.gbImportFolderAnalysisRunning){
-                GlobalClass.gbImportFolderAnalysisStop = true;
+            GlobalClass.gabImportExecutionStarted.set(false);
+            if(GlobalClass.gabImportFolderAnalysisRunning.get()){
+                GlobalClass.gabImportFolderAnalysisStop.set(true);
             }
             viewModelImportActivity.iImportMediaCategory = iNewImportMediaCatagory;
         }
@@ -443,7 +444,7 @@ public class Activity_Import extends AppCompatActivity {
             iNewImageSource = ViewModel_ImportActivity.IMAGE_SOURCE_WEBPAGE;
         } else if (radioButton_ImageSourceHoldingFolder.isChecked()){
             iNewImageSource = ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER;
-            GlobalClass.gbImportHoldingFolderAnalysisAutoStart = true;
+            GlobalClass.gabImportHoldingFolderAnalysisAutoStart.set(true);
         } else {
             iNewImageSource = ViewModel_ImportActivity.IMAGE_SOURCE_FOLDER;
         }
@@ -657,8 +658,8 @@ public class Activity_Import extends AppCompatActivity {
         if (bItemSelectedForDeletion) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE, false);
         } else {
-            GlobalClass.gbImportExecutionStarted = true;
-            GlobalClass.gbImportExecutionFinished = false;
+            GlobalClass.gabImportExecutionStarted.set(true);
+            GlobalClass.gabImportExecutionFinished.set(false);
             giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
             ViewPager2_Import.setCurrentItem(giStartingFragment, false);
             stackFragmentOrder.clear();
@@ -667,8 +668,8 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ImportConfirmDelete(View v){
-        GlobalClass.gbImportExecutionStarted = true;
-        GlobalClass.gbImportExecutionFinished = false;
+        GlobalClass.gabImportExecutionStarted.set(true);
+        GlobalClass.gabImportExecutionFinished.set(false);
         giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
         ViewPager2_Import.setCurrentItem(giStartingFragment, false);
         stackFragmentOrder.clear();
@@ -676,8 +677,8 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ImportConfirmRepair(View v){ //todo: merge with "buttonNextClick_ImportConfirmDelete"?
-        GlobalClass.gbImportExecutionStarted = true;
-        GlobalClass.gbImportExecutionFinished = false;
+        GlobalClass.gabImportExecutionStarted.set(true);
+        GlobalClass.gabImportExecutionFinished.set(false);
         giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
         ViewPager2_Import.setCurrentItem(giStartingFragment, false);
         stackFragmentOrder.clear();
@@ -696,8 +697,8 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonClick_Cancel(View v){
-        if(GlobalClass.gbImportFolderAnalysisRunning){
-            GlobalClass.gbImportFolderAnalysisStop = true;
+        if(GlobalClass.gabImportFolderAnalysisRunning.get()){
+            GlobalClass.gabImportFolderAnalysisStop.set(true);
         }
         gotoFinish();
     }

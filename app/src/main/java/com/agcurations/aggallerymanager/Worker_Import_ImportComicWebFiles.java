@@ -28,19 +28,22 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
     public static final String IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE";
 
-
+    public static final String EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_import_files_locator_al_key";
 
 
 
     String gsAddress;
+    String gsDataLocatorKey;
 
     public Worker_Import_ImportComicWebFiles(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         gsAddress = getInputData().getString(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
+        gsDataLocatorKey = getInputData().getString(EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY);
     }
 
     @NonNull
     @Override
+    @SuppressWarnings("unchecked")
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
@@ -57,7 +60,37 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
         String sMessage;
 
-        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
+        //Get the data needed by this worker:
+        if(gsDataLocatorKey == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Comic Web Files worker incomplete: no data key.",
+                    false, 0,
+                    false, "",
+                    IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+            return Result.failure();
+        }
+        if(!globalClass.WaitForObjectReady(GlobalClass.gabImportFileListTMAvailable, 1)){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Comic Web Files worker incomplete: timeout.",
+                    false, 0,
+                    false, "",
+                    IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+            return Result.failure();
+        }
+
+        GlobalClass.gabImportFileListTMAvailable.set(false);
+        ArrayList<ItemClass_File> alFileList = null;
+        if((ArrayList<ItemClass_File>)GlobalClass.gtmalImportFileList.get(gsDataLocatorKey) != null) {
+            alFileList = (ArrayList<ItemClass_File>) GlobalClass.gtmalImportFileList.get(gsDataLocatorKey).clone();
+            GlobalClass.gtmComicWebDataLocators.remove(gsDataLocatorKey);
+        }
+        GlobalClass.gabImportFileListTMAvailable.set(true);
+
+        if(alFileList == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Import Comic Web Files worker incomplete: no data.",
+                    false, 0,
+                    false, "",
+                    IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+            return Result.failure();
+        }
 
         long lProgressNumerator = 0L;
         long lProgressDenominator = alFileList.get(0).iComicPages;
@@ -92,8 +125,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         false, iProgressBarValue,
                         true, "Operation halted.",
                         IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                GlobalClass.gabImportExecutionRunning.set(false);
+                GlobalClass.gabImportExecutionFinished.set(true);
                 return Result.failure();
             } else {
 
@@ -175,8 +208,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
             globalClass.CatalogDataFile_CreateNewRecord(ciNew);
         } catch (Exception e) {
             e.printStackTrace();
-            globalClass.gbImportExecutionRunning = false;
-            globalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.failure();
         }
 
@@ -199,8 +232,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                             false, iProgressBarValue,
                             true, "Halted.",
                             IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure();
                 }
 
@@ -257,8 +290,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                                     false, iProgressBarValue,
                                     true, "Halted.",
                                     IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
-                            globalClass.gbImportExecutionRunning = false;
-                            globalClass.gbImportExecutionFinished = true;
+                            GlobalClass.gabImportExecutionRunning.set(false);
+                            GlobalClass.gabImportExecutionFinished.set(true);
                             return Result.failure();
                         }
                         request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " ComicID " + ciNew.sItemID);
@@ -351,8 +384,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
 
 
-        globalClass.gbImportExecutionRunning = false;
-        globalClass.gbImportExecutionFinished = true;
+        GlobalClass.gabImportExecutionRunning.set(false);
+        GlobalClass.gabImportExecutionFinished.set(true);
         return Result.success();
     }
 

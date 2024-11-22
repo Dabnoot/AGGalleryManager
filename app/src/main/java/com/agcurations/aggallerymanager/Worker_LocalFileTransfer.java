@@ -101,8 +101,8 @@ public class Worker_LocalFileTransfer extends Worker {
 
         if(!GlobalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
-            GlobalClass.gbImportExecutionRunning = false;
-            GlobalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.failure(DataErrorMessage(sMessage));
 
         }
@@ -114,22 +114,22 @@ public class Worker_LocalFileTransfer extends Worker {
             uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, GlobalClass.BASE_TYPE_TEXT, sLogFileName);
         } catch (FileNotFoundException e) {
             sMessage = "Could not create log file at location " + GlobalClass.gUriLogsFolder + ".";
-            GlobalClass.gbImportExecutionRunning = false;
-            GlobalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.failure(DataErrorMessage(sMessage));
         }
         if(uriLogFile == null){
             sMessage = "Could not create log file at location " + GlobalClass.gUriLogsFolder + ".";
-            GlobalClass.gbImportExecutionRunning = false;
-            GlobalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.failure(DataErrorMessage(sMessage));
         }
         try { //Required for the log file.
             gosLogFile = GlobalClass.gcrContentResolver.openOutputStream(uriLogFile, "wt");
             if(gosLogFile == null){
                 sMessage = "Could not open output stream to log file at location " + GlobalClass.gUriLogsFolder + ".";
-                GlobalClass.gbImportExecutionRunning = false;
-                GlobalClass.gbImportExecutionFinished = true;
+                GlobalClass.gabImportExecutionRunning.set(false);
+                GlobalClass.gabImportExecutionFinished.set(true);
                 return Result.failure(DataErrorMessage(sMessage));
             }
             gbwLogFile = new BufferedWriter(new OutputStreamWriter(gosLogFile));
@@ -146,8 +146,8 @@ public class Worker_LocalFileTransfer extends Worker {
                         false, 0,
                         false, "",
                         IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                GlobalClass.gbImportExecutionRunning = false;
-                GlobalClass.gbImportExecutionFinished = true;
+                GlobalClass.gabImportExecutionRunning.set(false);
+                GlobalClass.gabImportExecutionFinished.set(true);
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
@@ -175,8 +175,8 @@ public class Worker_LocalFileTransfer extends Worker {
                             false, 0,
                             false, "",
                             IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                    GlobalClass.gbImportExecutionRunning = false;
-                    GlobalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure(DataErrorMessage(sMessage));
                 }
 
@@ -245,8 +245,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                 false, 0,
                                 false, "",
                                 IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                        GlobalClass.gbImportExecutionRunning = false;
-                        GlobalClass.gbImportExecutionFinished = true;
+                        GlobalClass.gabImportExecutionRunning.set(false);
+                        GlobalClass.gabImportExecutionFinished.set(true);
                         return Result.failure(DataErrorMessage(sMessage));
                     }
 
@@ -596,8 +596,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                         false, "",
                                         IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                 CloseNotification();
-                                GlobalClass.gbImportExecutionRunning = false;
-                                GlobalClass.gbImportExecutionFinished = true;
+                                GlobalClass.gabImportExecutionRunning.set(false);
+                                GlobalClass.gabImportExecutionFinished.set(true);
                                 return Result.failure(DataErrorMessage(sMessage));
                             }
                         }
@@ -623,8 +623,8 @@ public class Worker_LocalFileTransfer extends Worker {
                             false, 0,
                             false, "",
                             IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                    GlobalClass.gbImportExecutionRunning = false;
-                    GlobalClass.gbImportExecutionFinished = true;
+                    GlobalClass.gabImportExecutionRunning.set(false);
+                    GlobalClass.gabImportExecutionFinished.set(true);
                     return Result.failure(DataErrorMessage(sMessage));
                 }
 
@@ -651,8 +651,8 @@ public class Worker_LocalFileTransfer extends Worker {
                         false, 0,
                         false, "",
                         IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-                GlobalClass.gbImportExecutionRunning = false;
-                GlobalClass.gbImportExecutionFinished = true;
+                GlobalClass.gabImportExecutionRunning.set(false);
+                GlobalClass.gabImportExecutionFinished.set(true);
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
@@ -661,8 +661,8 @@ public class Worker_LocalFileTransfer extends Worker {
             gosLogFile.flush();
             gosLogFile.close();
 
-            GlobalClass.gbImportExecutionRunning = false;
-            GlobalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.success(dataProgress);
 
         } catch (Exception e){
@@ -675,8 +675,8 @@ public class Worker_LocalFileTransfer extends Worker {
                     false, 0,
                     false, "",
                     IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
-            GlobalClass.gbImportExecutionRunning = false;
-            GlobalClass.gbImportExecutionFinished = true;
+            GlobalClass.gabImportExecutionRunning.set(false);
+            GlobalClass.gabImportExecutionFinished.set(true);
             return Result.failure(DataErrorMessage(sMessage));
         }
 

@@ -54,7 +54,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
     private ResponseReceiver_ComicWebDetect responseReceiver_ComicWebDetect;
 
-    private String gsUnknownAddress = "UNKNOWN_ADDRESS";
+    private final String gsUnknownAddress = "UNKNOWN_ADDRESS";
     private ArrayList<String> galsRequestedResources;
     private final boolean gbWebSiteCheck = false;
 
@@ -286,31 +286,31 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final Observer<String> observerStringHTML = new Observer<String>() {
+        final Observer<String> observerStringHTML = new Observer<>() {
             @Override
             public void onChanged(String sHTML) {
                 //Enter here when an assigned String is changed.
                 //In particular, we enter here when a web page has finished loading.
-                if(getActivity() != null) {
+                if (getActivity() != null) {
 
                     //Locate the WebComicDataLocator in-use, and assign the HTML:
-                    if(globalClass == null){
+                    if (globalClass == null) {
                         globalClass = (GlobalClass) getActivity().getApplicationContext();
                     }
-                    if(viewModelImportActivity.sWebAddress.equals("")){
+                    if (viewModelImportActivity.sWebAddress.equals("")) {
                         RecordWebAddress(); //We usually end up here during testing because I have
-                                            //  pre-loaded the editText with data, so onChanged for the editText
-                                            //  never fires.
+                        //  pre-loaded the editText with data, so onChanged for the editText
+                        //  never fires.
                     }
-                    for(ItemClass_WebComicDataLocator icWCDL: viewModelImportActivity.alWebComicDataLocators) {
+                    for (ItemClass_WebComicDataLocator icWCDL : viewModelImportActivity.alWebComicDataLocators) {
                         if (icWCDL.bHostNameMatchFound) {
                             icWCDL.sHTML = sHTML;
                             break;
                         }
                     }
 
-                    String sDataRecordKey = GlobalClass.getNewCatalogRecordID();
-                    if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+                    String sDataRecordKey = GlobalClass.getNewCatalogRecordID(); //Not actually getting a new catalog item ID, just using it to generate a unique ID for data tagging.
+                    if (!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)) {
                         Toast.makeText(getContext(), "Web data transfer unavailble.", Toast.LENGTH_SHORT).show();
                         return;
                     }
@@ -320,7 +320,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                     GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, (ArrayList<ItemClass_WebComicDataLocator>) viewModelImportActivity.alWebComicDataLocators.clone());
                     GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
-                    if(getContext() == null) return;
+                    if (getContext() == null) return;
                     SetTextStatusMessage("Analyzing HTML...");
                     String sCallerID = "Service_Import:startActionComicAnalyzeHTML()";
                     Double dTimeStamp = GlobalClass.GetTimeStampDouble();
@@ -456,7 +456,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     //=========================================================================
     //========================= Receiver ======================================
 
-    @SuppressWarnings("unchecked")
     public class ResponseReceiver_ComicWebDetect extends BroadcastReceiver {
 
         @Override
@@ -484,11 +483,8 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                         //Present the text to the user:
                         SetTextStatusMessage(sLogLine);
                         //Check to see if the operation is complete:
-                        if (sLogLine.contains("Click 'Next' to continue.")) {
+                        if (sLogLine.contains("Click 'Next' to continue.")) { //todo: Add an actual flag variable.
                             gButton_Next.setEnabled(true);
-                            if(false){
-                                gButton_Next.performClick();
-                            }
                         } else {
                             gButton_Next.setEnabled(false);
                         }

@@ -76,41 +76,17 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
 
         // Construct the data source
+
+        //Set the destination folder on each item:
+        GlobalClass.AssignDestinationFolders(viewModelImportActivity.alfiConfirmedFileImports, viewModelImportActivity.iImportMediaCategory);
+
+        //Calculate the import size and create a filtered list of actual imports (excluding files the user might have marked for deletion if a local-storage import):
         long lRequiredStorageSpaceBytes = 0L;
         ArrayList<ItemClass_File> alicf_FileImports = new ArrayList<>();
         for(ItemClass_File fileItem: viewModelImportActivity.alfiConfirmedFileImports){
             if(!fileItem.bMarkedForDeletion) {
                 lRequiredStorageSpaceBytes += fileItem.lSizeBytes;
-
-                //Set the destination folder on each file item:
-                ItemClass_StorageFolderAvailability icStorageFolderAvailability = GlobalClass.gtmFolderAvailability.get(viewModelImportActivity.iImportMediaCategory);
-                if(icStorageFolderAvailability == null){
-                    //Get the next folder:
-                    GlobalClass.getAGGMStorageFolderAvailability(viewModelImportActivity.iImportMediaCategory);
-                    icStorageFolderAvailability = GlobalClass.gtmFolderAvailability.get(viewModelImportActivity.iImportMediaCategory);
-                }
-                if(icStorageFolderAvailability != null) {
-                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                        if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
-                            //If this is the comic folder fileItem, increase the file count by 1.
-                            //  The comic will be stored in a folder inside the subfolder. It is the
-                            //  subfolder count that is being increased.
-                            icStorageFolderAvailability.iFileCount++;
-                        }
-                    } else {
-                        icStorageFolderAvailability.iFileCount++;
-                    }
-                    if(icStorageFolderAvailability.iFileCount >= 250){
-                        //Designate the next folder to hold content:
-                        int iFolderID = Integer.parseInt(icStorageFolderAvailability.sFolderName); //Should not yield an exception as it should have already been caught in a prior process.
-                        iFolderID++;
-                        icStorageFolderAvailability.iFileCount = 0;
-                        icStorageFolderAvailability.sFolderName = "" + iFolderID;
-                    }
-
-                    fileItem.sDestinationFolder = icStorageFolderAvailability.sFolderName;
-                    alicf_FileImports.add(fileItem);
-                }
+                alicf_FileImports.add(fileItem);
             }
         }
 

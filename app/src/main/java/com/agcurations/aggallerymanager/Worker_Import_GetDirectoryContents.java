@@ -97,7 +97,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                         long lProgressDenominatorQuick = lProgressDenominator;
 
                         cImport.moveToPosition(-1);
-                        while (cImport.moveToNext() && !GlobalClass.gbImportFolderAnalysisStop) {
+                        while (cImport.moveToNext() && !GlobalClass.gabImportFolderAnalysisStop.get()) {
                             String sSubFolderDocID = cImport.getString(0);
                             String sSubFolderMimeType = cImport.getString(2);
 
@@ -153,7 +153,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                     mediaMetadataRetriever = new MediaMetadataRetriever();
 
                     cImport.moveToPosition(-1);
-                    while (cImport.moveToNext() && !GlobalClass.gbImportFolderAnalysisStop) {
+                    while (cImport.moveToNext() && !GlobalClass.gabImportFolderAnalysisStop.get()) {
 
                         //Update progress bar:
                         //Update progress right away in order to avoid instances in which a loop is skipped.
@@ -558,7 +558,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                                 String sMessage = "Problem identifying page number for comic in folder \"" +
                                                         sDocName + "\", file \"" + file.sFileOrFolderName +
                                                         "\". Note that the system uses alphabetization to sort comic pages.\n";
-                                                globalClass.gsbImportFolderAnalysisLog.append(sMessage);
+                                                GlobalClass.gsbImportFolderAnalysisLog.append(sMessage);
                                                 globalClass.problemNotificationConfig(sMessage, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                                             }
                                         }
@@ -674,10 +674,10 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                 } //End if "there are items in the folder that the user selected.
 
             }catch (Exception e){
-                GlobalClass.gbImportFolderAnalysisRunning = false;
-                GlobalClass.gbImportFolderAnalysisFinished = true;
+                GlobalClass.gabImportFolderAnalysisRunning.set(false);
+                GlobalClass.gabImportFolderAnalysisFinished.set(true);
                 String sMessage = "Problem during handleAction_GetDirectoryContents: " + e.getMessage();
-                globalClass.gsbImportFolderAnalysisLog.append(sMessage);
+                GlobalClass.gsbImportFolderAnalysisLog.append(sMessage);
                 globalClass.problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                 return Result.failure();
             }
@@ -691,15 +691,15 @@ public class Worker_Import_GetDirectoryContents extends Worker {
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
 
             //Set finished and broadcast so that the fragment knows that we are done.
-            GlobalClass.gbImportFolderAnalysisFinished = true;
+            GlobalClass.gabImportFolderAnalysisFinished.set(true);
             globalClass.BroadcastProgress(false, "",
                     true, iProgressBarValue,
                     true, lProgressNumerator + "/" + lProgressDenominator,
                     Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
-            GlobalClass.gbImportFolderAnalysisRunning = false;
-            if(GlobalClass.gbImportFolderAnalysisStop) {
-                GlobalClass.gbImportFolderAnalysisStop = false;
+            GlobalClass.gabImportFolderAnalysisRunning.set(false);
+            if(GlobalClass.gabImportFolderAnalysisStop.get()) {
+                GlobalClass.gabImportFolderAnalysisStop.set(false);
             }
 
         }

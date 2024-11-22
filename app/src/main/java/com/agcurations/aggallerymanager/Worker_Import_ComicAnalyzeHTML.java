@@ -40,6 +40,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
     @NonNull
     @Override
+    @SuppressWarnings("unchecked")
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
@@ -51,6 +52,13 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
 
         //Get the data needed by this worker:
+        if(gsDataRecordKey == null){
+            globalClass.BroadcastProgress(true, "Data transfer to Comic Analysis worker incomplete: no data key.",
+                    false, 0,
+                    false, "",
+                    WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+            return Result.failure();
+        }
         if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
             globalClass.BroadcastProgress(true, "Data transfer to Comic Analysis worker incomplete: timeout.",
                     false, 0,
@@ -58,8 +66,9 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
             return Result.failure();
         }
+
         GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
-        ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators = GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey);
+        ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators = (ArrayList<ItemClass_WebComicDataLocator>)GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey).clone();
         GlobalClass.gtmComicWebDataLocators.remove(gsDataRecordKey);
         GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
@@ -383,8 +392,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                    GlobalClass.gbImportComicWebAnalysisRunning = false;
-                    GlobalClass.gbImportComicWebAnalysisFinished = true;
+                    GlobalClass.gabImportComicWebAnalysisRunning.set(false);
+                    GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                     return Result.failure();
                 }
                 //Page addresses should now be acquired.
@@ -480,8 +489,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 //sendBroadcast(broadcastIntent);
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                GlobalClass.gbImportComicWebAnalysisRunning = false;
-                GlobalClass.gbImportComicWebAnalysisFinished = true;
+                GlobalClass.gabImportComicWebAnalysisRunning.set(false);
+                GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                 return Result.failure();
             }
 
@@ -683,8 +692,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                        GlobalClass.gbImportComicWebAnalysisRunning = false;
-                        GlobalClass.gbImportComicWebAnalysisFinished = true;
+                        GlobalClass.gabImportComicWebAnalysisRunning.set(false);
+                        GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                         return Result.failure();
                     }
                     //Page addresses should now be acquired.
@@ -764,8 +773,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 //sendBroadcast(broadcastIntent);
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-                GlobalClass.gbImportComicWebAnalysisRunning = false;
-                GlobalClass.gbImportComicWebAnalysisFinished = true;
+                GlobalClass.gabImportComicWebAnalysisRunning.set(false);
+                GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                 return Result.failure();
             }
 
@@ -781,8 +790,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         }
 
 
-        GlobalClass.gbImportComicWebAnalysisRunning = false;
-        GlobalClass.gbImportComicWebAnalysisFinished = true;
+        GlobalClass.gabImportComicWebAnalysisRunning.set(false);
+        GlobalClass.gabImportComicWebAnalysisFinished.set(true);
 
 
 

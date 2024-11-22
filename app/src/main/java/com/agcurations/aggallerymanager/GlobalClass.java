@@ -199,7 +199,8 @@ public class GlobalClass extends Application {
 
     public static final String gsUnsortedFolderName = "etc";  //Todo: this folder should not be used anymore. Was used when a tag was not assigned to an item.
 
-    public static ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
+    public static AtomicBoolean gabImportFileListTMAvailable = new AtomicBoolean(true);
+    public static TreeMap<String, ArrayList<ItemClass_File>> gtmalImportFileList = new TreeMap<>(); //Used to pass a large list of files to import to the import service.
     public static ArrayList<ItemClass_File> galPreviewFileList; //Same as above, but for preview.
     //  This is done because the list of files can exceed the intent extra transaction size limit.
 
@@ -237,10 +238,10 @@ public class GlobalClass extends Application {
     // These variables prevent the system/user from starting another folder analysis until an
     // existing folder analysis operation is finished.
     //public boolean gbImportFolderAnalysisStarted = false; This item not needed for this fragment.
-    public static boolean gbImportFolderAnalysisRunning = false;            //todo: Change to AtomicBoolean
-    public static boolean gbImportHoldingFolderAnalysisAutoStart = false;   //todo: Change to AtomicBoolean?
-    public static boolean gbImportFolderAnalysisStop = false;               //todo: Change to AtomicBoolean
-    public static boolean gbImportFolderAnalysisFinished = false;           //todo: Change to AtomicBoolean
+    public static AtomicBoolean gabImportFolderAnalysisRunning = new AtomicBoolean(false);
+    public static AtomicBoolean gabImportHoldingFolderAnalysisAutoStart = new AtomicBoolean(false);
+    public static AtomicBoolean gabImportFolderAnalysisStop = new AtomicBoolean(false);
+    public static AtomicBoolean gabImportFolderAnalysisFinished = new AtomicBoolean(false);
     public static StringBuilder gsbImportFolderAnalysisLog = new StringBuilder();
     public static int giImportFolderAnalysisProgressBarPercent = 0;
     public static String gsImportFolderAnalysisProgressBarText = "";
@@ -248,9 +249,9 @@ public class GlobalClass extends Application {
     //Variables to control starting of import execution:
     // These variables prevent the system/user from starting another import until an existing
     // import operation is finished.
-    public static boolean gbImportExecutionStarted = false;                        //todo: Change to AtomicBoolean?
-    public static boolean gbImportExecutionRunning = false;                        //todo: Change to AtomicBoolean
-    public static boolean gbImportExecutionFinished = false;                       //todo: Change to AtomicBoolean
+    public static AtomicBoolean gabImportExecutionStarted = new AtomicBoolean(false);
+    public static AtomicBoolean gabImportExecutionRunning = new AtomicBoolean(false);
+    public static AtomicBoolean gabImportExecutionFinished = new AtomicBoolean(false);
     public static StringBuilder gsbImportExecutionLog = new StringBuilder();
     public static int giImportExecutionProgressBarPercent = 0;
     public static String gsImportExecutionProgressBarText = "";
@@ -269,8 +270,8 @@ public class GlobalClass extends Application {
     // operation is finished.
     public static AtomicBoolean gabComicWebAnalysDataTMAvailable = new AtomicBoolean(true);
     public static TreeMap<String, ArrayList<ItemClass_WebComicDataLocator>> gtmComicWebDataLocators = new TreeMap<>();
-    public static boolean gbImportComicWebAnalysisRunning = false;
-    public static boolean gbImportComicWebAnalysisFinished = false;
+    public static AtomicBoolean gabImportComicWebAnalysisRunning = new AtomicBoolean(false);
+    public static AtomicBoolean gabImportComicWebAnalysisFinished = new AtomicBoolean(false);
 
 
 
@@ -3395,7 +3396,47 @@ public class GlobalClass extends Application {
             Log.d("AGGalleryManager", "Problem querying folder.");
         }
 
+    }
 
+    public static void AssignDestinationFolders(ArrayList<ItemClass_File> alicf, int iMediaCategory){
+        //This routine is used to assign folders to items being imported.
+        //If there end up being more than X items per folder, it's really no big deal
+        //  so long as the destination folder is in fact recorded.
+        //  Item count limit per folder is really for human ability to browse objects.
+
+        for(ItemClass_File fileItem: alicf){
+            if(!fileItem.bMarkedForDeletion) {
+
+                //Set the destination folder on each file item:
+                ItemClass_StorageFolderAvailability icStorageFolderAvailability = GlobalClass.gtmFolderAvailability.get(iMediaCategory);
+                if(icStorageFolderAvailability == null){
+                    //Get the next folder:
+                    GlobalClass.getAGGMStorageFolderAvailability(iMediaCategory);
+                    icStorageFolderAvailability = GlobalClass.gtmFolderAvailability.get(iMediaCategory);
+                }
+                if(icStorageFolderAvailability != null) {
+                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                        if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
+                            //If this is the comic folder fileItem, increase the file count by 1.
+                            //  The comic will be stored in a folder inside the subfolder. It is the
+                            //  subfolder count that is being increased.
+                            icStorageFolderAvailability.iFileCount++;
+                        }
+                    } else {
+                        icStorageFolderAvailability.iFileCount++;
+                    }
+                    if(icStorageFolderAvailability.iFileCount >= 250){
+                        //Designate the next folder to hold content:
+                        int iFolderID = Integer.parseInt(icStorageFolderAvailability.sFolderName); //Should not yield an exception as it should have already been caught in a prior process.
+                        iFolderID++;
+                        icStorageFolderAvailability.iFileCount = 0;
+                        icStorageFolderAvailability.sFolderName = "" + iFolderID;
+                    }
+
+                    fileItem.sDestinationFolder = icStorageFolderAvailability.sFolderName;
+                }
+            }
+        }
 
     }
 
@@ -3849,8 +3890,9 @@ public class GlobalClass extends Application {
         ItemClass_WebComicDataLocator itemClass_webComicDataLocator;
 
         itemClass_webComicDataLocator =
-                FormWebImageSeriesDataLocator("^h%ttps:\\/\\/n%hen%tai\\.n%et\\/(.*)",
+                FormWebImageSeriesDataLocator("^h%t%tps:\\/\\/n%he%n%ta%i\\.n%e%t\\/(.*)",
                         null);
+        itemClass_webComicDataLocator.sComicSeriesIDStartString = "h%t%tps://n%he%n%ta%i.n%e%t/g/";
         itemClass_webComicDataLocator.sShortName = "nH"; //For hard-coded behavior differentiation
         alWebComicDataLocators.add(itemClass_webComicDataLocator);
 
