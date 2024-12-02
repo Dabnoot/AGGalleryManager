@@ -3213,6 +3213,8 @@ public class GlobalClass extends Application {
     //=========  BROWSER OPTIONS  ======================================================================
     //==================================================================================================
 
+    public static final String USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX = "_MaxBrowserTabCount";
+    public static final int MAX_BROWSER_TAB_COUNT_DEFAULT = 15;
     public static int giMaxTabCount = 15;
 
     //====================================================================================

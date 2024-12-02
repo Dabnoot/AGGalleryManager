@@ -4,11 +4,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -86,6 +88,8 @@ public class Activity_UserSelection extends AppCompatActivity {
                         GlobalClass.gicuCurrentUser = icu;
                         setUserAdjustableMaturityFilters();
 
+                        setUserPreferences();
+
                         globalClass.populateApprovedTags();
                         resetContentSortAndFilterTags();
                         Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
@@ -106,6 +110,8 @@ public class Activity_UserSelection extends AppCompatActivity {
                 //If this user record does not require a pin to log-in, merely log-in.
                 GlobalClass.gicuCurrentUser = icu;
                 setUserAdjustableMaturityFilters();
+
+                setUserPreferences();
 
                 globalClass.populateApprovedTags();
                 resetContentSortAndFilterTags();
@@ -161,6 +167,26 @@ public class Activity_UserSelection extends AppCompatActivity {
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         broadcastIntent.putExtra(Activity_UserSelectionResponseReceiver.EXTRA_BOOL_CLOSE_ACTIVITY, true);
         LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
+    }
+
+    private void setUserPreferences(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
+
+        //Set the maximum browser tabs allowed open to the user:
+        String sMaxBrowserTabCountPref = sPreferenceNamePrefix + GlobalClass.USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX;
+        String sMaxBrowserTabCountByUser = sharedPreferences.getString(sMaxBrowserTabCountPref, null);
+        if(sMaxBrowserTabCountByUser != null){
+            try{
+                GlobalClass.giMaxTabCount = Integer.parseInt(sMaxBrowserTabCountByUser);
+            } catch (Exception ignored){
+                GlobalClass.giMaxTabCount = GlobalClass.MAX_BROWSER_TAB_COUNT_DEFAULT;
+            }
+        } else {
+            GlobalClass.giMaxTabCount = GlobalClass.MAX_BROWSER_TAB_COUNT_DEFAULT;
+        }
+
     }
 
     //Create a listener

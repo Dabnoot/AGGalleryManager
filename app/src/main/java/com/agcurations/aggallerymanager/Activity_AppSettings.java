@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
@@ -23,8 +24,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 
 public class Activity_AppSettings extends AppCompatActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
@@ -197,6 +200,8 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
 
+                    if(getContext() == null) return false;
+
                     //Confirm with the user that they are doing what they want to do:
                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
                     builder.setTitle("AG Gallery Manager Web Browser");
@@ -237,6 +242,8 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
 
+                    if(getContext() == null) return false;
+
                     //Confirm with the user that they are doing what they want to do:
                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
                     builder.setTitle("AG Gallery Manager Web Browser");
@@ -270,6 +277,35 @@ public class Activity_AppSettings extends AppCompatActivity implements
                     return false;
                 }
             });
+
+            EditTextPreference editTextPreference_max_tab_count = findPreference("max_tab_count");
+            if(editTextPreference_max_tab_count != null) {
+                String sValue = "" + GlobalClass.giMaxTabCount;
+                editTextPreference_max_tab_count.setText(sValue);
+
+                editTextPreference_max_tab_count.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+
+                        if(getContext() == null) return false;
+
+                        //Map this preference to a custom preference by the user name:
+                        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+
+                        String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
+                        String sMaxBrowserTabCountPref = sPreferenceNamePrefix + GlobalClass.USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX;
+
+                        String sNewValue = (String) newValue;
+
+                        sharedPreferences.edit()
+                                .putString(sMaxBrowserTabCountPref, sNewValue)
+                                .apply();
+
+                        return true;
+                    }
+                });
+            }
+
 
 
         }

@@ -14,4 +14,12 @@
         android:summary="Clears all cookies stored in relation to this app. Does not clear cookies related to other apps."
         />
 
+    <EditTextPreference
+        android:title="Max Tab Count"
+        android:key="max_tab_count"
+        android:defaultValue="15"
+        android:inputType="numberDecimal"
+        android:summary="Defines the maximum allowable browser tabs that can be open at one time."
+        />
+
 </PreferenceScreen>
