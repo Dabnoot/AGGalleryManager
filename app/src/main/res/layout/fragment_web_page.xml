@@ -67,7 +67,7 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/linearLayout_EndButtons"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
@@ -85,9 +85,17 @@
                 android:scaleType="center"
                 android:src="@drawable/download" />
 
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/linearProgressIndicator_DLInspection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignStart="@+id/imageButton_ImportContent"
+                android:layout_alignEnd="@+id/imageButton_ImportContent"
+                android:layout_alignBottom="@+id/imageButton_ImportContent"
+                android:visibility="invisible"/>
 
 
-        </LinearLayout>
+        </RelativeLayout>
     </RelativeLayout>
 
     <com.agcurations.aggallerymanager.VideoEnabledWebView

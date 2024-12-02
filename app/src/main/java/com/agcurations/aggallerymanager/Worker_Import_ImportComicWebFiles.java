@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.app.DownloadManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -31,7 +33,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
     public static final String EXTRA_STRING_IMPORT_FILES_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_import_files_locator_al_key";
 
-
+    public static final String EXTRA_BOOLEAN_NEW_CAT_ITEM_CREATED = "com.agcurations.aggallermanager.extra_boolean_new_cat_item_created";
 
     String gsAddress;
     String gsDataLocatorKey;
@@ -324,9 +326,17 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 }
                 //Success downloading files.
 
+                //Send a message to indicate that there is a new item in the catalog.
+                //This is to be picked up by Fragment_WebPageTab.
+                Intent broadcastIntent = new Intent();
+                broadcastIntent.setAction(IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+                broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+                broadcastIntent.putExtra(EXTRA_BOOLEAN_NEW_CAT_ITEM_CREATED, true);
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+
+
                 //Start a worker to move the downloaded files:
-
-
                 long[] lDownloadIDs = new long[allDownloadIDs.size()];
                 for(int i = 0; i < allDownloadIDs.size(); i++){
                     lDownloadIDs[i] = allDownloadIDs.get(i);

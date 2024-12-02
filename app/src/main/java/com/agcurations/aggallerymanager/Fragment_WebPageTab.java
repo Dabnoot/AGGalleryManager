@@ -91,6 +91,7 @@ public class Fragment_WebPageTab extends Fragment {
     ImageButton gImageButton_ImportContent;
 
     private ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators;
+    private boolean gbWebpageAnalysisRetry = true; //This is to re-trigger an analysis in the event that a page did not load fully before "onPageFinished" was triggered.
 
     private String gsCustomDownloadPrompt = "";
     private final int CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT = 1;
@@ -141,6 +142,7 @@ public class Fragment_WebPageTab extends Fragment {
         responseReceiver_WebPageTab = new ResponseReceiver_WebPageTab();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Worker_Import_ComicAnalyzeHTML.WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getActivity().getApplicationContext()).registerReceiver(responseReceiver_WebPageTab,filter);
 
@@ -828,6 +830,7 @@ public class Fragment_WebPageTab extends Fragment {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
+                gbWebpageAnalysisRetry = true; //Allow a one-shot analysis retry if necessary.
                 gEditText_Address.setText(url);
 
                 //Update the recorded webpage history for this tab:
@@ -1095,7 +1098,7 @@ public class Fragment_WebPageTab extends Fragment {
                 giMediaCategory = -1;
 
                 //Set color of the download icon to be grey:
-                SetDownloadButtonState(NORMAL);
+                SetDownloadButtonColor(NORMAL);
 
                 //Check to see if this is a comic site and if the user has downloaded a related comic.
                 //  If so, prep to allow the user to download and group the comic.
@@ -1110,7 +1113,7 @@ public class Fragment_WebPageTab extends Fragment {
                         if(icWCDL.sAddress.equals(gsWebAddress)){
                             if(icWCDL.alicf_ComicDownloadFileItems != null){
                                 //Data for this web page has already been acquired.
-                                SetDownloadButtonState(READY);
+                                SetDownloadButtonColor(RECOGNIZED);
                             }
                         }
                         icWCDL.sAddress = gsWebAddress;  //Passing this item here so that this icWCDL can be passed to a processing worker,
@@ -1140,6 +1143,10 @@ public class Fragment_WebPageTab extends Fragment {
                 if (!sComicSeriesIDStartString.equals("")) {
                     //If data has been provided internally to search for a series...
                     if(gsWebAddress.startsWith(sComicSeriesIDStartString)){
+                        //If we are here, then this website contains a comic that can be downloaded.
+                        //  Set the download button color.
+                        SetDownloadButtonColor(READY);
+
                         //If this item appears to be a potential comic series entry. Check the ID.
                         sComicSeriesID = gsWebAddress.substring(sComicSeriesIDStartString.length());
                         int iLastSlashIndex = sComicSeriesID.indexOf("/");
@@ -1190,7 +1197,7 @@ public class Fragment_WebPageTab extends Fragment {
                 if(bItemInCatalog){
                     gsCustomDownloadPrompt = "This comic exists in the catalog. Would you like to proceed with the import activity?";
                     giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
-                    SetDownloadButtonState(DUPLICATE);
+                    SetDownloadButtonColor(DUPLICATE);
                     return;
                 }
 
@@ -1257,6 +1264,15 @@ public class Fragment_WebPageTab extends Fragment {
             if (bError) {
                 String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+
+                boolean bRecoverableAnalysisError = intent.getBooleanExtra(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE, false);
+                if(bRecoverableAnalysisError && gbWebpageAnalysisRetry){
+                    gbWebpageAnalysisRetry = false;
+                    gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
+                            "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable to check the background html.
+                    Toast.makeText(getContext(), "Analysis retry...", Toast.LENGTH_SHORT).show();
+                }
+
             } else {
 
                 //Check to see if this is a response to request to get comic downloads from html:
@@ -1272,8 +1288,9 @@ public class Fragment_WebPageTab extends Fragment {
                         for (ItemClass_WebComicDataLocator icWCDL : galWebComicDataLocators) {
                             if (icWCDL.sAddress.matches(sDataRelatedURLAddress)) {
                                 icWCDL.alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
-                                //Set color of the download icon to be green:
-                                SetDownloadButtonState(READY);
+                                //Set color of the download icon to be blue:
+                                SetDownloadButtonColor(RECOGNIZED);
+                                Toast.makeText(getContext(), "Success detecting matching comic and images.", Toast.LENGTH_SHORT).show();
                                 gLinearProgressIndicator_DLInspection.setProgress(0);
                                 gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
                                 break;
@@ -1281,8 +1298,42 @@ public class Fragment_WebPageTab extends Fragment {
                         }
                     }
 
+                }
 
+                boolean bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                if (bUpdatePercentComplete) {
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                    if(gLinearProgressIndicator_DLInspection != null) {
+                        gLinearProgressIndicator_DLInspection.setProgress(iAmountComplete);
+                        if (iAmountComplete == 100) {
+                            gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
+                        } else {
+                            gLinearProgressIndicator_DLInspection.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
 
+                //Check to see if it is for this web address and
+                // change the download icon color to indicate duplicate.
+                boolean bNewCatItemCreated = intent.getBooleanExtra(Worker_Import_ImportComicWebFiles.EXTRA_BOOLEAN_NEW_CAT_ITEM_CREATED,false);
+                if(bNewCatItemCreated) {
+                    String sCatalogItem_Address;
+                    for (Map.Entry<String, ItemClass_CatalogItem>
+                            entry : GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+
+                        if (!entry.getValue().alsApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)) {
+                            //Don't notify the user that there are existing, matching catalog items if those items
+                            //  are not approved for this user.
+                            continue;
+                        }
+
+                        sCatalogItem_Address = entry.getValue().sSource;
+                        if (sCatalogItem_Address.equals(gsWebAddress)) {      //Check every item to ensure no exact match.
+                            SetDownloadButtonColor(DUPLICATE);
+                            break;
+                        }
+                    }
                 }
 
             }
@@ -1294,13 +1345,16 @@ public class Fragment_WebPageTab extends Fragment {
 
     private final int NORMAL = 1;
     private final int READY = 2;
-    private final int DUPLICATE = 3;
-    private void SetDownloadButtonState(int iColor){
+    private final int RECOGNIZED = 3;
+    private final int DUPLICATE = 4;
+    private void SetDownloadButtonColor(int iColor){
         int iColorInt;
         if(iColor == NORMAL) {
             iColorInt = ContextCompat.getColor(gContext, R.color.color_download_normal);
         } else if(iColor == READY){
             iColorInt = ContextCompat.getColor(gContext, R.color.color_download_ready);
+        } else if(iColor == RECOGNIZED){
+            iColorInt = ContextCompat.getColor(gContext, R.color.color_download_recognized);
         } else {
             iColorInt = ContextCompat.getColor(gContext, R.color.color_download_duplicate);
         }
