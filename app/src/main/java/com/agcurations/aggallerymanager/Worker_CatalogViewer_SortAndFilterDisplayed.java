@@ -354,51 +354,53 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
         }
 
         if(!bSearchMatchApplicable) {
-            //Hide all but first of group items, so long as the user is not explictly searching for text:
-            ArrayList<String> alsUniqueGroupIDs = new ArrayList<>();
+            if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) { //Only do this for comics at this time.
+                //Hide all but first of group items, so long as the user is not explictly searching for text:
+                ArrayList<String> alsUniqueGroupIDs = new ArrayList<>();
 
-            for (Map.Entry<String, ItemClass_CatalogItem>
-                    entry : treeMapPreSort.entrySet()) {
-                if (entry.getValue().sGroupID != "") {
-                    if (!alsUniqueGroupIDs.contains(entry.getValue().sGroupID)) {
-                        alsUniqueGroupIDs.add(entry.getValue().sGroupID);
-                    }
-                }
-            }
-            //All group IDs identified.
-            ArrayList<String> alsGroupMembersToHide = new ArrayList<>();
-            for (String sGroupID : alsUniqueGroupIDs) {
-                double dLastItemDateTime = 0;
-                String sLastItemID = "";
                 for (Map.Entry<String, ItemClass_CatalogItem>
                         entry : treeMapPreSort.entrySet()) {
-                    if (entry.getValue().sGroupID.equals(sGroupID)) {
-                        if (sLastItemID.equals("")) {
-                            //If this is the first time we have found a member of this group, initialize.
-                            sLastItemID = entry.getValue().sItemID;
-                            dLastItemDateTime = entry.getValue().dDatetime_Import;
-                        } else {
-                            //If this is not the first time we have found a member of this group...
-
-                            if (dLastItemDateTime < entry.getValue().dDatetime_Import) {
-                                // If this item is newer than the last group item identified,
-                                // mark it to be excluded from the sort results.
-                                alsGroupMembersToHide.add(entry.getKey());
-                            } else {
-                                //Else this item is older than the last group item identified,
-                                // mark it as the latest to compare to and mark the one we were
-                                // previously comparing against to be excluded from the sort results.
-                                alsGroupMembersToHide.add(sLastItemID);
+                    if (!entry.getValue().sGroupID.equals("")) {
+                        if (!alsUniqueGroupIDs.contains(entry.getValue().sGroupID)) {
+                            alsUniqueGroupIDs.add(entry.getValue().sGroupID);
+                        }
+                    }
+                }
+                //All group IDs identified.
+                ArrayList<String> alsGroupMembersToHide = new ArrayList<>();
+                for (String sGroupID : alsUniqueGroupIDs) {
+                    double dLastItemDateTime = 0;
+                    String sLastItemID = "";
+                    for (Map.Entry<String, ItemClass_CatalogItem>
+                            entry : treeMapPreSort.entrySet()) {
+                        if (entry.getValue().sGroupID.equals(sGroupID)) {
+                            if (sLastItemID.equals("")) {
+                                //If this is the first time we have found a member of this group, initialize.
                                 sLastItemID = entry.getValue().sItemID;
                                 dLastItemDateTime = entry.getValue().dDatetime_Import;
+                            } else {
+                                //If this is not the first time we have found a member of this group...
+
+                                if (dLastItemDateTime < entry.getValue().dDatetime_Import) {
+                                    // If this item is newer than the last group item identified,
+                                    // mark it to be excluded from the sort results.
+                                    alsGroupMembersToHide.add(entry.getKey());
+                                } else {
+                                    //Else this item is older than the last group item identified,
+                                    // mark it as the latest to compare to and mark the one we were
+                                    // previously comparing against to be excluded from the sort results.
+                                    alsGroupMembersToHide.add(sLastItemID);
+                                    sLastItemID = entry.getValue().sItemID;
+                                    dLastItemDateTime = entry.getValue().dDatetime_Import;
+                                }
                             }
                         }
                     }
                 }
-            }
-            //Hide identified group items which are not the first of their group:
-            for(String sItemID: alsGroupMembersToHide){
-                treeMapPreSort.remove(sItemID);
+                //Hide identified group items which are not the first of their group:
+                for (String sItemID : alsGroupMembersToHide) {
+                    treeMapPreSort.remove(sItemID);
+                }
             }
         }
 
