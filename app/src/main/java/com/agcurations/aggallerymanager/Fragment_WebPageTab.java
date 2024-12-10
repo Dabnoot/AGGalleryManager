@@ -833,6 +833,9 @@ public class Fragment_WebPageTab extends Fragment {
                 gbWebpageAnalysisRetry = true; //Allow a one-shot analysis retry if necessary.
                 gEditText_Address.setText(url);
 
+                //Set color of the download icon to be grey:
+                SetDownloadButtonColor(NORMAL);
+
                 //Update the recorded webpage history for this tab:
                 //Find the associated WebPageTabData:
                 for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
@@ -1097,9 +1100,6 @@ public class Fragment_WebPageTab extends Fragment {
                 gsMatchingCatalogItemID = "";
                 giMediaCategory = -1;
 
-                //Set color of the download icon to be grey:
-                SetDownloadButtonColor(NORMAL);
-
                 //Check to see if this is a comic site and if the user has downloaded a related comic.
                 //  If so, prep to allow the user to download and group the comic.
                 galWebComicDataLocators = GlobalClass.getComicWebDataKeys();
@@ -1270,7 +1270,7 @@ public class Fragment_WebPageTab extends Fragment {
                     gbWebpageAnalysisRetry = false;
                     gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
                             "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable to check the background html.
-                    Toast.makeText(getContext(), "Analysis retry...", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getContext(), "Analysis retry...", Toast.LENGTH_SHORT).show();
                 }
 
             } else {
@@ -1290,7 +1290,7 @@ public class Fragment_WebPageTab extends Fragment {
                                 icWCDL.alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
                                 //Set color of the download icon to be blue:
                                 SetDownloadButtonColor(RECOGNIZED);
-                                Toast.makeText(getContext(), "Success detecting matching comic and images.", Toast.LENGTH_SHORT).show();
+                                //Toast.makeText(getContext(), "Success detecting matching comic and images.", Toast.LENGTH_SHORT).show();
                                 gLinearProgressIndicator_DLInspection.setProgress(0);
                                 gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
                                 break;
