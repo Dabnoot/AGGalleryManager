@@ -1,14 +1,17 @@
 package com.agcurations.aggallerymanager;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -29,6 +32,9 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
 
     public static final String EXTRA_COMIC_PAGE_START = "COMIC_PAGE_START";
 
+    private int giEditButtonVisible = View.INVISIBLE;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,9 +49,6 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
                     WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
         }
 
-        // Initialize RecyclerView
-        RecyclerView gRecyclerView_ComicViewer = findViewById(R.id.recyclerView_ComicPages);
-        gRecyclerView_ComicViewer.setLayoutManager(new LinearLayoutManager(this));
 
 
         // Initialize data
@@ -121,15 +124,25 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
 
         // Initialize adapter and set to RecyclerView
         ComicAdapter comicAdapter = new ComicAdapter(comicUris);
-        gRecyclerView_ComicViewer.setAdapter(comicAdapter);
+        // Initialize RecyclerView
+        RecyclerView recyclerView_ComicViewer = findViewById(R.id.recyclerView_ComicPages);
+        recyclerView_ComicViewer.setLayoutManager(new LinearLayoutManager(this));
+
+        recyclerView_ComicViewer.setAdapter(comicAdapter);
 
         if(iStartPage > 0) {
             //Navigate to a start page:
-            RecyclerView.LayoutManager rvlm = gRecyclerView_ComicViewer.getLayoutManager();
+            RecyclerView.LayoutManager rvlm = recyclerView_ComicViewer.getLayoutManager();
             if(rvlm != null){
                 rvlm.scrollToPosition(iStartPage);
             }
         }
+
+
+
+
+
+
     }
 
 
@@ -139,10 +152,12 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
 
         public class ComicViewHolder extends RecyclerView.ViewHolder {
             ImageView imageView_ComicPage;
+            ImageButton imageButton_Edit;
 
             public ComicViewHolder(@NonNull View itemView) {
                 super(itemView);
                 imageView_ComicPage = itemView.findViewById(R.id.imageView_ComicPage);
+                imageButton_Edit = itemView.findViewById(R.id.imageButton_Edit);
             }
         }
 
@@ -165,6 +180,33 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
                     .load(comicUri)
                     .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
                     .into(holder.imageView_ComicPage);
+
+            holder.imageView_ComicPage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //Make the edit button visible or invisible.
+                    if(giEditButtonVisible == View.INVISIBLE){
+                        giEditButtonVisible = View.VISIBLE;
+                    } else {
+                        giEditButtonVisible = View.INVISIBLE;
+                    }
+                    holder.imageButton_Edit.setVisibility(giEditButtonVisible);
+
+                    //Update neighbors:
+                    int iRange = 2;
+                    int iRangeMin = Math.max(0, position - iRange);
+                    int iRangeMax = Math.min(position + iRange, comicUris.size());
+
+                    for(int i = iRangeMin; i <= iRangeMax; i++) {
+                        if (i != position) {
+                            notifyItemChanged(i);
+                        }
+                    }
+                }
+            });
+
+            holder.imageButton_Edit.setVisibility(giEditButtonVisible);
+
         }
 
         @Override

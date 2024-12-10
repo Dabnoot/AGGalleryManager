@@ -13,6 +13,7 @@
     <color name="colorFragmentBackgroundHighlight">#255dbb</color>
     <color name="colorFragmentBackgroundHighlight2">#447ad4</color>
     <color name="colorButton">#eb305b</color>
+    <color name="colorButtonPressed">#B13033</color>
 
     <color name="colorBackgroundShadow">#AA000000</color>
 

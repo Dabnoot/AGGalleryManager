@@ -14,6 +14,7 @@
     <color name="colorFragmentBackgroundHighlight"> #BB1700</color>
     <color name="colorFragmentBackgroundHighlight2">#D4341C</color>
     <color name="colorButton">                      #E13033</color>
+    <color name="colorButtonPressed">               #B13033</color>
 
     <color name="colorBlack">#000000</color>
     <color name="black_overlay">#66000000</color>

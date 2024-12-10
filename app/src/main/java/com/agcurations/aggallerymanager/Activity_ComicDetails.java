@@ -90,7 +90,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     }
 
     private void loadComicPageData(){
-        //This was put in place to handle the scenario of missing file download completion - when missing files are downloaded.
+
 
         //Look-up the item and grab a copy:
         if (!gsComicItemID.equals("")) {
