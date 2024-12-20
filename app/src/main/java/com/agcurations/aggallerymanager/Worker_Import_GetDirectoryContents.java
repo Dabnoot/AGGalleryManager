@@ -268,7 +268,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                             continue; //Skip the rest of this loop.
                                         }
                                         sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                                        sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                        sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
                                         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                                         if (time != null) {
                                             lDurationInMilliseconds = Long.parseLong(time);
