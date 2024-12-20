@@ -3213,15 +3213,24 @@ public class GlobalClass extends Application {
     //=========  BROWSER OPTIONS  ======================================================================
     //==================================================================================================
 
-    public static final String USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX = "_MaxBrowserTabCount";
+    public static final String USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX = "_MaxBrowserTabCnt";
     public static final int MAX_BROWSER_TAB_COUNT_DEFAULT = 15;
     public static int giMaxTabCount = 15;
 
     //====================================================================================
-    //===== Worker/Download Management ==========================================================
+    //===== User Training Tracking =======================================================
     //====================================================================================
 
+    //Variables for tracking user use of side bars. After the user has used them three times,
+    //  stop automatically displaying them for a moment before hiding them. The temporary
+    //  initial display of the side bars is to let the user know that they are there. That
+    //  initial display makes use of the program by the user just a little bit slower,
+    //  and also gets in the way of my own debugging.
+    public static final String USR_DRAWER_USE_CNT_SUFX_CATALOG_BROWSER = "_DrawerUseCntCatBrowser";
+    public static int giDrawerUseCntCatBrowser = 0;
 
+    public static final String USR_DRAWER_USE_CNT_SUFX_IMAGE_VIEWER = "_DrawerUseCntImgViewer";
+    public static int giDrawerUseCntImgViewer = 0;
 
     //=====================================================================================
     //===== File System Subroutines Section ===================================================

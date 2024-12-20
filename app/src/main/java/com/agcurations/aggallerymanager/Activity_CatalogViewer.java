@@ -194,10 +194,22 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         }
 
         final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
-        drawer_layout_sort.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
-        //Configure a runnable to close the drawer after a timeout.
-        drawer_layout_sort.postDelayed(() ->
-                drawer_layout_sort.closeDrawer(GravityCompat.START), 1500);
+        if(GlobalClass.giDrawerUseCntCatBrowser < 5) {
+            //Start the drawer open so that the user knows it's there, and
+            //  configure a runnable to close the drawer after a timeout.
+            //This is to train the user so that they know that the drawer is there.
+            drawer_layout_sort.openDrawer(GravityCompat.START);
+            drawer_layout_sort.postDelayed(() ->
+                    drawer_layout_sort.closeDrawer(GravityCompat.START), 1500);
+        } else if(GlobalClass.giDrawerUseCntCatBrowser < 10) {
+            //The user has been using the drawer. Close it faster.
+            drawer_layout_sort.openDrawer(GravityCompat.START);
+            drawer_layout_sort.postDelayed(() ->
+                    drawer_layout_sort.closeDrawer(GravityCompat.START), 500);
+            //After the user has used the drawer more than X times, don't start with the
+            //  drawer open anymore - assume the user knows that it's there and how to use it.
+            // This piece of data is unique to each user name.
+        }
 
         //Populate the CatalogDataEditor fragment:
         if(gFragment_CatalogDataEditor == null) {

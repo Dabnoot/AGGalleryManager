@@ -295,10 +295,18 @@ public class Activity_AppSettings extends AppCompatActivity implements
                         String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
                         String sMaxBrowserTabCountPref = sPreferenceNamePrefix + GlobalClass.USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX;
 
-                        String sNewValue = (String) newValue;
+                        int iNewMaxTabCount = GlobalClass.MAX_BROWSER_TAB_COUNT_DEFAULT;
+                        try {
+                            String sTemp = (String) newValue;
+                            iNewMaxTabCount = Integer.parseInt(sTemp);
+
+                        } catch (Exception e){
+                            Toast.makeText(getContext(), "Trouble applying new data.", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
 
                         sharedPreferences.edit()
-                                .putString(sMaxBrowserTabCountPref, sNewValue)
+                                .putInt(sMaxBrowserTabCountPref, iNewMaxTabCount)
                                 .apply();
 
                         return true;

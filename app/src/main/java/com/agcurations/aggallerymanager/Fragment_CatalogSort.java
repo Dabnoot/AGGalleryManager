@@ -400,6 +400,18 @@ public class Fragment_CatalogSort extends Fragment {
                     public void onClick(View view) {
                         //On Apply filter....
                         apply();
+
+                        //Record that the user has used this feature. This count is recorded, and
+                        //  is used to reduce impact of features used to train the user.
+                        GlobalClass.giDrawerUseCntCatBrowser++;
+                        if(getContext() != null) {
+                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+                            String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
+                            String sPrefName_DrawerUseCntCatBrowser = sPreferenceNamePrefix + GlobalClass.USR_DRAWER_USE_CNT_SUFX_CATALOG_BROWSER;
+                            sharedPreferences.edit()
+                                    .putInt(sPrefName_DrawerUseCntCatBrowser, GlobalClass.giDrawerUseCntCatBrowser)
+                                    .apply();
+                        }
                     }
                 });
             } //end config of button_Apply.

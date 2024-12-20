@@ -174,18 +174,18 @@ public class Activity_UserSelection extends AppCompatActivity {
 
         String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
 
-        //Set the maximum browser tabs allowed open to the user:
-        String sMaxBrowserTabCountPref = sPreferenceNamePrefix + GlobalClass.USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX;
-        String sMaxBrowserTabCountByUser = sharedPreferences.getString(sMaxBrowserTabCountPref, null);
-        if(sMaxBrowserTabCountByUser != null){
-            try{
-                GlobalClass.giMaxTabCount = Integer.parseInt(sMaxBrowserTabCountByUser);
-            } catch (Exception ignored){
-                GlobalClass.giMaxTabCount = GlobalClass.MAX_BROWSER_TAB_COUNT_DEFAULT;
-            }
-        } else {
-            GlobalClass.giMaxTabCount = GlobalClass.MAX_BROWSER_TAB_COUNT_DEFAULT;
-        }
+        //Get the maximum browser tabs allowed open to the user from the user's preference:
+        String sPrefName_MaxBrowserTabCount = sPreferenceNamePrefix + GlobalClass.USR_MAX_BROWSER_TAB_COUNT_PREF_SUFFIX;
+        GlobalClass.giMaxTabCount = sharedPreferences.getInt(sPrefName_MaxBrowserTabCount, GlobalClass.MAX_BROWSER_TAB_COUNT_DEFAULT);
+
+        //Get user training tracking values:
+        //Get the number of times the user has used the drawer on the Catalog Browser:
+        String sPrefName_DrawerUseCntCatBrowser = sPreferenceNamePrefix + GlobalClass.USR_DRAWER_USE_CNT_SUFX_CATALOG_BROWSER;
+        GlobalClass.giDrawerUseCntCatBrowser = sharedPreferences.getInt(sPrefName_DrawerUseCntCatBrowser, 0);
+
+        //Get the number of times the user has used the drawer on the Image Viewer:
+        String sPrefName_DrawerUseCntImgViewer = sPreferenceNamePrefix + GlobalClass.USR_DRAWER_USE_CNT_SUFX_IMAGE_VIEWER;
+        GlobalClass.giDrawerUseCntImgViewer = sharedPreferences.getInt(sPrefName_DrawerUseCntImgViewer, 0);
 
     }
 
