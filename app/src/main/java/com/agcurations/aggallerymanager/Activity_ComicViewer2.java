@@ -174,10 +174,10 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ComicViewHolder holder, int position) {
-            Uri comicUri = comicUris.get(position);
+            Uri uriComicPageFileUri = comicUris.get(position);
 
             Glide.with(getApplicationContext())
-                    .load(comicUri)
+                    .load(uriComicPageFileUri)
                     .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
                     .into(holder.imageView_ComicPage);
 
@@ -206,6 +206,15 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
             });
 
             holder.imageButton_Edit.setVisibility(giEditButtonVisible);
+
+            holder.imageButton_Edit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intentActivityComicPageEditor = new Intent(getApplicationContext(), Activity_ComicPageEditor.class);
+                    intentActivityComicPageEditor.putExtra(Activity_ComicPageEditor.EXTRA_STRING_COMIC_PAGE_FILE_URI, uriComicPageFileUri.toString());
+                    startActivity(intentActivityComicPageEditor);
+                }
+            });
 
         }
 

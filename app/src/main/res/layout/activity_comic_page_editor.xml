@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/relativeLayout_All"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:theme="@style/ThemeOverlay.AGGalleryManager.FullscreenContainer"
+    tools:context=".Activity_ComicPageEditor"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout_ToolBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/imageButton_ShowPalatte"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/round_button"
+                android:src="@drawable/baseline_palette_24"
+                android:layout_margin="10dp" />
+
+            <ImageButton
+                android:id="@+id/imageButton_ColorPicker"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/round_button"
+                android:src="@drawable/baseline_color_picker_24"
+                android:layout_margin="10dp" />
+
+            <ImageButton
+                android:id="@+id/imageButton_ToolErase"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/round_button"
+                android:src="@drawable/baseline_brush_24"
+                android:layout_margin="10dp" />
+
+            <ImageButton
+                android:id="@+id/imageButton_InsertText"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/round_button"
+                android:src="@drawable/baseline_format_text_24"
+                android:layout_margin="10dp"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/imageView_ComicPage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/comic_page"
+        android:layout_toEndOf="@+id/relativeLayout_ToolBar"/>
+
+</RelativeLayout>

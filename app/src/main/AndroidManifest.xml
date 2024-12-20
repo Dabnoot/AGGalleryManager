@@ -20,10 +20,10 @@
         <activity
             android:name=".Activity_XPath_Tester"
             android:exported="false"
-            android:windowSoftInputMode="adjustPan"/>
+            android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".Activity_CatalogGroupViewer"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".Activity_CatalogAnalysis"
             android:exported="false" />
@@ -39,7 +39,7 @@
         <activity
             android:name=".Activity_VideoPlayer"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_video_player_full_screen"/>
+            android:label="@string/title_activity_video_player_full_screen" />
         <activity android:name=".Activity_CatalogViewer" />
         <activity android:name=".Activity_Import" />
         <activity
@@ -71,6 +71,12 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer2"
             android:parentActivityName=".Activity_ComicDetails"
+            android:theme="@style/AppTheme.Fullscreen" />
+        <activity
+            android:name=".Activity_ComicPageEditor"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_comic_page_editor"
+            android:parentActivityName=".Activity_ComicViewer2"
             android:theme="@style/AppTheme.Fullscreen" />
         <activity
             android:name=".Activity_ExportComics"
