@@ -811,6 +811,12 @@ public class Activity_Main extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "Opening Videos catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
         //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        if(!GlobalClass.gsGroupIDClip.equals("") && GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS){
+            //If the user was copying a group ID but is moving into a different media category, clear the copied group ID
+            //  to disallow the user from pasting the group ID onto a media item outside the original category.
+            //  Otherwise the GroupID control panel will open when the user enters the new media category, and it can be confusing.
+            GlobalClass.gsGroupIDClip = "";
+        }
         GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         startActivity(intentCatalogActivity);
     }
@@ -821,6 +827,9 @@ public class Activity_Main extends AppCompatActivity {
         }
         Toast.makeText(getApplicationContext(), "Opening Images catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
+        if(!GlobalClass.gsGroupIDClip.equals("") && GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_IMAGES){
+            GlobalClass.gsGroupIDClip = "";
+        }
         GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentCatalogActivity);
     }
@@ -831,6 +840,9 @@ public class Activity_Main extends AppCompatActivity {
         }
         Toast.makeText(getApplicationContext(), "Opening Comics catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
+        if(!GlobalClass.gsGroupIDClip.equals("") && GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS){
+            GlobalClass.gsGroupIDClip = "";
+        }
         GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentCatalogActivity);
     }

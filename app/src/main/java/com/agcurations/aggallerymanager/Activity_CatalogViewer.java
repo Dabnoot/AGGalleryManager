@@ -161,6 +161,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             updateVisibleRecyclerItems();
             gLinearLayout_GroupingModeNotifier.setVisibility(View.INVISIBLE);
         });
+        if(!GlobalClass.gsGroupIDClip.equals("")) {
+            //If the app has a groupID on the clipboard, it means that we are in grouping mode. Show the
+            //  grouping control panel.
+            setGroupingModeNotifier(GlobalClass.gsGroupIDClip);
+        }
 
         ApplicationLogWriter("Creating ResponseReceiver");
 
@@ -997,26 +1002,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 holder.imageButton_GroupIDCopy.setOnClickListener(v -> {
                     boolean bGroupControlsAlreadyOpen = !GlobalClass.gsGroupIDClip.equals("");
                     GlobalClass.gsGroupIDClip = ci.sGroupID;
-                    gLinearLayout_GroupingModeNotifier.setVisibility(View.VISIBLE);
-
-                    //Set the colors of the grouping mode notifier to match the calculated colors from the group ID:
-                    int[] iColors = GlobalClass.calculateGroupingControlsColors(ci.sGroupID);
-                    gTextView_GroupIDClipboardLabel.setTextColor(iColors[1]);
-                    gTextView_GroupIDClipboard.setTextColor(iColors[1]);
-                    //Change the color of the 'close' icon for proper contrast:
-                    Drawable drawable_Baseline_Close_24 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.baseline_close_24);
-                    if(drawable_Baseline_Close_24 != null) {
-                        Drawable drawable = drawable_Baseline_Close_24.mutate();
-                        drawable.setColorFilter(new PorterDuffColorFilter(iColors[1], PorterDuff.Mode.SRC_IN));
-                        gImageButton_ClearGroupingClipboard.setImageDrawable(drawable);
-                    }
-                    //Set the grouping mode notifier background and border colors:
-                    GradientDrawable drawable = (GradientDrawable)gLinearLayout_GroupingModeNotifier.getBackground();
-                    //drawable.mutate(); // only change this instance of the xml, not all components using this xml
-                    drawable.setStroke(globalClass.ConvertDPtoPX(1), iColors[1]); // set stroke width and stroke color
-                    drawable.setColor(iColors[0]); //Don't use .setTint for this, as it will override the stroke (border).
-
-                    gTextView_GroupIDClipboard.setText(GlobalClass.gsGroupIDClip);
+                    setGroupingModeNotifier(ci.sGroupID);
 
                     if(!bGroupControlsAlreadyOpen){
                         updateVisibleRecyclerItems();
@@ -1255,6 +1241,30 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 gRecyclerViewCatalogAdapter.notifyItemChanged(i);
             }
         }
+    }
+
+    private void setGroupingModeNotifier(String sGroupID){
+        gLinearLayout_GroupingModeNotifier.setVisibility(View.VISIBLE);
+
+        //Set the colors of the grouping mode notifier to match the calculated colors from the group ID:
+        int[] iColors = GlobalClass.calculateGroupingControlsColors(sGroupID);
+        gTextView_GroupIDClipboardLabel.setTextColor(iColors[1]);
+        gTextView_GroupIDClipboard.setTextColor(iColors[1]);
+        //Change the color of the 'close' icon for proper contrast:
+        Drawable drawable_Baseline_Close_24 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.baseline_close_24);
+        if(drawable_Baseline_Close_24 != null) {
+            Drawable drawable = drawable_Baseline_Close_24.mutate();
+            drawable.setColorFilter(new PorterDuffColorFilter(iColors[1], PorterDuff.Mode.SRC_IN));
+            gImageButton_ClearGroupingClipboard.setImageDrawable(drawable);
+        }
+        //Set the grouping mode notifier background and border colors:
+        GradientDrawable drawable = (GradientDrawable)gLinearLayout_GroupingModeNotifier.getBackground();
+        //drawable.mutate(); // only change this instance of the xml, not all components using this xml
+        drawable.setStroke(globalClass.ConvertDPtoPX(1), iColors[1]); // set stroke width and stroke color
+        drawable.setColor(iColors[0]); //Don't use .setTint for this, as it will override the stroke (border).
+
+        gTextView_GroupIDClipboard.setText(GlobalClass.gsGroupIDClip);
+
     }
 
 
