@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/icon_toggle_auto_group_item_import"
+        android:title="Toggle Auto Group Item Import"
+        android:checkable="true"
+        android:orderInCategory="1"
+        app:showAsAction="always"
+        android:iconTint="@color/colorButton"
+        />
+
+    <item
+        android:id="@+id/icon_retry_processing"
+        android:title="Retry Processing"
+        android:orderInCategory="2"
+        app:showAsAction="always"
+        android:iconTint="@color/colorButton"
+        />
+</menu>

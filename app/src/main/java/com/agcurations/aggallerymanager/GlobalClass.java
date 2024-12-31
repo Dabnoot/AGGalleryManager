@@ -3890,6 +3890,11 @@ public class GlobalClass extends Application {
 
     public static final int DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
 
+    public static int giAutoProcessingWaitTimeMS = 1000; //Wait time to allow a web page to load, after onPageFinished, before performing an analysis.
+                                                         //  This is because sometimes the onPageFinished call happens before is really is truly fully loaded.
+                                                         //todo: Move this to a setting in the browser section.
+
+    public static boolean gbAutoDownloadGroupComics = false;
 
     public static ArrayList<ItemClass_WebComicDataLocator> getComicWebDataKeys(){
 
