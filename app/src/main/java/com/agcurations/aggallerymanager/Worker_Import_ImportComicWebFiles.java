@@ -52,9 +52,9 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         //Set the flags to tell the catalogViewer to view the imported files first:
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         sharedPreferences.edit()
-                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory],
+                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.MEDIA_CATEGORY_COMICS],
                         GlobalClass.SORT_BY_DATETIME_IMPORTED)
-                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory],
+                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS],
                         false)
                 .apply();
 
