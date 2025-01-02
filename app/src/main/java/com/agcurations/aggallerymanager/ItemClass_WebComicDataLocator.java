@@ -9,7 +9,8 @@ public class ItemClass_WebComicDataLocator implements Serializable {
     public final String sHostnameRegEx;
     public String sComicSeriesIDStartString = ""; //Used if the comic site has a standard tracking for comic series. Used to extract the ID.
     public boolean bHostNameMatchFound = false; //This tells Worker_Import_ComicAnalyzeHTML that this is the particular item in use.
-    public boolean bSeriesFlag = false; //This tells Worker_Import_ComicAnalyzeHTML that the user is looking to import a listed comic series.
+    public boolean bSeriesSummaryWebpageFlag = false; //This tells Worker_Import_ComicAnalyzeHTML that the user is looking to analyze a page listing comics in a series.
+    public boolean bRecognizedSeries = false; //Tells that this data is associated with a recognized comic series.
     public String sAddress = "";
 
     public String sHTML;

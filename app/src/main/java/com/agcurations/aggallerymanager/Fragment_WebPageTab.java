@@ -1133,6 +1133,7 @@ public class Fragment_WebPageTab extends Fragment {
                                 sCatalogItemWebComicID = sCatalogItemWebComicID.substring(0, sCatalogItemWebComicID.indexOf("/"));
                                 if (sComicSeriesID.equals(sCatalogItemWebComicID)) {
                                     gsMatchingCatalogItemID = entry.getKey();
+                                    icWCDL_Match.bRecognizedSeries = true;
                                 }
                             }
                         }
@@ -1242,7 +1243,11 @@ public class Fragment_WebPageTab extends Fragment {
                                 gLinearProgressIndicator_DLInspection.setProgress(0);
                                 gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
 
-                                if(GlobalClass.gbAutoDownloadGroupComics){
+                                if(GlobalClass.gbAutoDownloadGroupComics && icWCDL.bRecognizedSeries){
+                                    //If autodownload is on and this item is from a recognized series,
+                                    //  initiate download. The series check is here because the system
+                                    //  was recognizing comics from other sites that did not belong to a group and was just
+                                    //  straight-up downloading them immediately.
                                     initiateComicGroupItemImport(icWCDL);
                                 }
 
