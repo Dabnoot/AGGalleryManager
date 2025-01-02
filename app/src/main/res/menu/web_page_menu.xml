@@ -5,7 +5,7 @@
 
     <item
         android:id="@+id/icon_toggle_auto_group_item_import"
-        android:title="Toggle Auto Group Item Import"
+        android:title="Comic Series Auto-Import"
         android:checkable="true"
         android:orderInCategory="1"
         app:showAsAction="always"
