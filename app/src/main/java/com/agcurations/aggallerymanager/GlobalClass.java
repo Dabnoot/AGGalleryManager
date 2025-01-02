@@ -3906,7 +3906,7 @@ public class GlobalClass extends Application {
         ItemClass_WebComicDataLocator itemClass_webComicDataLocator;
 
         itemClass_webComicDataLocator =
-                FormWebImageSeriesDataLocator("^h%t%tps:\\/\\/n%he%n%ta%i\\.n%e%t\\/(.*)",
+                FormWebImageSeriesDataLocator("^h%t%tps:\\/\\/n%he%n%ta%i\\.n%e%t\\/g\\/(.*)",
                         null);
         itemClass_webComicDataLocator.sComicSeriesIDStartString = "h%t%tps://n%he%n%ta%i.n%e%t/g/";
         itemClass_webComicDataLocator.sShortName = "nH"; //For hard-coded behavior differentiation
