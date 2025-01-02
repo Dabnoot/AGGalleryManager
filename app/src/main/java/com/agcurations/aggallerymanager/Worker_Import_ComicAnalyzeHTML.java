@@ -555,7 +555,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
             try {
 
-                if(icWebDataLocator.bSeriesFlag){
+                if(icWebDataLocator.bSeriesSummaryWebpageFlag){
                     //The user is considering importing a series listing from this webpage.
                     //Get title:
                     BroadcastProgress_ComicDetails("Looking for comic title...", -1);
