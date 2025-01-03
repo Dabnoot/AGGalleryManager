@@ -5,6 +5,7 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
@@ -285,7 +286,7 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
 
             StopWatch stopWatch = new StopWatch(false); //enable/disable essentially turns the usage of this item on/off.
             stopWatch.Start();
-            String sWatchMessageBase = "Activity_CatalogViewer:RecyclerViewCatalogAdapter:onBindViewHolder:";
+            String sWatchMessageBase = "Activity_CatalogGroupViewer:RecyclerViewCatalogAdapter:onBindViewHolder:";
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Getting catalog item data from treemap. ");
 
             //Get the data for the row:
@@ -615,22 +616,23 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
             if(viewHolder.button_Delete != null) {
 
                 final String sItemNameToDelete = sItemName;
-                viewHolder.button_Delete.setOnClickListener(view -> {
+                viewHolder.button_Delete.setOnClickListener( (view) -> {
+
                     //Present confirmation that the user wishes to delete this item.
                     String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext(), R.style.AlertDialogCustomStyle);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_CatalogGroupViewer.this, R.style.AlertDialogCustomStyle); //getApplicationContext & getBaseContext would not work here for some reason.
                     builder.setTitle("Delete Item");
                     builder.setMessage(sConfirmationMessage);
                     //builder.setIcon(R.drawable.ic_launcher);
-                    builder.setPositiveButton("Yes", (dialog, id) -> {
-                        dialog.dismiss();
+                    builder.setPositiveButton("Yes", (DialogInterface dialogInterface, int i) -> {
+                        dialogInterface.dismiss();
                         Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_LONG).show();
 
                         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                         String sCatalogRecord = GlobalClass.getCatalogRecordString(ci_final);
                         Data dataCatalogDeleteItem = new Data.Builder()
-                                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogViewer:btnDelete.OnClickListener.OnClick")
+                                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogGroupViewer:btnDelete.OnClickListener.OnClick")
                                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                                 .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
                                 .build();
@@ -640,12 +642,14 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
                                 .build();
                         WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
                     });
-                    builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
+                    builder.setNegativeButton("No", (DialogInterface dialogInterface, int i) -> {
+                        dialogInterface.dismiss();
+                    });
                     AlertDialog adConfirmationDialog = builder.create();
                     adConfirmationDialog.show();
 
-
                 });
+
             }
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item delete button configured.");
