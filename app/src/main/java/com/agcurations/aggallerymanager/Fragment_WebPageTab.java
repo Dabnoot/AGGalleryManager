@@ -713,8 +713,10 @@ public class Fragment_WebPageTab extends Fragment {
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
-                                "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
+                        if(gWebView != null) {
+                            gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
+                                    "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
+                        }
                     }
                 }, GlobalClass.giAutoProcessingWaitTimeMS);
 
