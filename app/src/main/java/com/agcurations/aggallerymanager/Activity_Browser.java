@@ -177,8 +177,10 @@ public class Activity_Browser extends AppCompatActivity {
                     //Record the tab selected by the user so we can go back to that tab when the activity is restarted:
                     if (bTabsLoaded) {
                         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                        String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
+                        String sPrefWebTabPrevFocusIndexByUser = GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX_PREFIX + sPreferenceNamePrefix;
                         sharedPreferences.edit()
-                                .putInt(GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX, tab.getPosition())
+                                .putInt(sPrefWebTabPrevFocusIndexByUser, tab.getPosition())
                                 .apply();
                     }
                 }
@@ -715,7 +717,9 @@ public class Activity_Browser extends AppCompatActivity {
 
                         //Go to the tab last having the user focus:
                         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                        int iTabofLastFocus = sharedPreferences.getInt(GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX, 0);
+                        String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
+                        String sPrefWebTabPrevFocusIndexByUser = GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX_PREFIX + sPreferenceNamePrefix;
+                        int iTabofLastFocus = sharedPreferences.getInt(sPrefWebTabPrevFocusIndexByUser, 0);
                         gViewPager2_WebPages.setCurrentItem(iTabofLastFocus, false);
 
                         //Shrink the progressbar:

@@ -4010,7 +4010,7 @@ public class GlobalClass extends Application {
     public static final String gsPreference_Import_IncludeGraphicsFileData = "com.agcurations.aggallerymanager.preferences.ImportIncludeGraphicsFileData";
 
 
-    public static final String PREF_WEB_TAB_PREV_FOCUS_INDEX = "com.agcurations.aggallerymanager.preference.web_tab_prev_focus_index";
+    public static final String PREF_WEB_TAB_PREV_FOCUS_INDEX_PREFIX = "com.agcurations.aggallerymanager.preference.web_tab_prev_focus_index_"; //Current user name to be appended.
 
     public static String PREF_APPLICATION_LOG_PATH_FILENAME = "APPLICATION_LOG_PATH_FILENAME";
     public static String PREF_WRITE_APPLICATION_LOG_FILE = "WRITE_APPLICATION_LOG_FILE";
