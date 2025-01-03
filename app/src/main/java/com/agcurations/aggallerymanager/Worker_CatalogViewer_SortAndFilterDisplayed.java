@@ -113,6 +113,10 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
         boolean bSearchMatchApplicable = false;
 
 
+        boolean bGroupIDFilterApplicable;
+        //If the global group ID filter for this media category has data, turn on this filter:
+        bGroupIDFilterApplicable = !GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory].equals("");
+
         for (Map.Entry<String, ItemClass_CatalogItem>
                 entry : GlobalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).entrySet()) {
 
@@ -294,10 +298,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 bApprovedForThisUser = true;
             }
 
-            boolean bGroupIDFilterApplicable;
             boolean bGroupIDMatch = false;
-            //If the global group ID filter for this media category has data, turn on this filter:
-            bGroupIDFilterApplicable = !GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory].equals("");
             if(bGroupIDFilterApplicable){
                 if(entry.getValue().sGroupID.equals(GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory])){
                     bGroupIDMatch = true;
@@ -353,7 +354,10 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
         }
 
-        if(!bSearchMatchApplicable) {
+        //Alter results for groupings - for items that are in a group, only display the first item in the group
+        // unless a filter has been initiated for that group ID. If a filter for the group ID has been executed,
+        // then show all members of that group.
+        if(!bGroupIDFilterApplicable) {
             if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) { //Only do this for comics at this time.
                 //Hide all but first of group items, so long as the user is not explictly searching for text:
                 ArrayList<String> alsUniqueGroupIDs = new ArrayList<>();
