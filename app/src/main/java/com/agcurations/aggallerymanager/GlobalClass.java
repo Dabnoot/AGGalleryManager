@@ -3906,7 +3906,7 @@ public class GlobalClass extends Application {
         ItemClass_WebComicDataLocator itemClass_webComicDataLocator;
 
         itemClass_webComicDataLocator =
-                FormWebImageSeriesDataLocator("^h%t%tps:\\/\\/n%he%n%ta%i\\.n%e%t\\/g\\/(.*)",
+                FormWebImageSeriesDataLocator("^h%t%tps:\\/\\/n%he%n%ta%i\\.n%e%t\\/g\\/\\d{1,7}\\/$",
                         null);
         itemClass_webComicDataLocator.sComicSeriesIDStartString = "h%t%tps://n%he%n%ta%i.n%e%t/g/";
         itemClass_webComicDataLocator.sShortName = "nH"; //For hard-coded behavior differentiation
@@ -3914,7 +3914,7 @@ public class GlobalClass extends Application {
 
 
         itemClass_webComicDataLocator =
-                FormWebImageSeriesDataLocator("^ht%tps:\\/\\/man%gapa%rk.io\\/(.*)",
+                FormWebImageSeriesDataLocator("^h%t%tps:\\/\\/m%an%g%ap%ark%.%i%o\\/title\\/(.*)\\/(.*)$",
                         null);
         itemClass_webComicDataLocator.sComicSeriesIDStartString = "ht%tps://man%gapa%rk.io/title/";
         //https://mangapark.io/title/10049-en-hikaru-no-go/64697-vol-22-ch-175
