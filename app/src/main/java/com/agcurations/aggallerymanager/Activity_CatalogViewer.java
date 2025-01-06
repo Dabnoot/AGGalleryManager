@@ -431,7 +431,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             public final ImageView imageView_Thumbnail;
             public final ImageView imageView_Attention;
             public final TextView textView_AttentionNote;
-            public final Button button_Delete;
+            public final ImageButton button_Delete;
             public final ImageButton imageButton_OpenGroupingControls;
             public final TextView textView_Title;
             public final TextView textView_Details;
