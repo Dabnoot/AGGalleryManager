@@ -615,7 +615,7 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
 
             if(viewHolder.button_Delete != null) {
 
-                final String sItemNameToDelete = sItemName;
+                final String sItemNameToDelete = sThumbnailText;
                 viewHolder.button_Delete.setOnClickListener( (view) -> {
 
                     //Present confirmation that the user wishes to delete this item.

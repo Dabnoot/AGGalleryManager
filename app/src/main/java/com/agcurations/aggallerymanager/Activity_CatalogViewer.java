@@ -819,7 +819,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             if(holder.button_Delete != null) {
 
-                final String sItemNameToDelete = sItemName;
+                final String sItemNameToDelete = sThumbnailText;
                 holder.button_Delete.setOnClickListener(view -> {
                     //Present confirmation that the user wishes to delete this item.
                     String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
