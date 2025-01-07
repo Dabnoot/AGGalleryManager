@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -355,8 +356,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
             public final TextView textView_LabelMissingPages;
             public final TextView textView_LabelComicID;
 
-            public final Button button_Delete;
-            public final ImageButton imageButton_GroupIDNew;
+            public final ImageButton button_Delete;
+            public final ImageButton imageButton_OpenGroupingControls;
 
             public ViewHolder(View v) {
                 super(v);
@@ -392,7 +393,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 textView_LabelComicID = v.findViewById(R.id.textView_LabelComicID);
 
                 button_Delete = v.findViewById(R.id.button_Delete);
-                imageButton_GroupIDNew = v.findViewById(R.id.imageButton_GroupIDNew);
+                imageButton_OpenGroupingControls = v.findViewById(R.id.imageButton_OpenGroupingControls);
             }
         }
 
@@ -443,7 +444,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         }
 
 
-
         // Replace the contents of a view (invoked by the layout manager)
         @Override
         public void onBindViewHolder(@androidx.annotation.NonNull Activity_ComicDetails.RecyclerViewComicPagesAdapter.ViewHolder holder, final int position) {
@@ -463,7 +463,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 holder.textView_Categories.setVisibility(View.VISIBLE);
                 holder.textView_Pages.setVisibility(View.VISIBLE);
                 holder.textView_FileCount.setVisibility(View.VISIBLE);
-                if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                if (!gciCatalogItem.sComic_Missing_Pages.equals("")) {
                     holder.textView_MissingPages.setVisibility(View.VISIBLE);
                 }
                 holder.textView_ComicID.setVisibility(View.VISIBLE);
@@ -476,7 +476,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 holder.textView_LabelCategories.setVisibility(View.VISIBLE);
                 holder.textView_LabelPages.setVisibility(View.VISIBLE);
                 holder.textView_LabelFileCount.setVisibility(View.VISIBLE);
-                if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                if (!gciCatalogItem.sComic_Missing_Pages.equals("")) {
                     holder.textView_LabelMissingPages.setVisibility(View.VISIBLE);
                 }
                 holder.textView_LabelComicID.setVisibility(View.VISIBLE);
@@ -499,10 +499,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 holder.textView_Pages.setText(sPages);
                 String sFileCount = "" + gciCatalogItem.iFile_Count;
                 holder.textView_FileCount.setText(sFileCount);
-                if(!gciCatalogItem.sComic_Missing_Pages.equals("")){
+                if (!gciCatalogItem.sComic_Missing_Pages.equals("")) {
                     String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
-                    if(sMissingPages.length() > 10){
-                        sMissingPages = sMissingPages.substring(0,10) + "...";
+                    if (sMissingPages.length() > 10) {
+                        sMissingPages = sMissingPages.substring(0, 10) + "...";
                     }
                     holder.textView_MissingPages.setText(sMissingPages);
                 }
@@ -518,7 +518,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 });
 
             } else {
-                sThumbnailText = "Page " + (position + 1) + " of " + getItemCount();  //Position is 0-based.
+                sThumbnailText = "Page " + (position) + " of " + (getItemCount() - 1);  //Position is 0-based, but one extra item is added for the header.
+                if (holder.imageButton_OpenGroupingControls != null) {
+                    //Hide the grouping controls since this is not valid for individual pages of a comic.
+                    holder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
+                }
             }
 
             Uri uriThumbnailFileName = treeMap.get(position);
@@ -533,7 +537,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     if (gbDebugTouch)
                         Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_SHORT).show();
                     int iCorrectedPosition = position;
-                    if(iCorrectedPosition > 0) {
+                    if (iCorrectedPosition > 0) {
                         iCorrectedPosition = position - 1; //This is because we repeat the first image - once in the header, and again in the recyclerview grid.
                     }
 
@@ -541,8 +545,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 }
             });
 
-            if(holder.button_Delete != null){
-                if(uriThumbnailFileName != null) {
+            if (holder.button_Delete != null) {
+                if (uriThumbnailFileName != null) {
                     final String sUriFileToDelete = uriThumbnailFileName.toString();
                     holder.button_Delete.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -555,6 +559,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                             builder.setTitle("Delete File");
                             builder.setMessage(sConfirmationMessage);
                             builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @SuppressLint("NotifyDataSetChanged")
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
                                     dialogInterface.dismiss();
@@ -570,9 +575,21 @@ public class Activity_ComicDetails extends AppCompatActivity {
                                     if (bDeleteSuccess) {
                                         Toast.makeText(getApplicationContext(), "File successfully deleted.", Toast.LENGTH_SHORT).show();
                                         //Trigger a reinitialization of the gridview?
-                                        removeAt(position);
+                                        treeMap.remove(position);
+                                        //Shift treeMap contents down:
+                                        Uri uriTemp;
+                                        for (int j = position; j < treeMap.size(); j++) {
+                                            uriTemp = treeMap.get(j + 1);
+                                            treeMap.put(j, uriTemp);
+                                            treeMap.remove(j + 1);
+                                        }
                                         gciCatalogItem.iFile_Count--;
                                         globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+                                        if(position == 1){
+                                            treeMap.put(0, treeMap.get(1)); //If the user deleted the first page, update the header slot.
+                                        }
+                                        //notifyItemRangeChanged(0, treeMap.size() - 1); //All items have changed because the "Page X of N" text has changed. However, this always appears to crash the app.
+                                        notifyDataSetChanged();
                                     }
                                 }
                             });
@@ -588,14 +605,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         }
 
-        public void removeAt(int position) {
-            treeMap.remove(position);
-            notifyItemRemoved(position);
-            notifyItemRangeChanged(position, treeMap.size());
-        }
-
     }
-
 
     //=====================================================================================
     //===== Comic Viewer Code =================================================================
