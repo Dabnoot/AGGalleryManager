@@ -58,7 +58,6 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -105,6 +104,8 @@ public class Fragment_WebPageTab extends Fragment {
     private LinearProgressIndicator gLinearProgressIndicator_DLInspection;
 
     private int giMediaCategory = -1;
+
+    private boolean gbFaviconAddressFound = false;
 
     ResponseReceiver_WebPageTab responseReceiver_WebPageTab;
 
@@ -219,6 +220,26 @@ public class Fragment_WebPageTab extends Fragment {
 
             }
         });
+
+        gWebChromeClient.setOnFaviconReceived(new VideoEnabledWebChromeClient.FaviconReceivedCallback() {
+            @Override
+            public void faviconReceived(Bitmap icon) {
+                //Though I have coded this, I choose not to use it because it appears to load an inferior
+                //  icon compared to what might be found on some webpage's link to favicon.ico.
+            }
+        });
+
+        gWebChromeClient.setOnTitleReceived(new VideoEnabledWebChromeClient.TitleReceivedCallback() {
+            @Override
+            public void titleReceived(String sTitle) {
+                Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                if(activity_browser != null){
+                    activity_browser.resetSingleTabNotchTitle(giThisFragmentHashCode, sTitle);
+                }
+            }
+        });
+
+
 
 
         //Configure the WebView:
@@ -366,14 +387,25 @@ public class Fragment_WebPageTab extends Fragment {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
                 //Log.d("test", "onEditorAction: KeyEvent.Keycode = " + keyEvent.getKeyCode());
-                String sWebAddress = textView.getText().toString();
-                if (!sWebAddress.startsWith("http")) {
-                    sWebAddress = "https://" + sWebAddress;
-                    textView.setText(sWebAddress);
+                String sRequestedAddress = textView.getText().toString();
+                if (!sRequestedAddress.startsWith("http")) {
+                    sRequestedAddress = "https://" + sRequestedAddress;
+                    textView.setText(sRequestedAddress);
                 }
                 gEditText_Address.clearFocus();
-                gsWebAddress = sWebAddress;
-                gWebView.loadUrl(sWebAddress);
+
+                String sRequestedDomain = getDomainFromAddress(sRequestedAddress);
+                if(!gsWebAddress.startsWith(sRequestedDomain)){
+                    gbFaviconAddressFound = false;
+                    //Reset the favicon and tab title while we wait for the webpage to load:
+                    Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                    if(activity_browser != null) {
+                        String sTitle = getDomainShortName(sRequestedDomain);
+                        activity_browser.resetSingleTabNotchFavicon(giThisFragmentHashCode, sTitle);
+                    }
+                }
+                gsWebAddress = sRequestedAddress;
+                gWebView.loadUrl(sRequestedAddress);
 
                 if (getActivity() != null) {
                     //Hide the keyboard. EditText ActionGo attribute does not hide the keyboard.
@@ -784,6 +816,20 @@ public class Fragment_WebPageTab extends Fragment {
                 gbWebpageAnalysisRetry = true; //Allow a one-shot analysis retry if necessary.
                 gEditText_Address.setText(url);
 
+
+                //Check to see if the favicon needs to be updated:
+                String sRequestedDomain = getDomainFromAddress(url);
+                if(!gsWebAddress.startsWith(sRequestedDomain)){
+                    gbFaviconAddressFound = false;
+                    //Reset the favicon and tab title while we wait for the webpage to load:
+                    Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                    if(activity_browser != null) {
+                        String sTitle = getDomainShortName(sRequestedDomain);
+                        activity_browser.resetSingleTabNotchFavicon(giThisFragmentHashCode, sTitle);
+                    }
+                }
+
+
                 //Set color of the download icon to be grey:
                 SetDownloadButtonColor(NORMAL);
 
@@ -792,23 +838,6 @@ public class Fragment_WebPageTab extends Fragment {
                 for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
                     ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPagesForCurrentUser.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
-                            /*if (icwptd.sAddress == null) {
-                                icwptd.sAddress = new ArrayList<>();
-                            }
-                            //Add url to address history list for this tab, but first make sure that
-                            //  we are not merely re-loading the current address:
-                            int iAddressCount = icwptd.sAddress.size();
-                            boolean bSkipSet = false;
-                            if (iAddressCount > 0) {
-                                String sCurrentAddress = icwptd.sAddress.get(iAddressCount - 1);
-                                if (!url.equals(sCurrentAddress)) {
-                                    icwptd.sAddress.add(url);
-                                } else {
-                                    bSkipSet = true;
-                                }
-                            } else {
-                                icwptd.sAddress.add(url);
-                            }*/
                         boolean bSkipSet = false;
                         if (icwptd.sAddress != null) {
                             if (!icwptd.sAddress.equals(url)) {
@@ -859,34 +888,27 @@ public class Fragment_WebPageTab extends Fragment {
 
 
                 //Determine the base host address:
-                String sHostAddress = "";
-                int iCharIndexOfHostStart = gsWebAddress.indexOf("://");
-                if(iCharIndexOfHostStart > 0){
-                    iCharIndexOfHostStart += 3;
-                    int iCharIndexOfHostEnd = gsWebAddress.indexOf("/", iCharIndexOfHostStart);
-                    if(iCharIndexOfHostEnd > 0){
-                        sHostAddress = gsWebAddress.substring(0,iCharIndexOfHostEnd);
-                    }
-                }
+                String sHostAddress = getDomainFromAddress(gsWebAddress);
 
                 //Determine if navigation should continue regardless:
                 String sRequestedAddress = request.getUrl().toString();
                 if(sHostAddress.equals("") ||
-                        sRequestedAddress.startsWith(sHostAddress) ||
-                        sRequestedAddress.equals("https://www.google.com")){
+                        sRequestedAddress.startsWith(sHostAddress)){
+                    if(sHostAddress.equals("")){
+                        gbFaviconAddressFound = false; //If this is a new navigation, note no favicon yet.
+                        //Reset the favicon and tab title while we wait for the webpage to load:
+                        Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                        if(activity_browser != null) {
+                            String sDomain = getDomainFromAddress(sRequestedAddress);
+                            String sTitle = getDomainShortName(sDomain);
+                            activity_browser.resetSingleTabNotchFavicon(giThisFragmentHashCode, sTitle);
+                        }
+                    }
                     return super.shouldOverrideUrlLoading(webView, request);
                 }
 
                 //Determine the host for the new page for reporting to the user:
-                String sNewHostAddress = "";
-                iCharIndexOfHostStart = sRequestedAddress.indexOf("://");
-                if(iCharIndexOfHostStart > 0){
-                    iCharIndexOfHostStart += 3;
-                    int iCharIndexOfHostEnd = sRequestedAddress.indexOf("/", iCharIndexOfHostStart);
-                    if(iCharIndexOfHostEnd > 0){
-                        sNewHostAddress = sRequestedAddress.substring(0,iCharIndexOfHostEnd);
-                    }
-                }
+                String sNewHostAddress = getDomainFromAddress(sRequestedAddress);;
 
                 String sConfirmationMessage = "Web page tab is attempting to navigate to a new URL. Would you like to allow this navigation?\nNew host: " + sNewHostAddress;
                 AlertDialog.Builder builder = new AlertDialog.Builder(webView.getContext(), R.style.AlertDialogCustomStyle);
@@ -894,7 +916,16 @@ public class Fragment_WebPageTab extends Fragment {
                 builder.setMessage(sConfirmationMessage);
                 builder.setPositiveButton("Yes", (dialog, id) -> {
                     dialog.dismiss();
-                    webView.loadUrl(request.getUrl().toString());
+                    String sRequestedUrl = request.getUrl().toString();
+                    webView.loadUrl(sRequestedUrl);
+                    gbFaviconAddressFound = false;
+                    //Reset the favicon and tab title while we wait for the webpage to load:
+                    Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                    if(activity_browser != null) {
+                        String sDomain = getDomainFromAddress(sRequestedUrl);
+                        String sTitle = getDomainShortName(sDomain);
+                        activity_browser.resetSingleTabNotchFavicon(giThisFragmentHashCode, sTitle);
+                    }
                 });
                 builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
                 AlertDialog adConfirmationDialog = builder.create();
@@ -918,7 +949,7 @@ public class Fragment_WebPageTab extends Fragment {
 
     private void ConfigureHTMLWatcher(){
 
-        final Observer<String> observerStringHTML = new Observer<String>() {
+        final Observer<String> observerStringHTML = new Observer<>() {
             @Override
             public void onChanged(String sHTML) {
                 //Enter here when an assigned String is changed.
@@ -927,71 +958,15 @@ public class Fragment_WebPageTab extends Fragment {
                 gsPageHTML = sHTML;
 
                 //Find the favicon address:
-                boolean bFaviconAddressFound = false; //todo: clear this in onPageStarted if the domain has changed.
                 int iFoundLinkLocationStart = 0;
                 int iFoundLinkLocationEnd;
                 String sFaviconAddress = "";
-                /*do {
-                    iFoundLinkLocationStart = sHTML.indexOf("<link", iFoundLinkLocationStart + 1);
-                    if (iFoundLinkLocationStart < 0) continue;
-                    iFoundLinkLocationEnd = sHTML.indexOf(">", iFoundLinkLocationStart);
-                    if (iFoundLinkLocationEnd < 0) continue;
-                    String sLinkBlock = sHTML.substring(iFoundLinkLocationStart, iFoundLinkLocationEnd);
-                    int iFoundRelLocationStart = sLinkBlock.indexOf("rel");
-                    if (iFoundRelLocationStart < 0) continue;
-                    int iFirstStringQuote = sLinkBlock.indexOf("\"", iFoundRelLocationStart);
-                    if (iFirstStringQuote < 0) continue;
-                    int iEndStringQuote = sLinkBlock.indexOf("\"", iFirstStringQuote + 1);
-                    if (iEndStringQuote < 0) continue;
-                    String sRel = sLinkBlock.substring(iFirstStringQuote + 1, iEndStringQuote);
 
-                    if(sRel.equals("icon")) {
-                        int iFoundHrefLocationStart = sLinkBlock.indexOf("href");
-                        if (iFoundHrefLocationStart < 0) continue;
-                        iFirstStringQuote = sLinkBlock.indexOf("\"", iFoundHrefLocationStart);
-                        if (iFirstStringQuote < 0) continue;
-                        iEndStringQuote = sLinkBlock.indexOf("\"", iFirstStringQuote + 1);
-                        if (iEndStringQuote < 0) continue;
-                        sFaviconAddress = sLinkBlock.substring(iFirstStringQuote + 1, iEndStringQuote);
-                        bFaviconAddressFound = true;
+                if(!gbFaviconAddressFound){
+                    String sDomain = getDomainFromAddress(gsWebAddress);
+                    if(sDomain.endsWith("/")){
+                       sDomain = sDomain.substring(0, sDomain.length() - 2);
                     }
-
-                } while (iFoundLinkLocationStart > 0 && !bFaviconAddressFound);
-                if(bFaviconAddressFound){
-
-                    //Handle the case where the favicon listed address is relative to the host, and not a full address:
-                    if(!sFaviconAddress.startsWith("http")) {
-                        try {
-                            URL url = new URL(gsWebAddress);
-                            String sHostPrefix = gsWebAddress.substring(0,gsWebAddress.indexOf("/"));
-                            String sHost = sHostPrefix + "//" + url.getHost();
-                            if(sFaviconAddress.startsWith("/")){
-                                sFaviconAddress = sHost + sFaviconAddress;
-                            } else {
-                                sFaviconAddress = sHost + "/" + sFaviconAddress;
-                            }
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                } else {
-                    //If the favicon was not found using the textual searches, try looking for it at the host level:
-                    try {
-                        URL url = new URL(gsWebAddress);
-                        String sHostPrefix = gsWebAddress.substring(0,gsWebAddress.indexOf("/"));
-                        String sHost = sHostPrefix + "//" + url.getHost();
-                        sFaviconAddress = sHost + "/favicon.ico";
-                        //Address is to be passed to Glide, so
-                        // let Glide deal with it for now.
-                        bFaviconAddressFound = true;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }*/
-                if(!bFaviconAddressFound){
-
                     int iFoundFavStringStart = sHTML.indexOf("favicon.ico", iFoundLinkLocationStart + 1);
                     if(iFoundFavStringStart > 0){
                         int iStartDQuote = 0;
@@ -1008,21 +983,23 @@ public class Fragment_WebPageTab extends Fragment {
                         if(iFoundLinkLocationEnd > 0){
                             sFaviconAddress = sHTML.substring(iFoundLinkLocationStart + 1, iFoundLinkLocationEnd);
                         }
+                        if(sFaviconAddress.startsWith("/")){
+                            sFaviconAddress = sFaviconAddress.substring(1);
+                        }
                         try {
-                            URL url = new URL(gsWebAddress);
-                            String sHostPrefix = gsWebAddress.substring(0, gsWebAddress.indexOf("/"));
-                            String sHost = sHostPrefix + "//" + url.getHost();
-                            if(!sFaviconAddress.startsWith(sHost)){
-                                sFaviconAddress = sHost + sFaviconAddress;
-                                bFaviconAddressFound = true;
+                            if(!sFaviconAddress.startsWith("http")){ //Sometimes the favicon address will be given relative to the domain.
+                                                                     //  If this is the case, concatenate the two.
+                                sFaviconAddress = sDomain + "/" + sFaviconAddress;
                             }
                         } catch (Exception ignored){
 
                         }
+                    } else {
+                        //If no "favicon.ico" entry was found, try the default...
+                        sFaviconAddress = sDomain + "/" + "favicon.ico";
                     }
+                    gbFaviconAddressFound = true;
 
-                }
-                if(bFaviconAddressFound){
                     Activity_Browser activity_browser = (Activity_Browser) getActivity();
                     if(activity_browser != null) {
                         //Update the favicon Address in the WebPageTabData:
@@ -1035,10 +1012,12 @@ public class Fragment_WebPageTab extends Fragment {
                                 break;
                             }
                         }
-                        activity_browser.updateSingleTabNotchFavicon(giThisFragmentHashCode); //Update the tab label.
+                        activity_browser.updateSingleTabNotch(giThisFragmentHashCode); //Update the tab label.
 
                     }
+
                 }
+
 
                 //========================
                 //== Pre-import checks
@@ -1393,7 +1372,41 @@ public class Fragment_WebPageTab extends Fragment {
         WorkManager.getInstance(gContext).enqueue(otwrImportComicWebFiles);
     }
 
+    /**
+     *
+     * @param sAddress
+     * @return String of host domain including http:// or https://.
+     */
+    private String getDomainFromAddress(String sAddress){
+        String sDomain = "";
+        int iCharIndexOfDomainStart = sAddress.indexOf("://");
+        if(iCharIndexOfDomainStart > 0){
+            iCharIndexOfDomainStart += 3;
+            int iCharIndexOfDomainEnd = sAddress.indexOf("/", iCharIndexOfDomainStart);
+            if(iCharIndexOfDomainEnd > 0){
+                sDomain = sAddress.substring(0,iCharIndexOfDomainEnd);
+            } else {
+                sDomain = sAddress;
+            }
+        }
+        return sDomain;
+    }
 
+    public String getDomainShortName(String sDomain){
+        String sDomainShortName = "";
+
+        if(!sDomain.equals("")){
+
+            if(sDomain.contains("://")){
+                sDomainShortName = sDomain.substring(sDomain.indexOf("://") + 3);
+            }
+            if(sDomainShortName.startsWith("www.")){
+                sDomainShortName = sDomainShortName.substring(4);
+            }
+        }
+
+        return  sDomainShortName;
+    }
 
 
 

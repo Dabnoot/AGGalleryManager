@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.view.SurfaceView;
 import android.view.View;
@@ -35,6 +36,17 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
         void toggledFullscreen(boolean fullscreen);
     }
 
+    public interface FaviconReceivedCallback {
+        void faviconReceived(Bitmap icon);
+    }
+
+    public interface TitleReceivedCallback {
+        void titleReceived(String sTitle);
+    }
+
+    /*public int giThisFragmentHashCode = 0; //For updating the favicon.
+    Activity_Browser activity_browser;*/
+
     private View activityNonVideoView;
     private ViewGroup activityVideoView;
     private View loadingView;
@@ -45,6 +57,9 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
     private CustomViewCallback videoViewCallback;
 
     private ToggledFullscreenCallback toggledFullscreenCallback;
+
+    private FaviconReceivedCallback faviconReceivedCallback;
+    private TitleReceivedCallback titleReceivedCallback;
 
     /**
      * Never use this constructor alone.
@@ -121,6 +136,18 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
     public void setOnToggledFullscreen(ToggledFullscreenCallback callback)
     {
         this.toggledFullscreenCallback = callback;
+    }
+
+    /**
+     * Set a callback that will be fired when a favicon is received.
+     * @param callback A VideoEnabledWebChromeClient.FaviconReceivedCallback callback
+     */
+    public void setOnFaviconReceived(FaviconReceivedCallback callback){
+        this.faviconReceivedCallback = callback;
+    }
+
+    public void setOnTitleReceived(TitleReceivedCallback callback){
+        this.titleReceivedCallback = callback;
     }
 
     @Override
@@ -299,5 +326,25 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
     public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
         result.cancel();
         return super.onJsPrompt(view, url, message, defaultValue, result);
+    }
+
+    @Override
+    public void onReceivedIcon(WebView view, Bitmap icon) {
+        super.onReceivedIcon(view, icon);
+        //Though I have coded this, I choose not to use it because it appears to load an inferior
+        //  icon compared to what might be found on some webpage's link to favicon.ico.
+        // Notify favicon received.
+        if (faviconReceivedCallback != null)
+        {
+            faviconReceivedCallback.faviconReceived(icon);
+        }
+    }
+
+    @Override
+    public void onReceivedTitle(WebView view, String title) {
+        super.onReceivedTitle(view, title);
+        if(titleReceivedCallback != null){
+            titleReceivedCallback.titleReceived(title);
+        }
     }
 }

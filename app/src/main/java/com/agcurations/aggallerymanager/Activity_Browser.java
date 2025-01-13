@@ -542,7 +542,79 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("InitializeTabAppearance end.");
     }
 
-    public void updateSingleTabNotchFavicon(int iHashCode){
+
+    /**
+     * Call to update a tab notch title only.
+     * @param iHashCode Hash code identifying a tab.
+     * @param sTitle Title to display on the tab notch.
+     */
+    public void resetSingleTabNotchTitle(int iHashCode, String sTitle){
+        int iTabIndex = -1;
+        //Find the tab index matching the supplied HashCode.
+        for(int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++){
+            if(iHashCode == GlobalClass.gal_WebPagesForCurrentUser.get(i).iTabFragmentHashID){
+                iTabIndex = i;
+                break;
+            }
+        }
+        if(iTabIndex == -1){
+            return;
+        }
+
+        TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(iTabIndex);
+        if(tab != null) {
+            View view = tab.getCustomView();
+            if(view != null) {
+                TextView textView_TabText = view.findViewById(R.id.text);
+                if (textView_TabText != null) {
+                    textView_TabText.setText(sTitle);
+                }
+            }
+        }
+    }
+
+    /**
+     * Call to update a tab notch with a loading icon and temporary title.
+     * @param iHashCode Hash code identifying a tab.
+     * @param sTitle Title to display on the tab notch.
+     */
+    public void resetSingleTabNotchFavicon(int iHashCode, String sTitle){
+
+        int iTabIndex = -1;
+        //Find the tab index matching the supplied HashCode.
+        for(int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++){
+            if(iHashCode == GlobalClass.gal_WebPagesForCurrentUser.get(i).iTabFragmentHashID){
+                iTabIndex = i;
+                break;
+            }
+        }
+        if(iTabIndex == -1){
+            return;
+        }
+
+        TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(iTabIndex);
+        if(tab != null) {
+            View view = tab.getCustomView();
+            if(view != null) {
+                TextView textView_TabText = view.findViewById(R.id.text);
+                if (textView_TabText != null) {
+                    textView_TabText.setText(sTitle);
+                }
+
+                ImageView imageView_Favicon = view.findViewById(R.id.imageView_Favicon);
+                if(imageView_Favicon != null) {
+                    imageView_Favicon.setImageResource(R.drawable.new_tab_icon);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Updates a tab notch with data found in the corresponding tab instance identified by iHashCode.
+     * @param iHashCode Hash code identifying a tab.
+     */
+    public void updateSingleTabNotch(int iHashCode){
         //Update tab title and favicon.
         ApplicationLogWriter("updateSingleTabNotchFavicon start.");
         int iTabIndex = -1;
@@ -761,7 +833,7 @@ public class Activity_Browser extends AppCompatActivity {
 
                             //Update views:
                             if(iHashCode != 0) {
-                                updateSingleTabNotchFavicon(iHashCode);
+                                updateSingleTabNotch(iHashCode);
                             }
                         }
 
