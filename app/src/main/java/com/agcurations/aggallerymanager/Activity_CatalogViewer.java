@@ -45,6 +45,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.button.MaterialButton;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -431,7 +432,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             public final ImageView imageView_Thumbnail;
             public final ImageView imageView_Attention;
             public final TextView textView_AttentionNote;
-            public final ImageButton button_Delete;
+            public final MaterialButton button_Delete;
             public final ImageButton imageButton_OpenGroupingControls;
             public final TextView textView_Title;
             public final TextView textView_Details;
