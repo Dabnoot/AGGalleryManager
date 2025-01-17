@@ -269,7 +269,7 @@ public class GlobalClass extends Application {
     // These variables prevent the system/user from starting another analysis until an existing
     // operation is finished.
     public static AtomicBoolean gabComicWebAnalysDataTMAvailable = new AtomicBoolean(true);
-    public static TreeMap<String, ArrayList<ItemClass_WebComicDataLocator>> gtmComicWebDataLocators = new TreeMap<>();
+    public static TreeMap<String, ItemClass_WebComicDataLocator> gtmComicWebDataLocators = new TreeMap<>();
     public static AtomicBoolean gabImportComicWebAnalysisRunning = new AtomicBoolean(false);
     public static AtomicBoolean gabImportComicWebAnalysisFinished = new AtomicBoolean(false);
 
@@ -3747,6 +3747,10 @@ public class GlobalClass extends Application {
     public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
 
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
+
+    public ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators; //An array of items corresponding to web pages that have been opened and the location of found online data.
+    public double gdWebComicDataExpirationDuration = 00000000.010000000d; //1 hour by gsDatePatternNumSort = "yyyyMMdd.HHmmssSSS". gsDatePatternNumSort used for code commonality with
+                                                                          // other implementations of time stamps.
 
     public static String cleanHTMLCodedCharacters(String sInput){
         String sResult;

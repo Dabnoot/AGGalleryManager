@@ -82,7 +82,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
             return Result.failure();
         }
-        ArrayList<ItemClass_WebComicDataLocator> alWebComicDataLocators = new ArrayList<>(Objects.requireNonNull(GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey)));
+        ItemClass_WebComicDataLocator icWebDataLocator = GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey);
         GlobalClass.gtmComicWebDataLocators.remove(gsDataRecordKey);
         GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
@@ -92,14 +92,6 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 false, "",
                 WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
 
-        ItemClass_WebComicDataLocator icWebDataLocator = null;
-
-        for (ItemClass_WebComicDataLocator icWCDL: alWebComicDataLocators){
-            if(icWCDL.bHostNameMatchFound){
-                icWebDataLocator = icWCDL;
-                break;
-            }
-        }
         if(icWebDataLocator == null){
             globalClass.BroadcastProgress(true, "This webpage is incompatible at this time.",
                     false, 0,

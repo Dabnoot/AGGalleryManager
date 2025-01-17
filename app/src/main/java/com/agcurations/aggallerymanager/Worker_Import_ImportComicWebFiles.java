@@ -82,7 +82,6 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ArrayList<ItemClass_File> alFileList = null;
         if(GlobalClass.gtmalImportFileList.get(gsDataLocatorKey) != null) {
             alFileList = new ArrayList<>(Objects.requireNonNull(GlobalClass.gtmalImportFileList.get(gsDataLocatorKey)));
-            GlobalClass.gtmComicWebDataLocators.remove(gsDataLocatorKey);
         }
         GlobalClass.gabImportFileListTMAvailable.set(true);
 

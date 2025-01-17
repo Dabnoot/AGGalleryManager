@@ -13,6 +13,9 @@ public class ItemClass_WebComicDataLocator implements Serializable {
     public boolean bRecognizedSeries = false; //Tells that this data is associated with a recognized comic series.
     public String sAddress = "";
 
+    Double dDateTimeStampDataLocated = 0d; //A date/time stamp indicating when the data was located. The user may come back to an item to import after
+                                            // investigation and wish to import. If the time is too great, it may need to be re-investigated.
+
     public String sHTML;
     //public String sCookie; //Cookie data sometimes needed when requesting resource download, according to some sources.
 

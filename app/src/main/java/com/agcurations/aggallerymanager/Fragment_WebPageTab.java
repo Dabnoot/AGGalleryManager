@@ -1023,6 +1023,10 @@ public class Fragment_WebPageTab extends Fragment {
                 //== Pre-import checks
                 //===========
 
+                //Check to see if this page has been analyzed before in current memory, and if so,
+                //  don't try to re-analyze.
+
+
                 gsCustomDownloadPrompt = "";
                 giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
                 gsMatchingCatalogItemID = "";
@@ -1053,6 +1057,9 @@ public class Fragment_WebPageTab extends Fragment {
                     return;
                 }
                 icWCDL_Match.sHTML = gsPageHTML;
+                icWCDL_Match.dDateTimeStampDataLocated = GlobalClass.GetTimeStampDouble(); //Assign, as soon as possible, a date/time stamp to indicate when the html data was acquired.
+                                                                                           // This relates to links that may expire within an unknown duration. Duration to expect expiration
+                                                                                           //  should probably be user-configurable.
 
                 //If we are here, this is a comic import site.
                 giMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
@@ -1150,9 +1157,8 @@ public class Fragment_WebPageTab extends Fragment {
                 GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
                 //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
                 //  depending on how fast the system might attempt to do it.
-                ArrayList<ItemClass_WebComicDataLocator> alicwcd = new ArrayList<>();
-                alicwcd.add(icWCDL_Match);
-                GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, alicwcd);
+
+                GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, icWCDL_Match);
                 GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
                 String sCallerID = "Fragment_WebPageTab:WebViewClient.onPageFinished()";
