@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -16,6 +17,7 @@ import com.bumptech.glide.Glide;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -32,7 +34,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -56,6 +57,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private final boolean gbDebugTouch = false;
 
     TextView gtextView_ComicDetailsLog;
+
+    private boolean gbComicFilesNotFound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -152,27 +155,25 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         //Load the full path to each comic page into tmComicPages:
         if (tmSortByFileName.size() == 0) {
-            gtextView_ComicDetailsLog.setVisibility(View.VISIBLE);
-            String sMessage = "No comic files found in folder at: " + sComicFolderUri + "\n";
-            sMessage = sMessage + "Comic source: " + gciCatalogItem.sSource + "\n";
-            gtextView_ComicDetailsLog.setText(sMessage);
-            gtextView_ComicDetailsLog.bringToFront();
-        } else {
-            gtextView_ComicDetailsLog.setVisibility(View.INVISIBLE);
-            gtextView_ComicDetailsLog.setText("");
-            gciCatalogItem.iFile_Count = tmSortByFileName.size(); //update the comic file count. Files may have been downloaded, deleted, etc.
-
-            if (!gciCatalogItem.sComic_Missing_Pages.equals("")) {
-                String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
-                //Check to see if this comic is missing any pages:
-                gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
-                if (!sMissingPages.equals(gciCatalogItem.sComic_Missing_Pages)) {
-                    //Update the catalog file with the new record of missing pages:
-                    globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
-                }
-                GlobalClass.gbCatalogViewerRefresh = true;
-            }
+            gbComicFilesNotFound = true;
+            tmSortByFileName.put("empty", "empty");
         }
+
+        gtextView_ComicDetailsLog.setVisibility(View.INVISIBLE);
+        gtextView_ComicDetailsLog.setText("");
+        gciCatalogItem.iFile_Count = tmSortByFileName.size(); //update the comic file count. Files may have been downloaded, deleted, etc.
+
+        if (!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+            String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
+            //Check to see if this comic is missing any pages:
+            gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
+            if (!sMissingPages.equals(gciCatalogItem.sComic_Missing_Pages)) {
+                //Update the catalog file with the new record of missing pages:
+                globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+            }
+            GlobalClass.gbCatalogViewerRefresh = true;
+        }
+
 
 
         gtmComicPages = new TreeMap<>();
@@ -181,11 +182,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
             String sFileUri = sComicFolderUri
                     + GlobalClass.gsFileSeparator + tmFiles.getValue();
             Uri uriFileUri = Uri.parse(sFileUri);
-            if(i == 0){
+            if(i == 0 && !gbComicFilesNotFound){
+                //Here we add the first file twice so that it shows up in the header entry and in the
+                //  later, smaller recylerview grid. But not if there are no files found.
                 gtmComicPages.put(i, uriFileUri);
                 i++;
-                //Here we add the first file twice so that it shows up in the header entry and in the
-                //  later, smaller recylerview grid.
             }
             gtmComicPages.put(i, uriFileUri);
             i++;
@@ -498,7 +499,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 String sPages = "" + gciCatalogItem.iComicPages;
                 holder.textView_Pages.setText(sPages);
                 String sFileCount = "" + gciCatalogItem.iFile_Count;
-                holder.textView_FileCount.setText(sFileCount);
+                if(!gbComicFilesNotFound) {
+                    holder.textView_FileCount.setText(sFileCount);
+                } else {
+                    holder.textView_FileCount.setText("0");
+                }
                 if (!gciCatalogItem.sComic_Missing_Pages.equals("")) {
                     String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
                     if (sMissingPages.length() > 10) {
@@ -526,7 +531,12 @@ public class Activity_ComicDetails extends AppCompatActivity {
             }
 
             Uri uriThumbnailFileName = treeMap.get(position);
-            Glide.with(getApplicationContext()).load(uriThumbnailFileName).into(holder.imageView_Thumbnail);
+            if(!gbComicFilesNotFound) {
+                Glide.with(getApplicationContext()).load(uriThumbnailFileName).into(holder.imageView_Thumbnail);
+            } else {
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_image_white_18dp_wpagepad, null);
+                Glide.with(getApplicationContext()).load(drawable).into(holder.imageView_Thumbnail);
+            }
 
             holder.textView_Title.setText(sThumbnailText);
 
@@ -534,6 +544,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
             holder.imageView_Thumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    if(gbComicFilesNotFound){
+                        return;
+                    }
+
                     if (gbDebugTouch)
                         Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_SHORT).show();
                     int iCorrectedPosition = position;
