@@ -48,6 +48,9 @@ import java.util.ArrayList;
 
 public class Activity_Browser extends AppCompatActivity {
 
+    public static final String EXTRA_STRING_WEB_ADDRESS_REQUEST = "com.agcurations.aggallermanager.extra_string_web_address_request";
+    private String gsStartupAddressRequest = null;
+
     public TabLayout tabLayout_WebTabs;
     ViewPager2 gViewPager2_WebPages;
     FragmentViewPagerAdapter viewPagerFragmentAdapter;
@@ -241,6 +244,13 @@ public class Activity_Browser extends AppCompatActivity {
 
             startAction_GetWebPageTabData();
 
+            Intent intentStartingIntent = getIntent();
+            if(intentStartingIntent != null){
+                String sRequestedAddress = intentStartingIntent.getStringExtra(EXTRA_STRING_WEB_ADDRESS_REQUEST);
+                if(sRequestedAddress != null){
+                    gsStartupAddressRequest = sRequestedAddress;
+                }
+            }
 
             /*Button button_testBrowser = findViewById(R.id.button_testBrowser);
             if(button_testBrowser != null){
@@ -770,6 +780,26 @@ public class Activity_Browser extends AppCompatActivity {
                     if(sResultType.equals(Worker_Browser_GetWebPageTabData.RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED)){
 
                         //Initialize the tabs:
+
+                        //Lookup the last tab of focus:
+                        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                        String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
+                        String sPrefWebTabPrevFocusIndexByUser = GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX_PREFIX + sPreferenceNamePrefix;
+                        int iTabofLastFocus = sharedPreferences.getInt(sPrefWebTabPrevFocusIndexByUser, 0);
+
+                        //Also check to see if this activity was requested
+                        // to be opened by a link the user clicked on an existing catalog item:
+                        if(gsStartupAddressRequest != null){
+                            ItemClass_WebPageTabData icwptd = new ItemClass_WebPageTabData();
+                            icwptd.sTabID = GlobalClass.GetTimeStampFileSafe();
+                            icwptd.sUserName = GlobalClass.gicuCurrentUser.sUserName;
+                            icwptd.sAddress = gsStartupAddressRequest;
+                            int iNewTabPosition = GlobalClass.gal_WebPagesForCurrentUser.size();
+                            GlobalClass.gal_WebPagesForCurrentUser.add(iNewTabPosition, icwptd);
+                            iTabofLastFocus = iNewTabPosition;
+                            gsStartupAddressRequest = null;
+                        }
+
                         int iTabCount = GlobalClass.gal_WebPagesForCurrentUser.size();
                         for(int i = 0; i < iTabCount; i++){
                             //NO PROGRESS BAR TO BE IMPLEMENTED HERE.
@@ -781,17 +811,12 @@ public class Activity_Browser extends AppCompatActivity {
                             } else {
                                 viewPagerFragmentAdapter.createFragment(i);
                             }
-
                         }
 
                         viewPagerFragmentAdapter.notifyDataSetChanged();
                         InitializeTabAppearance();
 
                         //Go to the tab last having the user focus:
-                        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                        String sPreferenceNamePrefix = GlobalClass.gicuCurrentUser.sUserName;
-                        String sPrefWebTabPrevFocusIndexByUser = GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX_PREFIX + sPreferenceNamePrefix;
-                        int iTabofLastFocus = sharedPreferences.getInt(sPrefWebTabPrevFocusIndexByUser, 0);
                         gViewPager2_WebPages.setCurrentItem(iTabofLastFocus, false);
 
                         //Shrink the progressbar:

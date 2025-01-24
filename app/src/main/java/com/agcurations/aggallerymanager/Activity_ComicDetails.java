@@ -486,6 +486,19 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
                 sThumbnailText = gciCatalogItem.sTitle;
                 holder.textView_ComicSource.setText(gciCatalogItem.sSource);
+
+                if(gciCatalogItem.sSource.startsWith("http")){
+                    //If the source is an address, configure the link such that the user can click it and go to the webpage.
+                    holder.textView_ComicSource.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intentBrowser = new Intent(getApplicationContext(), Activity_Browser.class);
+                            intentBrowser.putExtra(Activity_Browser.EXTRA_STRING_WEB_ADDRESS_REQUEST, gciCatalogItem.sSource);
+                            startActivity(intentBrowser);
+                        }
+                    });
+                }
+
                 holder.textView_Parodies.setText(gciCatalogItem.sComicParodies);
                 holder.textView_Characters.setText(gciCatalogItem.sComicCharacters);
 
