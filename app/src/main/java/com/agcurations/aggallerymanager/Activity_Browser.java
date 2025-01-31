@@ -460,9 +460,16 @@ public class Activity_Browser extends AppCompatActivity {
                 this.finish(); //Close this activity if the sizes are out-of-sync.
                 return;
             }
+
+            String sAddress = GlobalClass.gal_WebPagesForCurrentUser.get(i).sAddress;
+
             String sTitle = GlobalClass.gal_WebPagesForCurrentUser.get(i).sTabTitle;
             if(sTitle.equals("")){
-                sTitle = "New Tab";
+                if(sAddress.equals("")) {
+                    sTitle = "New Tab";
+                } else {
+                    sTitle = Fragment_WebPageTab.getDomainShortName(sAddress);
+                }
             }
 
             RelativeLayout relativeLayout_custom_tab = (RelativeLayout)
@@ -473,7 +480,17 @@ public class Activity_Browser extends AppCompatActivity {
             ImageView imageView_Favicon = relativeLayout_custom_tab.findViewById(R.id.imageView_Favicon);
             if(imageView_Favicon != null) {
                 String sFaviconAddress = GlobalClass.gal_WebPagesForCurrentUser.get(i).sFaviconAddress;
-                if(!sFaviconAddress.equals("")){
+                if(!sFaviconAddress.equals("")){  //todo: Everytime a new tab is opened, this might cause a reload of all tabs' favicons.
+                    Glide.with(this)
+                            .load(sFaviconAddress)
+                            .into(imageView_Favicon);
+                } else {
+                    //Attempt to load a default favicon:
+                    String sDomain = Fragment_WebPageTab.getDomainFromAddress(sAddress);
+                    if(sDomain.endsWith("/")) {
+                        sDomain = sDomain.substring(0, sDomain.length() - 2);
+                    }
+                    sFaviconAddress = sDomain + "/" + "favicon.ico";
                     Glide.with(this)
                             .load(sFaviconAddress)
                             .into(imageView_Favicon);
