@@ -32,7 +32,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,6 +40,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -193,7 +193,7 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
             public final ImageView imageView_Thumbnail;
             public final ImageView imageView_Attention;
             public final TextView textView_AttentionNote;
-            public final Button button_Delete;
+            public final AppCompatImageButton button_Delete;
             public final ImageButton imageButton_OpenGroupingControls;
             public final TextView textView_Title;
             public final TextView textView_Details;
