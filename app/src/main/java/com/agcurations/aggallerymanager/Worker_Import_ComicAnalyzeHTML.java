@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.widget.Toast;
 
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
@@ -83,7 +84,6 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             return Result.failure();
         }
         ItemClass_WebComicDataLocator icWebDataLocator = GlobalClass.gtmComicWebDataLocators.get(gsDataRecordKey);
-        GlobalClass.gtmComicWebDataLocators.remove(gsDataRecordKey);
         GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
 
@@ -427,58 +427,76 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 //===
                 //== Estimate comic size ===
                 //===
-
                 int iFileSizeLoopCount = 0;
-                boolean bGetOnlineSize = true;
-                long lProjectedComicSize;
-
+                long lProjectedComicSize = 0;
                 long lSize = 0;
-                for (Map.Entry<Integer, String[]> tmEntryPageNumImageExt : tmFileIndexImageExtension.entrySet()) {
-                    //Build the suspected URL for the image:
-                    String sTemp1 = "h%ttps://i.n%hen%tai.net/galleries/";
-                    String sExplicitAddress = sTemp1.replace("%","");
-                    String sImageDownloadAddress = sExplicitAddress +
-                            sGalleryID + "/" +
-                            tmEntryPageNumImageExt.getKey() + "." +
-                            tmEntryPageNumImageExt.getValue()[EXTENTION_INDEX];
-                    //Build a filename to save the file to in the catalog:
-                    String sPageStringForFilename = String.format(Locale.getDefault(), "%04d", tmEntryPageNumImageExt.getKey());
-                    String sNewFilename = "Page_" + sPageStringForFilename + "." + tmEntryPageNumImageExt.getValue()[EXTENTION_INDEX];
-                    String[] sTemp = {sImageDownloadAddress, sNewFilename, tmEntryPageNumImageExt.getValue()[THUMBNAIL_URL_INDEX]};
-                    alsComicPageAndImageData.add(sTemp);
+                boolean bAddressPrefixSearchSatisfied = false;
+                int iServer = 0;
+                while(!bAddressPrefixSearchSatisfied) {
+                    boolean bGetOnlineSize = true;
 
-                    //Get the size of the image and add it to the total size of the comic:
-                    if (bGetOnlineSize) {
-                        URL urlPage = new URL(sImageDownloadAddress);
-                        BroadcastProgress_ComicDetails("Getting file size data for " + sImageDownloadAddress, -1); //Broadcast progress
-                        //URLConnection connection = urlPage.openConnection();
-                        try{
-                            HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
-                            connection.setRequestProperty("Accept-Encoding", "identity");
-                            connection.setConnectTimeout(5000);
-                            lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
-                            if (lSize == -1) {
-                                bGetOnlineSize = false;
+                    String sServer = "";
+                    if(iServer > 0){
+                        sServer = iServer + "";
+                    }
+
+                    for (Map.Entry<Integer, String[]> tmEntryPageNumImageExt : tmFileIndexImageExtension.entrySet()) {
+                        //Build the suspected URL for the image:
+                        String sTemp1 = "h%ttps://i" + sServer + ".n%hen%tai.net/galleries/";
+                        String sExplicitAddress = sTemp1.replace("%", "");
+                        String sImageDownloadAddress = sExplicitAddress +
+                                sGalleryID + "/" +
+                                tmEntryPageNumImageExt.getKey() + "." +
+                                tmEntryPageNumImageExt.getValue()[EXTENTION_INDEX];
+                        //Build a filename to save the file to in the catalog:
+                        String sPageStringForFilename = String.format(Locale.getDefault(), "%04d", tmEntryPageNumImageExt.getKey());
+                        String sNewFilename = "Page_" + sPageStringForFilename + "." + tmEntryPageNumImageExt.getValue()[EXTENTION_INDEX];
+                        String[] sTemp = {sImageDownloadAddress, sNewFilename, tmEntryPageNumImageExt.getValue()[THUMBNAIL_URL_INDEX]};
+                        alsComicPageAndImageData.add(sTemp);
+
+                        //Get the size of the image and add it to the total size of the comic:
+                        if (bGetOnlineSize) {
+                            URL urlPage = new URL(sImageDownloadAddress);
+                            BroadcastProgress_ComicDetails("Getting file size data for " + sImageDownloadAddress, -1); //Broadcast progress
+                            //URLConnection connection = urlPage.openConnection();
+                            try {
+                                HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
+                                connection.setRequestProperty("Accept-Encoding", "identity");
+                                connection.setConnectTimeout(5000);
+                                lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
+                                if (lSize == -1) {
+                                    iServer++;
+                                    if(iServer > 3){
+                                        bAddressPrefixSearchSatisfied = true; //Stop looking.
+                                    } else {
+                                        iFileSizeLoopCount = 0;
+                                        lProjectedComicSize = 0;
+                                        lSize = 0;
+                                        alsComicPageAndImageData = new ArrayList<>();
+                                    }
+                                    break;
+                                }
+                                bAddressPrefixSearchSatisfied = true;
+                                iFileSizeLoopCount++;
+
+                                giProgressNumerator++;
+                                iProgressBarValue = Math.round((giProgressNumerator / (float) giProgressDenominator) * 100);
+                                BroadcastProgress_ComicDetails("", iProgressBarValue);
+
+                                if (iFileSizeLoopCount == iFileSizeMaxLoopCount) {  //Use a sample set of images to project the size of the comic.
+                                    //  Larger loop creates a longer delay before the user can move on
+                                    //  to the next step of an import process.
+                                    bGetOnlineSize = false;
+                                }
+                                connection.disconnect();
+                            } catch (java.net.SocketTimeoutException e) {
+                                sMessage = "Could not get image size due to timeout. " + e.getMessage();
+                                BroadcastProgress_ComicDetails(sMessage, -1);
                             }
-
-                            iFileSizeLoopCount++;
-
-                            giProgressNumerator++;
-                            iProgressBarValue = Math.round((giProgressNumerator / (float) giProgressDenominator) * 100);
-                            BroadcastProgress_ComicDetails("", iProgressBarValue);
-
-                            if (iFileSizeLoopCount == iFileSizeMaxLoopCount) {  //Use a sample set of images to project the size of the comic.
-                                //  Larger loop creates a longer delay before the user can move on
-                                //  to the next step of an import process.
-                                bGetOnlineSize = false;
-                            }
-                            connection.disconnect();
-                        } catch (java.net.SocketTimeoutException e) {
-                            sMessage = "Could not get image size due to timeout. " + e.getMessage();
-                            BroadcastProgress_ComicDetails(sMessage, -1);
                         }
                     }
-                }
+
+                } //End while address prefix not found.
 
                 //ProgressNumerator should equal 5 + iFileSizeMaxLoopCount here.
 
@@ -960,10 +978,25 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 alicf_ComicDownloadFileItems.add(icf_CleanedData);
             }
 
+            //Add the data to the Global:
+            //Wait for the data to be available, lock the token, add the data, unlock the token.
+            if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+                Toast.makeText(getApplicationContext(), "Unable to lock app memory for data allocation. Try again or perhaps restart app.", Toast.LENGTH_SHORT).show();
+            } else {
+                //Block other threads from accessing this data.
+                GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                ItemClass_WebComicDataLocator icWCDL = GlobalClass.gtmComicWebDataLocators.get(icWebDataLocator.sAddress);
+                if(icWCDL != null){
+                    //Put the data in Global memory:
+                    icWCDL.alicf_ComicDownloadFileItems = alicf_ComicDownloadFileItems;
+                }
+                GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+            }
+
+
             //Also send a broadcast to Activity Import to capture the download items in an array adapter:
             Intent broadcastIntent_ComicWebDetectResponse = new Intent();
             broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, true);
-            broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE, alicf_ComicDownloadFileItems);
             broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS, icWebDataLocator.sAddress); //Place this here so that the result is recognized by the receiver. Could be concurrent analysis' ongoing.
             broadcastIntent_ComicWebDetectResponse.setAction(WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
             broadcastIntent_ComicWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);

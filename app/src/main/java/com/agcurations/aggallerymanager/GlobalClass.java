@@ -3748,7 +3748,6 @@ public class GlobalClass extends Application {
 
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
-    public ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators; //An array of items corresponding to web pages that have been opened and the location of found online data.
     public double gdWebComicDataExpirationDuration = 00000000.010000000d; //1 hour by gsDatePatternNumSort = "yyyyMMdd.HHmmssSSS". gsDatePatternNumSort used for code commonality with
                                                                           // other implementations of time stamps.
 

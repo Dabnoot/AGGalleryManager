@@ -301,6 +301,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
                     if (viewModelImportActivity.webComicDataLocator.bHostNameMatchFound) {
                         viewModelImportActivity.webComicDataLocator.sHTML = sHTML;
+                        viewModelImportActivity.webComicDataLocator.sAddress = viewModelImportActivity.sWebAddress;
                     }
 
                     if (!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)) {

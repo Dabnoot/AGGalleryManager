@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
@@ -57,6 +58,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
     public static final String KEY_ARG_VIDEO_TYPE_SINGLE_M3U8 = "KEY_ARG_VIDEO_TYPE_SINGLE_M3U8";
     public static final String KEY_ARG_DOWNLOAD_IDS = "KEY_ARG_DOWNLOAD_IDS";
     public static final String KEY_ARG_ITEM_ID = "KEY_ARG_ITEM_ID";
+    public static final String KEY_ARG_DEFAULT_DL_SIZE_PREDICTION = "KEY_ARG_DEFAULT_DL_SIZE_PREDICTION";
 
     //=========================
 
@@ -125,9 +127,14 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         String sMessage;
 
-        long lProgressNumerator = 0L;
-        long lProgressDenominator;
+        long lFileCountProgressNumerator = 0L;
+        long lFileCountProgressDenominator;
+        int iFileCountProgressBarValue = 0;
+        int iSizeProgressBarValue = 0;
         int iProgressBarValue;
+        TreeMap<Long, Integer> tmDLSizes = new TreeMap<>();
+        long lSizeProgressNumerator = 0;
+        long lSizeProgressDenominator = 0;
 
         if(!GlobalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
@@ -157,7 +164,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
                 sMessage = "Download ID(s) missing.";
                 return Result.failure(LogReturnWithFailure(sMessage));
             }
-            lProgressDenominator = glDownloadIDs.length;
+            lFileCountProgressDenominator = glDownloadIDs.length;
 
             Set<Long> setDownloadIDs = new TreeSet<>();
             for(long l: glDownloadIDs){
@@ -189,10 +196,27 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
             DownloadManager downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
 
+            float fDLPercentComplete;
+            float fPercentConcernTimeElapsed;
+
             globalClass.BroadcastProgress(true, "\nBegin monitoring for downloads...\n",
                     true, 0,
-                    true, lProgressNumerator + "/" + lProgressDenominator + " downloads completed.",
+                    true, lFileCountProgressNumerator + "/" + lFileCountProgressDenominator + " downloads completed.",
                     DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
+
+            boolean bDLAwaitingRetry = false;
+
+            double dWaitTimeStart = GlobalClass.GetTimeStampDouble();
+
+            //Query for remaining downloads:
+            //Create array of download IDs to query:
+            long[] lDownloadIDs = new long[setDownloadIDs.size()];
+            lDownloadIDs = setDownloadIDs.stream().mapToLong(Long::longValue).toArray();
+
+            DownloadManager.Query dmQuery = new DownloadManager.Query();
+            dmQuery.setFilterById(lDownloadIDs);
+
+            boolean bRecalcSizeProgress;
 
             while ((iElapsedWaitTime < GlobalClass.DOWNLOAD_WAIT_TIMEOUT) && setDownloadIDs.size() > 0) {
 
@@ -209,18 +233,12 @@ public class Worker_DownloadPostProcessing  extends Worker {
                 if(bDebug) gbwLogFile.write(".");
                 if(bDebug) gbwLogFile.flush();
 
-                //Query for remaining downloads:
-                //Create array of download IDs to query:
-                long[] lDownloadIDs = new long[setDownloadIDs.size()];
-                lDownloadIDs = setDownloadIDs.stream().mapToLong(Long::longValue).toArray();
-
-                DownloadManager.Query dmQuery = new DownloadManager.Query();
-                dmQuery.setFilterById(lDownloadIDs);
-
+                //Execute the query for download data:
                 Cursor cursor = downloadManager.query(dmQuery);
 
                 if(cursor.moveToFirst()) {
                     do {
+                        bRecalcSizeProgress = false;
                         int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
                         int status = cursor.getInt(columnIndex);
                         int columnReason = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
@@ -231,6 +249,40 @@ public class Worker_DownloadPostProcessing  extends Worker {
                         String sDownloadURI = cursor.getString(iDownloadURI);
                         int iDownloadID = cursor.getColumnIndex((DownloadManager.COLUMN_ID));
                         long lDownloadID = cursor.getLong(iDownloadID);
+                        int iBytes_Downloaded_Column = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                        int iBytes_Downloaded = -1;
+                        if(iBytes_Downloaded_Column > -1){
+                            iBytes_Downloaded = cursor.getInt(iBytes_Downloaded_Column);
+                        }
+                        int iBytes_Total_Size_Column = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+                        int iBytes_Total_Size = -1;
+                        if(iBytes_Total_Size_Column > -1) {
+                            iBytes_Total_Size = cursor.getInt(iBytes_Total_Size_Column);
+                        }
+
+                        if(!tmDLSizes.containsKey(lDownloadID)) {
+                            lSizeProgressDenominator += iBytes_Total_Size;
+                            tmDLSizes.put(lDownloadID, iBytes_Downloaded);
+                            bRecalcSizeProgress = true;
+                        } else {
+                            if(tmDLSizes.get(lDownloadID) != null) {
+                                if (tmDLSizes.get(lDownloadID) != iBytes_Downloaded) {
+                                    //Store the new size:
+                                    tmDLSizes.replace(lDownloadID, iBytes_Downloaded);
+                                    bRecalcSizeProgress = true;
+                                }
+                            }
+                        }
+                        if(bRecalcSizeProgress){
+                            //Recalc progress:
+                            lSizeProgressNumerator = 0;
+                            for (Map.Entry<Long, Integer> entry : tmDLSizes.entrySet()) {
+                                lSizeProgressNumerator += entry.getValue();
+                            }
+                            iSizeProgressBarValue = Math.round((lSizeProgressNumerator / (float) lSizeProgressDenominator) * 100);
+                        }
+
+
 
                         bPaused = false;
 
@@ -275,11 +327,12 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                 sMessage = sMessage + "\n" + "Download: " + sDownloadURI;
                                 sMessage = sMessage + "\n" + "Reason ID: " + iReasonID;
                                 sMessage = sMessage + "\n" + "Reason text: " + sDownloadFailedReason;
-                                lProgressNumerator++;
-                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                lFileCountProgressNumerator++;
+                                iFileCountProgressBarValue = Math.round((lFileCountProgressNumerator / (float) lFileCountProgressDenominator) * 100);
+                                iProgressBarValue = Math.min(iFileCountProgressBarValue, iSizeProgressBarValue);
                                 globalClass.BroadcastProgress(true, sMessage + "\n",
                                         true, iProgressBarValue,
-                                        true, lProgressNumerator + "/" + lProgressDenominator + " downloads accounted.",
+                                        true, lFileCountProgressNumerator + "/" + lFileCountProgressDenominator + " downloads accounted.",
                                         DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
                                 if(bDebug) gbwLogFile.write(sMessage + "\n\n");
                                 if(bDebug) gbwLogFile.flush();
@@ -306,6 +359,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                 sMessage = "\n" + "Download paused: " + sDownloadURI;
                                 sMessage = sMessage + "\n" + "Reason ID: " + iReasonID;
                                 sMessage = sMessage + "\n" + "Reason text: " + sDownloadPausedReason;
+                                bDLAwaitingRetry = true;
                                 if(bDebug) gbwLogFile.write(sMessage + "\n\n");
                                 if(bDebug) gbwLogFile.flush();
 
@@ -440,11 +494,12 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                         if(bDebug) gbwLogFile.write(" Source file successfully deleted.");
                                     }
 
-                                    lProgressNumerator++;
-                                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                    lFileCountProgressNumerator++;
+                                    iFileCountProgressBarValue = Math.round((lFileCountProgressNumerator / (float) lFileCountProgressDenominator) * 100);
+                                    iProgressBarValue = Math.min(iFileCountProgressBarValue, iSizeProgressBarValue);
                                     globalClass.BroadcastProgress(true, "\nDownload completed and file placed at URI: \n" + sUserFriendlyDestinationFile + "\n",
                                             true, iProgressBarValue,
-                                            true, lProgressNumerator + "/" + lProgressDenominator + " downloads completed.",
+                                            true, lFileCountProgressNumerator + "/" + lFileCountProgressDenominator + " downloads completed.",
                                             DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
 
                                 } //End if fSource.exists. If it does not exist, we probably already moved it.
@@ -456,6 +511,39 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
                                 break; //end Case DownloadManager.STATUS_SUCCESSFUL.
                         }
+
+                        long lConcernTime = 5 * 1000; //5 seconds in milliseconds.
+                        double dWaitTimeCurrent = GlobalClass.GetTimeStampDouble();       //00000001000000000
+                        double dTotalWaitTimeMS = (dWaitTimeCurrent - dWaitTimeStart) * 1000000000;//yyyyMMdd.HHmmssSSS
+                        float fTemp = (float) dTotalWaitTimeMS;
+                        fPercentConcernTimeElapsed = (fTemp / (float) lConcernTime) * 100;
+
+                        if(fPercentConcernTimeElapsed > 50.0 && bDLAwaitingRetry){
+
+                            //Calculate user-friendly time elapsed:
+                            int iMSHours = 60 * 60 * 1000; //Milliseconds in an hour.
+                            int iMSMinutes = 60 * 1000; //Milliseconds in a minute.
+                            int iMSSeconds = 1000; //Milliseconds in a second.
+                            int iNetTime = (int) dTotalWaitTimeMS; //iElapsedWaitTime;
+                            int iHours = iNetTime / iMSHours;
+                            iNetTime = iNetTime - iHours * iMSHours;
+                            int iMinutes = iNetTime / iMSMinutes;
+                            iNetTime = iNetTime - iMinutes * iMSMinutes;
+                            int iSeconds = iNetTime / iMSSeconds;
+                            String sTempFormat = "%02d:%02d:%02d";
+                            @SuppressLint("DefaultLocale") String sElapsedTime = String.format(sTempFormat, iHours, iMinutes, iSeconds);
+
+                            String sMessage2 = lFileCountProgressNumerator + "/" + lFileCountProgressDenominator + " downloads completed. " + "One or more downloads awaiting retry. Time elapsed: " + sElapsedTime;
+                            iProgressBarValue = Math.min(iFileCountProgressBarValue, iSizeProgressBarValue); //Use 'min' because there could be 99/100 downloads done, but 50% size downloaded.
+                                                                                                                // There could also be a "jerk" when this routine is started and the progress
+                                                                                                                // on size is calculated
+                            globalClass.BroadcastProgress(true, "\n" + sMessage2,
+                                    true, iProgressBarValue,
+                                    true, sMessage2,
+                                    DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
+                        }
+
+
                     } while (cursor.moveToNext() && setDownloadIDs.size() > 0); //End loop through download query results.
 
                 } //End if cursor has a record.

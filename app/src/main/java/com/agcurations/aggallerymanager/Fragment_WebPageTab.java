@@ -53,6 +53,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -108,6 +109,8 @@ public class Fragment_WebPageTab extends Fragment {
     private boolean gbFaviconAddressFound = false;
 
     ResponseReceiver_WebPageTab responseReceiver_WebPageTab;
+
+    CircularProgressIndicator circularProgressIndicator_PageLoading;
 
     public Fragment_WebPageTab() {
         //Empty constructor
@@ -404,6 +407,19 @@ public class Fragment_WebPageTab extends Fragment {
                         activity_browser.resetSingleTabNotchFavicon(giThisFragmentHashCode, sTitle);
                     }
                 }
+
+                //Check and see if this "explicity-navigated" website exists as an analyzed site.
+                // If the data is there, clear it. This allows the user to restart an executed
+                // analysis.
+                if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+                    Toast.makeText(gContext, "Unable to check previously analyzed web comics.", Toast.LENGTH_SHORT).show();
+                } else {
+                    //Block other threads from accessing this data (because it can also be used by a worker).
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                    GlobalClass.gtmComicWebDataLocators.remove(sRequestedAddress);
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+                }
+
                 gsWebAddress = sRequestedAddress;
                 gWebView.loadUrl(sRequestedAddress);
 
@@ -491,6 +507,8 @@ public class Fragment_WebPageTab extends Fragment {
 
         } //End if (gImageButton_ImportContent != null).
 
+        circularProgressIndicator_PageLoading = getView().findViewById(R.id.circularProgressIndicator_PageLoading);
+
         ImageButton imageButton_OpenWebPageTabMenu = getView().findViewById(R.id.imageButton_OpenWebPageTabMenu);
         if(imageButton_OpenWebPageTabMenu != null){
             imageButton_OpenWebPageTabMenu.setOnClickListener(new View.OnClickListener() {
@@ -506,6 +524,12 @@ public class Fragment_WebPageTab extends Fragment {
                                 GlobalClass.gbAutoDownloadGroupComics = !GlobalClass.gbAutoDownloadGroupComics;
                             }
                             if(menuItem.getItemId() == R.id.icon_retry_processing) {
+
+                                //Check to see if the data associated with this address is already in memory, and if so, remove it:
+                                GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                                GlobalClass.gtmComicWebDataLocators.remove(gsWebAddress);
+                                GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+
                                 gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
                                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
                             }
@@ -735,6 +759,9 @@ public class Fragment_WebPageTab extends Fragment {
                 //String sCookie = CookieManager.getInstance().getCookie(sAddress);
                 //GlobalClass.gsCookie = sCookie;
 
+                circularProgressIndicator_PageLoading.setVisibility(View.INVISIBLE);
+                gImageButton_ImportContent.setVisibility(View.VISIBLE);
+
                 if(!gsWebAddress.equals(sAddress)){
                     Toast.makeText(gContext, "Start address not the same as finished address.", Toast.LENGTH_SHORT).show();
                 }
@@ -816,6 +843,8 @@ public class Fragment_WebPageTab extends Fragment {
                 gbWebpageAnalysisRetry = true; //Allow a one-shot analysis retry if necessary.
                 gEditText_Address.setText(url);
 
+                circularProgressIndicator_PageLoading.setVisibility(View.VISIBLE);
+                gImageButton_ImportContent.setVisibility(View.INVISIBLE);
 
                 //Check to see if the favicon needs to be updated:
                 String sRequestedDomain = getDomainFromAddress(url);
@@ -1023,12 +1052,8 @@ public class Fragment_WebPageTab extends Fragment {
                 //== Pre-import checks
                 //===========
 
-                //Check to see if this page has been analyzed before in current memory, and if so,
-                //  don't try to re-analyze.
-
 
                 gsCustomDownloadPrompt = "";
-                giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
                 gsMatchingCatalogItemID = "";
                 giMediaCategory = -1;
 
@@ -1148,8 +1173,36 @@ public class Fragment_WebPageTab extends Fragment {
                 // used to recognize downloadable comic candidates. Further, the item is not a
                 // duplicate. The item may belong to a collection.
 
+                //Check to see if this page has been analyzed before in current memory, and if so,
+                //  don't try to re-analyze.
+                boolean bDataAlreadyExists = false;
+                if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+                    Toast.makeText(gContext, "Unable to check previously analyzed web comics.", Toast.LENGTH_SHORT).show();
+                } else {
+                    //Block other threads from accessing this data (because it can also be used by a worker).
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                    if(GlobalClass.gtmComicWebDataLocators.containsKey(gsWebAddress)){
+                        //This web address already exists in memory.
+                        //The user can manually reload the page or restart the application to refresh the data.
+                        bDataAlreadyExists = true;
+                    }
+                    GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+                }
+
+                if (bDataAlreadyExists){
+                    //If the comic has already been analyzed and the data is available,
+                    //  set the download icon to the proper color and leave the routine.
+                    //If the item already exists in the catalog, we would not be here, and the icon
+                    // would have been set to DUPLICATE in coding above before the routine was exited.
+                    if(gsMatchingCatalogItemID.equals("")) {
+                        SetDownloadButtonColor(READY);
+                    } else {
+                        SetDownloadButtonColor(RECOGNIZED);
+                    }
+                    return;
+                }
+
                 //Fire off a worker to get the comic details:
-                String sDataRecordKey = GlobalClass.getNewCatalogRecordID(); //Not actually getting a new catalog item ID, just using it to generate a unique ID for data tagging.
                 if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
                     Toast.makeText(gContext, "Web data transfer unavailble.", Toast.LENGTH_SHORT).show();
                     return;
@@ -1158,7 +1211,7 @@ public class Fragment_WebPageTab extends Fragment {
                 //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
                 //  depending on how fast the system might attempt to do it.
 
-                GlobalClass.gtmComicWebDataLocators.put(sDataRecordKey, icWCDL_Match);
+                GlobalClass.gtmComicWebDataLocators.put(gsWebAddress, icWCDL_Match);
                 GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
                 String sCallerID = "Fragment_WebPageTab:WebViewClient.onPageFinished()";
@@ -1166,7 +1219,7 @@ public class Fragment_WebPageTab extends Fragment {
                 Data dataComicAnalyzeHTML = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                         .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                        .putString(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY, sDataRecordKey)
+                        .putString(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY, gsWebAddress)
                         .build();
                 OneTimeWorkRequest otwrComicAnalyzeHTML = new OneTimeWorkRequest.Builder(Worker_Import_ComicAnalyzeHTML.class)
                         .setInputData(dataComicAnalyzeHTML)
@@ -1214,50 +1267,62 @@ public class Fragment_WebPageTab extends Fragment {
                 //Check to see if this is a response to request to get comic downloads from html:
                 boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
                 if (bGetComicDownloadsResponse) {
-
-                    //Look to see if this is a progress message:
-
-
-                    //Look to see if this is a response to a known item to this web tab:
+                    //Look to see if this is a response to a known item to this web tab.
+                    //  If it is, set the download button color and change the download button progress bar.
                     String sDataRelatedURLAddress = intent.getStringExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
-                    if(sDataRelatedURLAddress != null && galWebComicDataLocators != null) { //todo: why does galWebComicDataLocators sometimes appear as Null?
-                        for (ItemClass_WebComicDataLocator icWCDL : galWebComicDataLocators) {
-                            if (icWCDL.sAddress.matches(sDataRelatedURLAddress)) {
-                                icWCDL.alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
-                                //Set color of the download icon to be blue:
-                                SetDownloadButtonColor(RECOGNIZED);
-                                //Toast.makeText(getContext(), "Success detecting matching comic and images.", Toast.LENGTH_SHORT).show();
-                                gLinearProgressIndicator_DLInspection.setProgress(0);
-                                gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
-
-                                if(GlobalClass.gbAutoDownloadGroupComics && icWCDL.bRecognizedSeries){
-                                    //If autodownload is on and this item is from a recognized series,
-                                    //  initiate download. The series check is here because the system
-                                    //  was recognizing comics from other sites that did not belong to a group and was just
-                                    //  straight-up downloading them immediately.
-                                    initiateComicGroupItemImport(icWCDL);
+                    if(sDataRelatedURLAddress != null) {
+                        if(gsWebAddress.equals(sDataRelatedURLAddress)) { //Make sure this is in response to THIS Fragment_WebPageTab instance. It was considered to do a check via webtab ID, but this is better.
+                            if (!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)) {
+                                Toast.makeText(gContext, "Unable to check previously analyzed web comics.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                //Block other threads from accessing this data (because it can also be used by a worker).
+                                GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                                ItemClass_WebComicDataLocator icWCDL = GlobalClass.gtmComicWebDataLocators.get(sDataRelatedURLAddress);
+                                //todo: Check to make sure that file identifiers were actually put into the object. If not, then do what?
+                                boolean bDownloadFileItemsFound = false;
+                                if (icWCDL != null) {
+                                    if (icWCDL.alicf_ComicDownloadFileItems != null) {
+                                        if (icWCDL.alicf_ComicDownloadFileItems.size() > 0) {
+                                            bDownloadFileItemsFound = true;
+                                            //Set color of the download icon to be blue:
+                                            SetDownloadButtonColor(RECOGNIZED);
+                                            //Toast.makeText(getContext(), "Success detecting matching comic and images.", Toast.LENGTH_SHORT).show();
+                                            gLinearProgressIndicator_DLInspection.setProgress(0);
+                                            gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
+                                            int i = getWebPageTabDataIndex();
+                                            if (GlobalClass.gbAutoDownloadGroupComics && icWCDL.bRecognizedSeries) {
+                                                //If autodownload is on and this item is from a recognized series,
+                                                //  initiate download. The series check is here because the system
+                                                //  was recognizing comics from other sites that did not belong to a group and was just
+                                                //  straight-up downloading them immediately.
+                                                initiateComicGroupItemImport(icWCDL);
+                                            }
+                                        }
+                                    }
                                 }
-
-
-                                break;
+                                if (!bDownloadFileItemsFound) {
+                                    Toast.makeText(getContext(), "No items found for download. Suggest retry analysis.", Toast.LENGTH_SHORT).show();
+                                }
+                                GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
                             }
+
+                            boolean bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                            if (bUpdatePercentComplete) {
+                                int iAmountComplete;
+                                iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                                if(gLinearProgressIndicator_DLInspection != null) {
+                                    gLinearProgressIndicator_DLInspection.setProgress(iAmountComplete);
+                                    if (iAmountComplete == 100) {
+                                        gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
+                                    } else {
+                                        gLinearProgressIndicator_DLInspection.setVisibility(View.VISIBLE);
+                                    }
+                                }
+                            }
+
                         }
                     }
 
-                }
-
-                boolean bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
-                if (bUpdatePercentComplete) {
-                    int iAmountComplete;
-                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
-                    if(gLinearProgressIndicator_DLInspection != null) {
-                        gLinearProgressIndicator_DLInspection.setProgress(iAmountComplete);
-                        if (iAmountComplete == 100) {
-                            gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
-                        } else {
-                            gLinearProgressIndicator_DLInspection.setVisibility(View.VISIBLE);
-                        }
-                    }
                 }
 
                 //Check to see if it is for this web address and
@@ -1320,7 +1385,7 @@ public class Fragment_WebPageTab extends Fragment {
 
     private void initiateComicGroupItemImport(ItemClass_WebComicDataLocator icWCDL){
         //Set the destination for all file items:
-        GlobalClass.AssignDestinationFolders(icWCDL.alicf_ComicDownloadFileItems, giMediaCategory);
+        GlobalClass.AssignDestinationFolders(icWCDL.alicf_ComicDownloadFileItems, GlobalClass.MEDIA_CATEGORY_COMICS);
 
         //Copy the group ID, tags and other data from the found catalog match:
         ItemClass_CatalogItem icci_Match = GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(gsMatchingCatalogItemID);
@@ -1341,7 +1406,7 @@ public class Fragment_WebPageTab extends Fragment {
                 ItemClass_CatalogItem icci_Match2 = GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(gsMatchingCatalogItemID);
                 //todo: confirm that a new group ID sticks, and then delete the above line (assuming pass-by-reference works).
                 Toast.makeText(gContext, "New group ID generated. New item will be grouped with matching catalog item.", Toast.LENGTH_SHORT).show();
-                globalClass.CatalogDataFile_UpdateCatalogFile(giMediaCategory, "Saving...");
+                globalClass.CatalogDataFile_UpdateCatalogFile(GlobalClass.MEDIA_CATEGORY_COMICS, "Saving...");
                 //todo: confirm that a new group ID sticks.
             }
         }
@@ -1383,7 +1448,7 @@ public class Fragment_WebPageTab extends Fragment {
      * @param sAddress
      * @return String of host domain including http:// or https://.
      */
-    private String getDomainFromAddress(String sAddress){
+    public static String getDomainFromAddress(String sAddress){
         String sDomain = "";
         int iCharIndexOfDomainStart = sAddress.indexOf("://");
         if(iCharIndexOfDomainStart > 0){
@@ -1398,7 +1463,7 @@ public class Fragment_WebPageTab extends Fragment {
         return sDomain;
     }
 
-    public String getDomainShortName(String sDomain){
+    public static String getDomainShortName(String sDomain){
         String sDomainShortName = "";
 
         if(!sDomain.equals("")){

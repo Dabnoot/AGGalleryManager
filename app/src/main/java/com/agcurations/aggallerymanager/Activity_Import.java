@@ -136,6 +136,9 @@ public class Activity_Import extends AppCompatActivity {
 
         setTitle("Import");
 
+        gpDisplayDims = GlobalClass.getScreenWidth(this); //For recycler grid imageview sizing, particularly for comic preview.
+                                                                  // Too many "entry points for it's use" to narrow-down calc point to sometime later.
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
@@ -220,7 +223,42 @@ public class Activity_Import extends AppCompatActivity {
                     } else if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
                         giStartingFragment = FRAGMENT_IMPORT_0B_ID_IMAGE_SOURCE;
                     } else {
-                        giStartingFragment = FRAGMENT_IMPORT_0C_ID_COMIC_SOURCE;
+                        //Comic source.
+                        //Check to see if the Comic Data is web and available:
+                        if(!GlobalClass.gsBrowserAddressClipboard.equals("")){
+                            String sAddress = GlobalClass.gsBrowserAddressClipboard;
+
+                            //Wait for the data to be available, lock the token, add the data, unlock the token.
+                            ItemClass_WebComicDataLocator icWCDL = null;
+                            if(!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)){
+                                Toast.makeText(getApplicationContext(), "Unable to lock app memory for data acquisition. Try again or perhaps restart app.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                //Block other threads from accessing this data.
+                                GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                                icWCDL = GlobalClass.gtmComicWebDataLocators.get(sAddress);
+                                GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+                                viewModelImportActivity.sWebAddress = sAddress; //This eventually gets applied to the imported catalog item.
+                            }
+
+
+                            if(icWCDL != null){
+                                //The data has been pre-located. Clear the internal clipboard of this URL,
+                                // get the data, and move forward.
+                                GlobalClass.gsBrowserAddressClipboard = "";
+                                viewModelImportActivity.iComicImportSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+                                recyclerViewComicPreviewAdapter = new RecyclerViewComicPreviewAdapter(icWCDL.alicf_ComicDownloadFileItems);
+                                //Go straight to the comic preview fragment:
+                                giStartingFragment = FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM;
+                                ViewPager2_Import.setCurrentItem(giStartingFragment, false);
+                                stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+                                return;
+                            }
+                        } else {
+                            //Take the user to the spot where they select the comic source.
+                            giStartingFragment = FRAGMENT_IMPORT_0C_ID_COMIC_SOURCE;
+                        }
+
+
                     }
                     //Check to see if this start is related to a catalog verification test looking for
                     //  orphaned files:
@@ -297,9 +335,26 @@ public class Activity_Import extends AppCompatActivity {
                 //Check to see if this is a response to request to get comic downloads from html:
                 boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
                 if (bGetComicDownloadsResponse) {
-                    ArrayList<ItemClass_File> alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
-                    recyclerViewComicPreviewAdapter = new RecyclerViewComicPreviewAdapter(alicf_ComicDownloadFileItems);
+                    //Get the URL for the webpage for lookup in the Global treemap:
+                    String sAddress = intent.getStringExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
 
+                    if(sAddress != null) {
+                        //Wait for the data to be available, lock the token, add the data, unlock the token.
+                        ItemClass_WebComicDataLocator icWCDL;
+                        if (!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)) {
+                            Toast.makeText(getApplicationContext(), "Unable to lock app memory for data acquisition. Try again or perhaps restart app.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            //Block other threads from accessing this data.
+                            GlobalClass.gabComicWebAnalysDataTMAvailable.set(false);
+                            icWCDL = GlobalClass.gtmComicWebDataLocators.get(sAddress);
+                            GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
+
+                            if(icWCDL != null){
+                                //Get data from GlobalClass.gtmComicWebDataLocators:
+                                recyclerViewComicPreviewAdapter = new RecyclerViewComicPreviewAdapter(icWCDL.alicf_ComicDownloadFileItems);
+                            }
+                        }
+                    }
                 }
 
             }
@@ -476,7 +531,6 @@ public class Activity_Import extends AppCompatActivity {
         int iNewComicSource; //This variable used to reset if the user used the back button to select a different import source.
 
         if (radioButton_ComicSourceWebpage.isChecked() || radioButton_ComicSeriesSourceWebpage.isChecked()){
-            gpDisplayDims = GlobalClass.getScreenWidth(this); //For recycler grid imageview sizing.
             if (radioButton_ComicSourceWebpage.isChecked()) {
                 iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
             } else {

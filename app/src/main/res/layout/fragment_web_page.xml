@@ -85,6 +85,18 @@
                 android:scaleType="center"
                 android:src="@drawable/download" />
 
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/circularProgressIndicator_PageLoading"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:indeterminate="true"
+                app:indicatorColor="@color/tab_backcolor_selected"
+                app:indicatorSize="22dp"
+                app:trackColor="@color/color_download_normal"
+                app:trackThickness="3dp"
+                android:padding="8dp"
+                android:visibility="invisible"/>
+
             <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/linearProgressIndicator_DLInspection"
                 android:layout_width="wrap_content"
