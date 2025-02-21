@@ -45,11 +45,11 @@
         android:visibility="invisible"
         android:textColor="@color/colorTextColor"/>
 
-    <Button
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/button_Delete"
         android:layout_width="50dp"
         android:layout_height="40dp"
-        android:drawableLeft="@drawable/baseline_delete_white_18dp"
+        android:src="@drawable/baseline_delete_white_18dp"
         android:layout_alignBottom="@id/imageView_Thumbnail"
         android:layout_alignEnd="@id/imageView_Thumbnail"
         android:background="@android:color/transparent"/>

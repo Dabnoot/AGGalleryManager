@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -432,7 +433,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             public final ImageView imageView_Thumbnail;
             public final ImageView imageView_Attention;
             public final TextView textView_AttentionNote;
-            public final MaterialButton button_Delete;
+            public final AppCompatImageButton button_Delete;
             public final ImageButton imageButton_OpenGroupingControls;
             public final TextView textView_Title;
             public final TextView textView_Details;
