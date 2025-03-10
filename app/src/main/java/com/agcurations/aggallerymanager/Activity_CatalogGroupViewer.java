@@ -542,6 +542,9 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
                         sThumbnailText = sThumbnailText + " - " + ci.sComicChapterSubtitle;
                     }
 
+                    String sPageCountString = ci.iComicPages + " pages.";
+                    viewHolder.textView_Details.setText(sPageCountString);
+
                     break;
             }
 
