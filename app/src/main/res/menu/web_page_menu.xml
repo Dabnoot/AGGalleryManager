@@ -13,9 +13,18 @@
         />
 
     <item
+        android:id="@+id/icon_toggle_auto_nav_next_chapter"
+        android:title="Auto-Navigate Next Comic Chapter"
+        android:checkable="true"
+        android:orderInCategory="2"
+        app:showAsAction="always"
+        android:iconTint="@color/colorButton"
+        />
+
+    <item
         android:id="@+id/icon_retry_processing"
         android:title="Retry Processing"
-        android:orderInCategory="2"
+        android:orderInCategory="3"
         app:showAsAction="always"
         android:iconTint="@color/colorButton"
         />

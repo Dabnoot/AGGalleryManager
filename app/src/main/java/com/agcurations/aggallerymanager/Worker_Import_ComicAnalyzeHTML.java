@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
@@ -34,6 +33,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
     public static final String EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_web_data_locator_al_key";
 
     public static final String EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE = "com.agcurations.aggallerymanager.intent.action.EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE";
+
+    public static final String EXTRA_STRING_WEB_COMIC_NEXT_CHAPTER_LINK = "com.agcurations.aggallermanager.extra_string_web_comic_next_chapter_link";
 
     String gsDataRecordKey;
 
@@ -164,7 +165,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             globalClass.problemNotificationConfig(sMessage, WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
             return Result.failure();
         }
-        //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
+        //For acquiring clean html for use with xPathExpression testing tool at http://xpather.com/:
         String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
 
         giProgressNumerator++;
@@ -174,11 +175,6 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         boolean bProblem = false;
 
         ArrayList<ItemClass_File> alicf_ComicDownloadFileItems = new ArrayList<>();
-
-        //Broadcast a message to be picked-up by the caller:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         String sTitle = "";
         String sComicDescription = "";
@@ -192,6 +188,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         String sComicVolume = "";
         String sComicChapter = "";
         String sComicChapterSubtitle = "";
+        String sNextChapterLink = "";
         int iComicPages = -1;
         long lAveragePageSize = 0;
         ArrayList<String[]> alsComicPageAndImageData = new ArrayList<>(); //This ArrayList contains page download address, Save-as filename, and thumbnail address.
@@ -412,10 +409,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 if(tmFileIndexImageExtension.size() == 0){
                     sMessage = "Problem identifying comic page images on this webpage.";
                     BroadcastProgress_ComicDetails(sMessage, 100);
-                    broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
-                    broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
-                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
+                    Broadcast_Error(icWebDataLocator.sAddress, sMessage, false);
                     GlobalClass.gabImportComicWebAnalysisRunning.set(false);
                     GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                     return Result.failure();
@@ -542,11 +536,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             } catch (Exception e) {
                 sMessage = e.getMessage();
                 BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMessage, 100);
-                broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
-                broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
-                //sendBroadcast(broadcastIntent);
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
+                Broadcast_Error(icWebDataLocator.sAddress, sMessage, false);
                 GlobalClass.gabImportComicWebAnalysisRunning.set(false);
                 GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                 return Result.failure();
@@ -651,6 +641,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     if(alsChapterListing.size() != alsChapterLinkListing.size()){
                         sMessage = "Trouble identifying same count comic chapters and links to chapters.";
                         BroadcastProgress_ComicDetails("\n" + sMessage, 100); //Broadcast progress
+                        Broadcast_Error(icWebDataLocator.sAddress, sMessage, false);
                         Data data = new Data.Builder().putString("FAILURE_REASON", sMessage).build();
                         return Result.failure(data);
                     }
@@ -660,6 +651,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     if(!globalClass.WaitForObjectReady(GlobalClass.gabComicSeriesArrayAvailable, 2)) {
                         sMessage = "Wait time for ComicSeriesArray to become available exceeded. Worker terminated.";
                         BroadcastProgress_ComicDetails("\n" + sMessage, 100); //Broadcast progress
+                        Broadcast_Error(icWebDataLocator.sAddress, sMessage, false);
                         Data data = new Data.Builder().putString("FAILURE_REASON", sMessage).build();
                         return Result.failure(data);
                     }
@@ -756,6 +748,33 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     sComicChapter = sVolumeAndChapter[1];
 
 
+                    //Look for a next chapter link for "auto next chapter" feature:
+
+                    sxPathExpression = "//a[@class=\"btn btn-sm btn-outline btn-primary items-center\"]/@href";
+                    Object[] objsNextChapterLinkCandidates = node.evaluateXPath(sxPathExpression);
+                    sxPathExpression = "//a[@class=\"btn btn-sm btn-outline btn-primary items-center\"]";
+                    Object[] objsNextChapterLinkTextCandidates = node.evaluateXPath(sxPathExpression);
+                    //Check to see if we found anything:
+                    if ((objsNextChapterLinkCandidates != null && objsNextChapterLinkCandidates.length > 0 ) &&
+                            (objsNextChapterLinkTextCandidates != null && objsNextChapterLinkTextCandidates.length > 0 ) &&
+                            (objsNextChapterLinkCandidates.length == objsNextChapterLinkTextCandidates.length)) {
+                        //If we found something, assign it to a string:
+                        String sTemp;
+                        for(int i = 0; i < objsNextChapterLinkTextCandidates.length; i++){
+                            sTemp = ((TagNode) objsNextChapterLinkTextCandidates[i]).getText().toString();
+                            if(sTemp.toLowerCase(Locale.ROOT).contains("next chapter")){
+                                //This index contains the link to the next chapter.
+                                sNextChapterLink = (String) objsNextChapterLinkCandidates[i];
+                                if(sNextChapterLink.startsWith("/")){
+                                    sNextChapterLink = sNextChapterLink.substring(1);
+                                }
+                                String sDomainName = Fragment_WebPageTab.getDomainFromAddress(icWebDataLocator.sAddress);
+                                sNextChapterLink = sDomainName + "/" + sNextChapterLink;
+                                break;
+                            }
+                        }
+                    }
+
                     //===
                     //== Get comic page images ===
                     //===
@@ -779,11 +798,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     if (tmFileIndexAndAddress.size() == 0) {
                         sMessage = "Problem identifying comic page images on this webpage.";
                         BroadcastProgress_ComicDetails(sMessage, 100);
-                        broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
-                        broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
-                        broadcastIntent.putExtra(EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE, true);
-                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
+                        Broadcast_Error(icWebDataLocator.sAddress, sMessage, true);
                         GlobalClass.gabImportComicWebAnalysisRunning.set(false);
                         GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                         return Result.failure();
@@ -881,11 +896,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             } catch (Exception e) {
                 sMessage = e.getMessage();
                 BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMessage, 100);
-                broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
-                broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
-                //sendBroadcast(broadcastIntent);
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
+                Broadcast_Error(icWebDataLocator.sAddress, sMessage, false);
                 GlobalClass.gabImportComicWebAnalysisRunning.set(false);
                 GlobalClass.gabImportComicWebAnalysisFinished.set(true);
                 return Result.failure();
@@ -893,14 +904,6 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
 
         }
-
-        /*if(iComicPages > 0) { //todo, merge with !bProblem
-            //Broadcast a message to be picked up by the Import fragment to refresh the views:
-            broadcastIntent.putExtra(GlobalClass.COMIC_DETAILS_SUCCESS, true);
-            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-        } else {
-            BroadcastProgress_ComicDetails("No comic pages found.", -1);
-        }*/
 
         GlobalClass.gabImportComicWebAnalysisRunning.set(false);
         GlobalClass.gabImportComicWebAnalysisFinished.set(true);
@@ -995,9 +998,13 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
 
             //Also send a broadcast to Activity Import to capture the download items in an array adapter:
+            //Broadcast a message to be picked-up by the caller:
             Intent broadcastIntent_ComicWebDetectResponse = new Intent();
             broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, true);
             broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS, icWebDataLocator.sAddress); //Place this here so that the result is recognized by the receiver. Could be concurrent analysis' ongoing.
+            if(!sNextChapterLink.equals("")) {
+                broadcastIntent_ComicWebDetectResponse.putExtra(EXTRA_STRING_WEB_COMIC_NEXT_CHAPTER_LINK, sNextChapterLink);
+            }
             broadcastIntent_ComicWebDetectResponse.setAction(WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
             broadcastIntent_ComicWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_ComicWebDetectResponse);
@@ -1098,5 +1105,22 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 false, "",
                 WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
     }
+
+    private void Broadcast_Error(String sAddress, String sMessage, boolean bRecoverable){
+        Intent broadcastIntent_ComicWebDetectResponse = new Intent();
+        broadcastIntent_ComicWebDetectResponse.setAction(WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
+        broadcastIntent_ComicWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, true);
+
+        broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+        broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+
+        broadcastIntent_ComicWebDetectResponse.putExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS, sAddress); //Place this here so that the result is recognized by the receiver. Could be concurrent analysis' ongoing.
+
+        broadcastIntent_ComicWebDetectResponse.putExtra(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE, bRecoverable);
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_ComicWebDetectResponse);
+    }
+
 
 }

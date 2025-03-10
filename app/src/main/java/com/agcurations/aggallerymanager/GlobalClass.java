@@ -3898,6 +3898,7 @@ public class GlobalClass extends Application {
                                                          //todo: Move this to a setting in the browser section.
 
     public static boolean gbAutoDownloadGroupComics = false;
+    public static boolean gbAutoNavigateNextChapter = false;
 
     public static ArrayList<ItemClass_WebComicDataLocator> getComicWebDataKeys(){
 

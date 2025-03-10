@@ -112,6 +112,8 @@ public class Fragment_WebPageTab extends Fragment {
 
     CircularProgressIndicator circularProgressIndicator_PageLoading;
 
+    String gsNextChapterLink = "";
+
     public Fragment_WebPageTab() {
         //Empty constructor
     }
@@ -151,6 +153,7 @@ public class Fragment_WebPageTab extends Fragment {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Worker_Import_ComicAnalyzeHTML.WEB_COMIC_ANALYSIS_ACTION_RESPONSE);
         filter.addAction(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+        filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getActivity().getApplicationContext()).registerReceiver(responseReceiver_WebPageTab,filter);
 
@@ -517,11 +520,15 @@ public class Fragment_WebPageTab extends Fragment {
                     PopupMenu popupMenuImport = new PopupMenu(getContext(), view);
                     popupMenuImport.inflate(R.menu.web_page_menu);
                     popupMenuImport.getMenu().getItem(0).setChecked(GlobalClass.gbAutoDownloadGroupComics);
+                    popupMenuImport.getMenu().getItem(1).setChecked(GlobalClass.gbAutoNavigateNextChapter);
                     popupMenuImport.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem menuItem) {
                             if(menuItem.getItemId() == R.id.icon_toggle_auto_group_item_import) {
                                 GlobalClass.gbAutoDownloadGroupComics = !GlobalClass.gbAutoDownloadGroupComics;
+                            }
+                            if(menuItem.getItemId() == R.id.icon_toggle_auto_nav_next_chapter) {
+                                GlobalClass.gbAutoNavigateNextChapter = !GlobalClass.gbAutoNavigateNextChapter;
                             }
                             if(menuItem.getItemId() == R.id.icon_retry_processing) {
 
@@ -839,6 +846,9 @@ public class Fragment_WebPageTab extends Fragment {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
+
+                gsNextChapterLink = "";
+
                 gals_ResourceRequests = new ArrayList<>();
                 gbWebpageAnalysisRetry = true; //Allow a one-shot analysis retry if necessary.
                 gEditText_Address.setText(url);
@@ -1250,6 +1260,7 @@ public class Fragment_WebPageTab extends Fragment {
 
             //Get boolean indicating that an error may have occurred:
             boolean bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+            boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
 
             if (bError) {
                 String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
@@ -1260,12 +1271,14 @@ public class Fragment_WebPageTab extends Fragment {
                     gbWebpageAnalysisRetry = false;
                     gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
                             "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable to check the background html.
+                    if (gLinearProgressIndicator_DLInspection != null) {
+                        gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
+                    }
                 }
 
             } else {
 
                 //Check to see if this is a response to request to get comic downloads from html:
-                boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
                 if (bGetComicDownloadsResponse) {
                     //Look to see if this is a response to a known item to this web tab.
                     //  If it is, set the download button color and change the download button progress bar.
@@ -1320,9 +1333,28 @@ public class Fragment_WebPageTab extends Fragment {
                                 }
                             }
 
+                            String sNextChapterLink = intent.getStringExtra(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_WEB_COMIC_NEXT_CHAPTER_LINK);
+                            if (sNextChapterLink != null) {
+                                //Store the next chapter link:
+                                gsNextChapterLink = sNextChapterLink; //Store for later use.
+                            }
+
                         }
                     }
 
+                }
+
+                //Check to see if "a link to a next comic chapter" has been found:
+                String sDLPostProcessingID = intent.getStringExtra(Worker_DownloadPostProcessing.EXTRA_STRING_DOWNLOAD_POST_PROCESSING_ID);
+                if(sDLPostProcessingID != null) {
+                    if(gsWebAddress.equals(sDLPostProcessingID)) {
+                        //If the user has turned on the "auto next chapter" feature, and the data is available, navigate to the next chapter:
+                        if(GlobalClass.gbAutoNavigateNextChapter) {
+                            if(!gsNextChapterLink.equals("")) {
+                                gWebView.loadUrl(gsNextChapterLink);
+                            }
+                        }
+                    }
                 }
 
                 //Check to see if it is for this web address and

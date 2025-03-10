@@ -152,6 +152,16 @@ public class Activity_Browser extends AppCompatActivity {
                 }
             });
 
+            gViewPager2_WebPages.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    super.onPageSelected(position);
+                    GlobalClass.gbAutoDownloadGroupComics = false; //Turn off auto-download.
+                    GlobalClass.gbAutoNavigateNextChapter = false; //Turn off auto-navigate.
+                }
+            });
+
+
             tabLayout_WebTabs = findViewById(R.id.tabLayout_WebTabs);
 
             gRelativeLayout_BrowserTopBar = findViewById(R.id.relativeLayout_BrowserTopBar); //Referenced for scrolling the TopBar out of view during WebView scrolldown.
@@ -266,6 +276,8 @@ public class Activity_Browser extends AppCompatActivity {
         } catch (Exception e){
             ApplicationLogWriter(e.getMessage());
         }
+
+        GlobalClass.gtmComicWebDataLocators.clear(); //Clear any previously-found data.
 
     }
 

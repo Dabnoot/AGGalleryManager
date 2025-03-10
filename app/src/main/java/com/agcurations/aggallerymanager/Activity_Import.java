@@ -340,6 +340,8 @@ public class Activity_Import extends AppCompatActivity {
 
                     if(sAddress != null) {
                         //Wait for the data to be available, lock the token, add the data, unlock the token.
+                        //We do this here because the fragment that started this processing might have terminated as the user
+                        //  navigates to other tabs over time.
                         ItemClass_WebComicDataLocator icWCDL;
                         if (!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)) {
                             Toast.makeText(getApplicationContext(), "Unable to lock app memory for data acquisition. Try again or perhaps restart app.", Toast.LENGTH_SHORT).show();

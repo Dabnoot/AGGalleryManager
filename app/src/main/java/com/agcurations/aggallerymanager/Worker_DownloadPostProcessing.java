@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.ParseException;
 import android.net.Uri;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -47,6 +49,8 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
     public static final String DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE";
 
+    public static final String EXTRA_STRING_DOWNLOAD_POST_PROCESSING_ID = "com.agcurations.aggallermanager.extra_string_download_post_processing_id";
+
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
     final static boolean DEBUG = false;
@@ -65,6 +69,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
     //public static final int DOWNLOAD_TYPE_SINGLE = 1;
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
 
+    String gsDLPostProcessingID = "";
 
     GlobalClass globalClass;
 
@@ -90,6 +95,8 @@ public class Worker_DownloadPostProcessing  extends Worker {
         super(context, workerParams);
 
         globalClass = (GlobalClass) getApplicationContext();
+
+        gsDLPostProcessingID = getInputData().getString(EXTRA_STRING_DOWNLOAD_POST_PROCESSING_ID);
 
         //Get path to monitor for downloads for the purpose of deleting a download folder when
         //  empty:
@@ -374,7 +381,16 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                 sMessage = sMessage + "\n" + "Reason text: " + sDownloadFailedReason;
                                 lFileCountProgressNumerator++;
                                 iFileCountProgressBarValue = Math.round((lFileCountProgressNumerator / (float) lFileCountProgressDenominator) * 100);
-                                iProgressBarValue = Math.min(iFileCountProgressBarValue, iSizeProgressBarValue);
+                                iProgressBarValue = 0;
+                                if(iFileCountProgressBarValue == 0 && iSizeProgressBarValue > 0){
+                                    iProgressBarValue = iSizeProgressBarValue;
+                                } else if (iFileCountProgressBarValue >= iSizeProgressBarValue){
+                                    iProgressBarValue = iSizeProgressBarValue;
+                                }
+                                iProgressBarValue = iSizeProgressBarValue;
+                                if(iFileCountProgressBarValue == 100){
+                                    iProgressBarValue = iFileCountProgressBarValue;
+                                }
                                 bRecalcSizeProgress = false;
                                 globalClass.BroadcastProgress(true, sMessage + "\n",
                                         true, iProgressBarValue,
@@ -548,6 +564,10 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                     } else if (iFileCountProgressBarValue >= iSizeProgressBarValue){
                                         iProgressBarValue = iSizeProgressBarValue;
                                     }
+                                    iProgressBarValue = iSizeProgressBarValue;
+                                    if(iFileCountProgressBarValue == 100){
+                                        iProgressBarValue = iFileCountProgressBarValue;
+                                    }
                                     bRecalcSizeProgress = false;
                                     globalClass.BroadcastProgress(true, "\nDownload completed and file placed at URI: \n" + sUserFriendlyDestinationFile + "\n",
                                             true, iProgressBarValue,
@@ -586,18 +606,16 @@ public class Worker_DownloadPostProcessing  extends Worker {
                             @SuppressLint("DefaultLocale") String sElapsedTime = String.format(sTempFormat, iHours, iMinutes, iSeconds);
 
                             String sMessage2 = lFileCountProgressNumerator + "/" + lFileCountProgressDenominator + " downloads completed. " + "One or more downloads awaiting retry. Time elapsed: " + sElapsedTime;
-                            /*
-                                File Count                  DL Size
-                                Done    Remaining   %       Done    Remaining   %
-                                0       10          0%      1000    100000      1%
-                            */
                             iProgressBarValue = 0;
                             if(iFileCountProgressBarValue == 0 && iSizeProgressBarValue > 0){
                                 iProgressBarValue = iSizeProgressBarValue;
                             } else if (iFileCountProgressBarValue >= iSizeProgressBarValue){
                                 iProgressBarValue = iSizeProgressBarValue;
                             }
-
+                            iProgressBarValue = iSizeProgressBarValue;
+                            if(iFileCountProgressBarValue == 100){
+                                iProgressBarValue = iFileCountProgressBarValue;
+                            }
                             bRecalcSizeProgress = false;
                             globalClass.BroadcastProgress(true, "\n" + sMessage2,
                                     true, iProgressBarValue,
@@ -613,6 +631,10 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                 iProgressBarValue = iSizeProgressBarValue;
                             } else if (iFileCountProgressBarValue >= iSizeProgressBarValue){
                                 iProgressBarValue = iSizeProgressBarValue;
+                            }
+                            iProgressBarValue = iSizeProgressBarValue;
+                            if(iFileCountProgressBarValue == 100){
+                                iProgressBarValue = iFileCountProgressBarValue;
                             }
                             globalClass.BroadcastProgress(false, "",
                                     true, iProgressBarValue,
@@ -725,6 +747,15 @@ public class Worker_DownloadPostProcessing  extends Worker {
                 }
 
             }
+        }
+
+
+        if(gsDLPostProcessingID != null){
+            Intent broadcastIntent_DLPostProcessing = new Intent();
+            broadcastIntent_DLPostProcessing.putExtra(EXTRA_STRING_DOWNLOAD_POST_PROCESSING_ID, gsDLPostProcessingID);
+            broadcastIntent_DLPostProcessing.setAction(DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
+            broadcastIntent_DLPostProcessing.addCategory(Intent.CATEGORY_DEFAULT);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_DLPostProcessing);
         }
 
 

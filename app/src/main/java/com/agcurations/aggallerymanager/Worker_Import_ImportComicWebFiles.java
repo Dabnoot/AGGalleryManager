@@ -349,6 +349,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
                         .putString(Worker_DownloadPostProcessing.KEY_ARG_RELATIVE_PATH_TO_FOLDER, ciNew.sFolderRelativePath)
                         .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS)
+                        .putString(Worker_DownloadPostProcessing.EXTRA_STRING_DOWNLOAD_POST_PROCESSING_ID, gsAddress)
                         .putLongArray(Worker_DownloadPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                         .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID)
                         .build();
