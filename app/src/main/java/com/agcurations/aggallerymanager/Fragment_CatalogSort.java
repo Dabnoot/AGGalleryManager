@@ -24,6 +24,8 @@ import com.google.android.material.slider.RangeSlider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -116,6 +118,38 @@ public class Fragment_CatalogSort extends Fragment {
         if(GlobalClass.galtsiCatalogViewerFilterTags != null) {
             if (GlobalClass.galtsiCatalogViewerFilterTags.size() > 0) {
                 if (GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).size() > 0) {
+
+                    //Quickly go through the list of pre-selected tags to see if there are any that
+                    // don't have any matches. If there are such items, remove them from the list.
+                    // The case is that the CatalogSort tag list does not present to the user any
+                    // tags for selection that are not assigned to items. If the user was filtering
+                    // by a particular tag and deleted the last item that was assigned to that tag,
+                    // thus the tag should no longer be in the list, the tag will get stuck in the filter with it unable to
+                    // be cleared without resetting the activity. This happens if the user exits the catalog
+                    // viewer without unselecting the zero-item tag.
+                    //First get a list of all of the tags in-use:
+                    TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram;
+                    tmXrefTagHistogram =
+                                globalClass.getXrefTagHistogram(
+                                        giMediaCategory,
+                                        new ArrayList<>(),
+                                        false);
+                    //Create a place for tag IDs in the "pre-selected" list that are not in the histogram:
+                    ArrayList<Integer> aliIDsToUnselect = new ArrayList<>();
+                    //Check to see if there are any tags in the "pre-selected" list that need to be removed:
+                    for(Integer iTagID: GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory)){
+                        if(!tmXrefTagHistogram.containsKey(iTagID)){
+                            //If the tag ID is not included, mark it for removal from the set.
+                            //This should be a very rare occurrence.
+                            aliIDsToUnselect.add(iTagID);
+                        }
+                    }
+                    if (aliIDsToUnselect.size() > 0) {
+                        for(Integer iTagToUnselect: aliIDsToUnselect){
+                            GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).remove(iTagToUnselect);
+                        }
+                    }
+                    //Continue with the operation of initializing the fragment with pre-selected tags:
                     TreeSet<Integer> tsiTagIDs = GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory);
                     ArrayList<Integer> aliTagIDs = new ArrayList<>(tsiTagIDs);
                     fragment_selectTags_args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliTagIDs);
