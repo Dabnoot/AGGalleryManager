@@ -100,6 +100,7 @@ public class Fragment_WebPageTab extends Fragment {
     private String gsCustomDownloadPrompt = "";
     private final int CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT = 1;
     private final int CUSTOM_DOWNLOAD_OPTION_YES_IMPORT_TO_COLLECTION = 3;
+    private String gsDownloadWarningMessage = "";
     private int giCustomDownloadOptions = CUSTOM_DOWNLOAD_OPTION_NO_TO_HALT;
     private String gsPageHTML = "";
     private LinearProgressIndicator gLinearProgressIndicator_DLInspection;
@@ -448,14 +449,32 @@ public class Fragment_WebPageTab extends Fragment {
                     GlobalClass.giSelectedCatalogMediaCategory = giMediaCategory; //Sometimes know the media category if the site was properly detected.
 
                     if(gsCustomDownloadPrompt.equals("")) {
-                        //Send the user to the Import Activity:
-                        Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
-                        startActivity(intentImportGuided);
+                        if(!gsDownloadWarningMessage.equals("")){
+                            //If there is a warning message, show it before continuing.
+                            AlertDialog.Builder builder = new AlertDialog.Builder(gContext, R.style.AlertDialogCustomStyle);
+                            builder.setTitle("Import");
+                            builder.setMessage(gsDownloadWarningMessage);
+                            builder.setCancelable(true);
+                            builder.setPositiveButton("Continue", (dialog, id) -> {
+                                dialog.dismiss();
+                                //Send the user to the Import Activity:
+                                Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
+                                startActivity(intentImportGuided);
+                            });
+                        } else {
+                            //Send the user to the Import Activity:
+                            Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
+                            startActivity(intentImportGuided);
+                        }
 
                     } else {
                         //Else, if there is a custom prompt, show it to the user and then perform their need:
                         AlertDialog.Builder builder = new AlertDialog.Builder(gContext, R.style.AlertDialogCustomStyle);
                         builder.setTitle("Import");
+                        if(!gsDownloadWarningMessage.equals("")){
+                            //If there is a warning message, append it.
+                            gsCustomDownloadPrompt = gsCustomDownloadPrompt + "\n" + gsDownloadWarningMessage;
+                        }
                         builder.setMessage(gsCustomDownloadPrompt);
 
                         builder.setPositiveButton("Yes", (dialog, id) -> {
@@ -1064,6 +1083,7 @@ public class Fragment_WebPageTab extends Fragment {
 
 
                 gsCustomDownloadPrompt = "";
+                gsDownloadWarningMessage = "";
                 gsMatchingCatalogItemID = "";
                 giMediaCategory = -1;
 
@@ -1302,8 +1322,11 @@ public class Fragment_WebPageTab extends Fragment {
                                             //Toast.makeText(getContext(), "Success detecting matching comic and images.", Toast.LENGTH_SHORT).show();
                                             gLinearProgressIndicator_DLInspection.setProgress(0);
                                             gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
-                                            int i = getWebPageTabDataIndex();
-                                            if (GlobalClass.gbAutoDownloadGroupComics && icWCDL.bRecognizedSeries) {
+
+                                            if(icWCDL.alicf_ComicDownloadFileItems.size() == 1){
+                                                //If only one image was detected, don't proceed with automated functions.
+                                                gsDownloadWarningMessage = "Attention: Only 1 comic page detected for this website.";
+                                            } else if (GlobalClass.gbAutoDownloadGroupComics && icWCDL.bRecognizedSeries) {
                                                 //If autodownload is on and this item is from a recognized series,
                                                 //  initiate download. The series check is here because the system
                                                 //  was recognizing comics from other sites that did not belong to a group and was just
