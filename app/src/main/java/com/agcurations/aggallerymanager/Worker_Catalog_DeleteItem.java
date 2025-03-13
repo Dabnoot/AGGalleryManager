@@ -105,10 +105,12 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                 bSuccess = false;
                             } else {
 
-                                //Remove the item from the CatalogAnalysis index if in use:
-                                if(!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriFileToBeDeleted.toString())){
-                                    sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriFileToBeDeleted + "\n";
-                                    globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(ciToDelete.iMediaCategory).size() > 0) {
+                                    //Remove the item from the CatalogAnalysis index if in use:
+                                    if (!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriFileToBeDeleted.toString())) {
+                                        sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriFileToBeDeleted + "\n";
+                                        globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                    }
                                 }
 
 
