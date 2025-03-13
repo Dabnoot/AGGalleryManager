@@ -343,7 +343,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     boolean bDeleteItemResult = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
                     if (bDeleteItemResult) {
                         globalClass.updateTagHistogramsIfRequired(); //todo: Moved here after refactor of comic delete logic. Examine if this is appropriate.
-                        populate_RecyclerViewCatalogItems(); //Refresh the catalog recycler view.
+                        //populate_RecyclerViewCatalogItems(); //Refresh the catalog recycler view.
                     } else {
                         Toast.makeText(getApplicationContext(),"Could not successfully delete item.", Toast.LENGTH_LONG).show();
                     }
@@ -423,7 +423,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     public class RecyclerViewCatalogAdapter extends RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> {
 
         private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
-        private final Integer[] mapKeys;
+        private Integer[] mapKeys;
 
         // Provide a reference to the views for each data item
         // Complex data items may need more than one view per item, and
@@ -832,7 +832,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     //builder.setIcon(R.drawable.ic_launcher);
                     builder.setPositiveButton("Yes", (dialog, id) -> {
                         dialog.dismiss();
-                        Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_SHORT).show();
 
                         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                         String sCatalogRecord = GlobalClass.getCatalogRecordString(ci_final);
@@ -846,6 +846,19 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                 .addTag(Worker_Catalog_DeleteItem.TAG_WORKER_CATALOG_DELETEITEM) //To allow finding the worker later.
                                 .build();
                         WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
+
+                        //Resequence, move everything down a notch. This is important because the
+                        // viewer activity also relies on the sequence, particularly when doing
+                        // left/right swipes to go to a next item:
+                        int iTruePosition = holder.getAbsoluteAdapterPosition();
+                        for(int i = iTruePosition; i < mapKeys.length - 1; i++){
+                            treeMap.put(mapKeys[i], treeMap.get(mapKeys[i + 1]));
+                        }
+                        treeMap.remove(treeMap.size());
+                        mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
+
+                        gRecyclerViewCatalogAdapter.notifyItemRemoved(iTruePosition);
+
                     });
                     builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
                     AlertDialog adConfirmationDialog = builder.create();

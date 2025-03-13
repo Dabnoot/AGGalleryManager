@@ -180,7 +180,7 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
     public class RecyclerViewCatalogGroupAdapter extends RecyclerView.Adapter<RecyclerViewCatalogGroupAdapter.ViewHolder> {
 
         private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
-        private final Integer[] mapKeys;
+        private Integer[] mapKeys;
 
         /**
          * Provide a reference to the type of views that you are using
@@ -628,9 +628,9 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
                     builder.setTitle("Delete Item");
                     builder.setMessage(sConfirmationMessage);
                     //builder.setIcon(R.drawable.ic_launcher);
-                    builder.setPositiveButton("Yes", (DialogInterface dialogInterface, int i) -> {
-                        dialogInterface.dismiss();
-                        Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_LONG).show();
+                    builder.setPositiveButton("Yes", (dialog, id) -> {
+                        dialog.dismiss();
+                        Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_SHORT).show();
 
                         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                         String sCatalogRecord = GlobalClass.getCatalogRecordString(ci_final);
@@ -644,6 +644,19 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
                                 .addTag(Worker_Catalog_DeleteItem.TAG_WORKER_CATALOG_DELETEITEM) //To allow finding the worker later.
                                 .build();
                         WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
+
+                        //Resequence, move everything down a notch. This is important because the
+                        // viewer activity also relies on the sequence, particularly when doing
+                        // left/right swipes to go to a next item:
+                        int iTruePosition = viewHolder.getAbsoluteAdapterPosition();
+                        for(int i = iTruePosition; i < mapKeys.length - 1; i++){
+                            treeMap.put(mapKeys[i], treeMap.get(mapKeys[i + 1]));
+                        }
+                        treeMap.remove(treeMap.size());
+                        mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
+
+                        gRecyclerViewCatalogGroupAdapter.notifyItemRemoved(iTruePosition);
+
                     });
                     builder.setNegativeButton("No", (DialogInterface dialogInterface, int i) -> {
                         dialogInterface.dismiss();
@@ -998,7 +1011,7 @@ public class Activity_CatalogGroupViewer extends AppCompatActivity {
                     boolean bDeleteItemResult = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
                     if (bDeleteItemResult) {
                         globalClass.updateTagHistogramsIfRequired(); //todo: Moved here after refactor of comic delete logic. Examine if this is appropriate.
-                        populate_RecyclerViewCatalogGroupItems(); //Refresh the catalog recycler view.
+                        //populate_RecyclerViewCatalogGroupItems(); //Refresh the catalog recycler view.
                     } else {
                         Toast.makeText(getApplicationContext(),"Could not successfully delete item.", Toast.LENGTH_LONG).show();
                     }
