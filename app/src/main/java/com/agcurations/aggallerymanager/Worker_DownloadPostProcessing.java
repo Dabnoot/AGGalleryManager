@@ -496,6 +496,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                                     osDestinationFile.write(buffer, 0, buffer.length);
                                                     lSize += buffer.length;
                                                 }
+                                                inputStream.close();
                                                 osDestinationFile.flush();
                                                 osDestinationFile.close();
                                                 if (bDebug) gbwLogFile.write(" Copied to working folder.");
