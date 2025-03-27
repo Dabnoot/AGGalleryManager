@@ -1288,6 +1288,12 @@ public class Fragment_WebPageTab extends Fragment {
 
                 boolean bRecoverableAnalysisError = intent.getBooleanExtra(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE, false);
                 if(bRecoverableAnalysisError && gbWebpageAnalysisRetry){
+                    //Wait 1 second before retry
+                    try {
+                        Thread.sleep(1000); //todo: confirm that this is hit. Shouldn't take too long in auto-mode.
+                    } catch (Exception ignored){
+                    }
+
                     gbWebpageAnalysisRetry = false;
                     gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
                             "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable to check the background html.
