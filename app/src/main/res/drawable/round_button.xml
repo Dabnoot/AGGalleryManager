@@ -3,7 +3,7 @@
     android:color="@color/colorButtonPressed">
     <item>
         <shape android:shape="oval">
-            <solid android:color="@color/colorButton"/>
+            <solid android:color="@color/colorButtonTransparent"/>
         </shape>
     </item>
 </ripple>

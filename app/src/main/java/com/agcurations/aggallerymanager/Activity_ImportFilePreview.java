@@ -105,6 +105,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     ImageButton gImageButton_GroupIDPaste;
     ImageButton gImageButton_GroupIDRemove;
 
+    ImageButton gImageButton_NextItem;
+    ImageButton gImageButton_PreviousItem;
+
     Button gButton_ShowAdjacencies;
     TextView gTextView_AdjacencyCount			;
     TextView gTextView_FileNameMatchCount		;
@@ -398,6 +401,27 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             RelativeLayout relativeLayout_VideoView = findViewById(R.id.relativeLayout_VideoView);
             relativeLayout_VideoView.setOnTouchListener((v, event) -> gestureDetector_SwipeForNextFile.onTouchEvent(event));
 
+            gImageButton_NextItem = findViewById(R.id.imageButton_NextItem);
+            if(gImageButton_NextItem != null){
+                gImageButton_NextItem.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        iterateToGreaterIndexedItem();
+                    }
+                });
+            }
+
+            gImageButton_PreviousItem = findViewById(R.id.imageButton_PreviousItem);
+            if(gImageButton_PreviousItem != null){
+                gImageButton_PreviousItem.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        iterateToLesserIndexedItem();
+                    }
+                });
+            }
+
+            setNextPrevButtonVisibilities();
 
             if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 long lVideoDuration = galFileItems.get(giFileItemIndex).lVideoTimeInMilliseconds;
@@ -501,9 +525,12 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         if(iTempKey != giFileItemIndex) {
             giFileItemLastIndex = giFileItemIndex;
             giFileItemIndex = iTempKey;
+            setNextPrevButtonVisibilities();
             initializeFile();
         }
+
     }
+
     private void iterateToGreaterIndexedItem(){
         int iTempKey = giFileItemIndex + 1;
 
@@ -511,9 +538,29 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         if(iTempKey != giFileItemIndex) {
             giFileItemLastIndex = giFileItemIndex;
             giFileItemIndex = iTempKey;
+            setNextPrevButtonVisibilities();
             initializeFile();
         }
+
     }
+
+    private void setNextPrevButtonVisibilities(){
+        if(gImageButton_NextItem != null && gImageButton_PreviousItem != null) {
+            if (giFileItemIndex == 0) {
+                gImageButton_PreviousItem.setVisibility(View.INVISIBLE);
+            } else {
+                gImageButton_PreviousItem.setVisibility(View.VISIBLE);
+            }
+            if(giFileItemIndex == giMaxFileItemIndex){
+                gImageButton_NextItem.setVisibility(View.INVISIBLE);
+            } else {
+                gImageButton_NextItem.setVisibility(View.VISIBLE);
+            }
+        }
+
+
+    }
+
 
 
     private void initializeFile(){
