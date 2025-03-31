@@ -12,10 +12,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PersistableBundle;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -306,100 +304,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
 
             gImagePreview = findViewById(R.id.imageView_ImagePreview);
-
-            //Prepare a touch listener accept swipe to go to next or previous file:
-            final GestureDetector gestureDetector_SwipeForNextFile = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener(){
-
-
-                public boolean onDoubleTap(@NonNull MotionEvent e) {
-                    return true;
-                }
-
-                @Override
-                public void onLongPress(@NonNull MotionEvent e) {
-                    super.onLongPress(e);
-                }
-
-                @Override
-                public boolean onDoubleTapEvent(@NonNull MotionEvent e) {
-                    return true;
-                }
-
-                @Override
-                public boolean onDown(@NonNull MotionEvent e) {
-                    return true;
-                }
-
-                @Override
-                public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
-                    float fsx1 = gImagePreview.getX();
-                    float fsx2 = gImagePreview.getWidth();
-                    float fXMidPoint = fsx1 + (fsx2 / 2f);
-                    float fTouchDeadband = fsx2 * .50f;
-                    float fNavigateBackTapXLocation = fXMidPoint - fTouchDeadband;
-                    float fNavigateNextTapXLocation = fXMidPoint + fTouchDeadband;
-                    float fTapXLocation = e.getRawX();
-                    if(fTapXLocation < fNavigateBackTapXLocation){
-                        iterateToLesserIndexedItem();
-                    } else if (fTapXLocation > fNavigateNextTapXLocation){
-                        iterateToGreaterIndexedItem();
-                    }
-
-                    return super.onSingleTapConfirmed(e);
-                }
-
-                private static final int SWIPE_THRESHOLD = 100;
-                private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
-                @Override
-                public boolean onFling(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float velocityX, float velocityY) {
-                    boolean result = false;
-                    try {
-                        float diffY = e2.getY() - e1.getY();
-                        float diffX = e2.getX() - e1.getX();
-                        if (Math.abs(diffX) > Math.abs(diffY)) {
-                            if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                                if (diffX > 0) {
-                                    onSwipeRight();
-                                } else {
-                                    onSwipeLeft();
-                                }
-                                result = true;
-                            }
-                        }
-                        else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        /*if (diffY > 0) {
-                            onSwipeBottom();
-                        } else {
-                            onSwipeTop();
-                        }*/
-                            result = true;
-                        }
-                    } catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
-                    return result;
-                }
-
-                public void onSwipeRight() {
-                    iterateToLesserIndexedItem();
-                }
-
-                public void onSwipeLeft() {
-                    iterateToGreaterIndexedItem();
-                }
-
-            /*public void onSwipeTop() {
-            }*/
-
-            /*public void onSwipeBottom() {
-            }*/
-
-            });
-
-
-            RelativeLayout relativeLayout_VideoView = findViewById(R.id.relativeLayout_VideoView);
-            relativeLayout_VideoView.setOnTouchListener((v, event) -> gestureDetector_SwipeForNextFile.onTouchEvent(event));
 
             gImageButton_NextItem = findViewById(R.id.imageButton_NextItem);
             if(gImageButton_NextItem != null){
