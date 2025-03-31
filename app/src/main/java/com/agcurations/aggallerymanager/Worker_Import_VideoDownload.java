@@ -392,7 +392,7 @@ public class Worker_Import_VideoDownload extends Worker {
 
                 String sNewFilename = GlobalClass.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
 
-                if(sNewFilename.length() > 50){
+                if(sNewFilename.length() > 50){ //todo: this length restriction does not appear to be applied to the formation of the m3u8 file, below.
                     //Limit the length of the filename:
                     String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sNewFilename);
                     if(sBaseAndExtension.length == 2) {
@@ -402,8 +402,8 @@ public class Worker_Import_VideoDownload extends Worker {
                 }
 
                 if(ciNew.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
-                    //If we will be holding the .ts files in storage as part of a local M3U8 configuration,
-                    // jumble the .ts filenames:
+                    //If we will be holding the .ts/.m4s files in storage as part of a local M3U8 configuration,
+                    // jumble the .ts/.m4s filenames:
                     sNewFilename = GlobalClass.JumbleFileName(sNewFilename);
 
                     if(ciNew.sThumbnail_File.equals("")){
@@ -417,6 +417,37 @@ public class Worker_Import_VideoDownload extends Worker {
 
                 alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
             }
+
+            if (!icfDownloadItem.ic_M3U8.sEXT_X_MAP.equals("")){
+                //If an EXT_X_MAP has been defined, process needs here:
+                //Pick-out the file name on the server for download:
+                String sLine = icfDownloadItem.ic_M3U8.sEXT_X_MAP;
+                int iFirstDQ = sLine.indexOf("\"");
+                String sXMAP_FullPathFileOrg = sLine.substring(iFirstDQ + 1, sLine.length() - 1);
+                String sXMAP_FileName = "";
+                if(sXMAP_FullPathFileOrg.contains("/")){
+                    String[] sPathFileSplit = sXMAP_FullPathFileOrg.split("/");
+                    if(sPathFileSplit.length == 2){
+                        sXMAP_FileName = sPathFileSplit[1];
+                    }
+                } else {
+                    sXMAP_FileName = sXMAP_FullPathFileOrg;
+                }
+                String sDownloadAddress;
+                if(sXMAP_FullPathFileOrg.startsWith("http")){
+                    sDownloadAddress = sXMAP_FullPathFileOrg;
+                } else {
+                    sDownloadAddress = icfDownloadItem.ic_M3U8.sBaseURL + "/" + sXMAP_FullPathFileOrg;
+                }
+
+                String sXMAPShortFileName = GlobalClass.cleanFileNameViaTrim(sXMAP_FileName);
+                String sJumbledXMAPShortFileName = GlobalClass.JumbleFileName(sXMAPShortFileName);
+
+                alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sJumbledXMAPShortFileName});
+
+            }
+
+
         }
 
 
@@ -555,7 +586,7 @@ public class Worker_Import_VideoDownload extends Worker {
 
                 String[] sLines = sM3U8Content.split("\n");
                 for (String sLine : sLines) {
-                    if (!sLine.startsWith("#") && sLine.contains(".ts")) {// && sLine.startsWith("hls")) {
+                    if (!sLine.startsWith("#") && (sLine.contains(".ts") || sLine.contains(".m4s"))) {// && sLine.startsWith("hls")) {
                         if (sLine.contains("/")) {
                             sLine = sLine.substring(sLine.lastIndexOf("/") + 1);
                         }
@@ -564,6 +595,27 @@ public class Worker_Import_VideoDownload extends Worker {
                         //Add the path to the file name, or the video player will not be able to find the file:
                         String sFullPath = uriDestinationFolder + GlobalClass.gsFileSeparator + sJumbledTSShortFileName;
                         bwM3U8File.write(sFullPath + "\n");
+                    } else if (sLine.contains("#EXT-X-MAP")){
+                        //Break this line appart and re-form it, with a specific focus on correcting
+                        //  any path item. Example: #EXT-X-MAP:URI="144p.av1.mp4/init-v1-a1.mp4"
+                        int iFirstDQ = sLine.indexOf("\"");
+                        String sXMAP_FullPathFileOrg = sLine.substring(iFirstDQ + 1, sLine.length() - 1);
+                        String sXMAP_FileName = "";
+                        if(sXMAP_FullPathFileOrg.contains("/")){
+                            String[] sPathFileSplit = sXMAP_FullPathFileOrg.split("/");
+                            if(sPathFileSplit.length == 2){
+                                sXMAP_FileName = sPathFileSplit[1];
+                            }
+                        } else {
+                            sXMAP_FileName = sXMAP_FullPathFileOrg;
+                        }
+                        String sXMAPShortFileName = GlobalClass.cleanFileNameViaTrim(sXMAP_FileName);
+                        String sJumbledXMAPShortFileName = GlobalClass.JumbleFileName(sXMAPShortFileName);
+                        //Add the path to the file name, or the video player will not be able to find the file:
+                        String sXMAPFullPathNew = uriDestinationFolder + GlobalClass.gsFileSeparator + sJumbledXMAPShortFileName;
+                        sLine = sLine.replace(sXMAP_FullPathFileOrg, sXMAPFullPathNew);
+
+                        bwM3U8File.write(sLine + "\n");
                     } else if (sLine.contains("ENDLIST")) {
                         bwM3U8File.write(sLine + "\n");
                         break;

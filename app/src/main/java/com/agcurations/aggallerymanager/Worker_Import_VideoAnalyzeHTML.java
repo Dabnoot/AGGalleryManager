@@ -790,16 +790,17 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             //Evaluate lines in the M3U8 file to check if a .ts file name and add it to the arraylist if so:
                             String[] sLines = sM3U8Content.split("\n");
                             float fDurationInSeconds = 0.0f;
+                            if (icM3U8_entry.als_TSDownloads == null) {
+                                icM3U8_entry.als_TSDownloads = new ArrayList<>();
+                            }
                             for (String sLine : sLines) {
-
-                                if (!sLine.startsWith("#") && sLine.contains(".ts")) {// && sLine.startsWith("hls")) {
-                                    if (icM3U8_entry.als_TSDownloads == null) {
-                                        icM3U8_entry.als_TSDownloads = new ArrayList<>();
-                                    }
+                                if (!sLine.startsWith("#") && (sLine.contains(".ts") || sLine.contains(".m4s"))) {// && sLine.startsWith("hls")) {
                                     icM3U8_entry.als_TSDownloads.add(sLine); //Add our detected TS download address to the M3U8 item.
                                     //fwM3U8InterprettedFile.write(sLine + "\n");
                                 } else if (sLine.contains("ENDLIST")) {
                                     break;
+                                } else if (sLine.contains("#EXT-X-MAP")){
+                                    icM3U8_entry.sEXT_X_MAP = sLine; //#EXT-X-MAP:URI="144p.av1.mp4/init-v1-a1.mp4"
                                 } else if (sLine.contains("EXTINF")){
                                     //Try to pull out duration:
                                     String[] sData1 = sLine.split(":");

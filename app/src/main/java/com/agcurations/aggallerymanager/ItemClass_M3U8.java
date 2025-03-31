@@ -23,4 +23,6 @@ public class ItemClass_M3U8 {
     ArrayList<String> als_TSDownloads; //This item captures the TS file addresses for a given M3U8 entry.
     long lTotalTSFileSetSize = -1; //This captures the total size of all of the TS files for a given M3U8 entry.
 
+    String sEXT_X_MAP = ""; //https://stackoverflow.com/questions/12906820/any-m3u8-playlist-example-to-use-ext-x-map-tag
+                            //Specifies data on how to process segment files.
 }

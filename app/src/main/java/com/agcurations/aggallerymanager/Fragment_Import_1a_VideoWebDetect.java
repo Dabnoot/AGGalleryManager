@@ -251,7 +251,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                 }
                 //if(bDebug) Log.d("shouldInterceptRequest", "Resource request: " + sURL);
                 if((sURL.contains("m3u8") || sURL.contains("mp4") || sURL.contains("webm")) && !globalClass.gbWorkerVideoAnalysisInProgress
-                        && !(globalClass.gbOptionSilenceActiveStreamListening && sURL.contains(".ts"))){
+                        && !(globalClass.gbOptionSilenceActiveStreamListening && (sURL.contains(".ts") || sURL.contains(".m4s")))){
 
                     //Enter here if we detect a valid file
                     // but not if we are currently processing detected items
@@ -259,7 +259,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
 
                     String sAnnounce = "";
-                    if(sURL.contains(".ts")){
+                    if(sURL.contains(".ts") || sURL.contains(".m4s")){
                         // ".ts" is likely just the m3u8 downloading segments to a video player.
                         sAnnounce = "Possible video segment address intercepted. ";
                     }
