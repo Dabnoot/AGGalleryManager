@@ -409,10 +409,10 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 if(tmFileIndexImageExtension.size() == 0){
                     sMessage = "Problem identifying comic page images on this webpage.";
                     BroadcastProgress_ComicDetails(sMessage, 100);
-                    Broadcast_Error(icWebDataLocator.sAddress, sMessage, false);
+                    Broadcast_Error(icWebDataLocator.sAddress, sMessage, true);
                     GlobalClass.gabImportComicWebAnalysisRunning.set(false);
                     GlobalClass.gabImportComicWebAnalysisFinished.set(true);
-                    return Result.failure();
+                    return Result.failure(GlobalClass.DataErrorMessage(sMessage + " (1)"));
                 }
                 //Page addresses should now be acquired.
 
@@ -781,7 +781,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
                     //Decypher the comic page image URLs to be used in a later step of the import:
                     BroadcastProgress_ComicDetails("Looking for listing of comic pages...", -1);
-                    sxPathExpression = "//img[@class='w-full h-full']/@src";
+                    sxPathExpression = "//div [@data-name='image-item']//@src";//"//img[@class='w-full h-full']/@src";
                     Object[] objsTagNodePageImageAddresses = node.evaluateXPath(sxPathExpression);
                     //Check to see if we found anything:
                     TreeMap<Integer, String> tmFileIndexAndAddress = new TreeMap<>(); //Store page data.
@@ -801,7 +801,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         Broadcast_Error(icWebDataLocator.sAddress, sMessage, true);
                         GlobalClass.gabImportComicWebAnalysisRunning.set(false);
                         GlobalClass.gabImportComicWebAnalysisFinished.set(true);
-                        return Result.failure();
+                        return Result.failure(GlobalClass.DataErrorMessage(sMessage + " (2)"));
                     }
                     //Page addresses should now be acquired.
 
