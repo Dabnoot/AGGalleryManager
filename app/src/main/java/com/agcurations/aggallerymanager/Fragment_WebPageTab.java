@@ -57,11 +57,11 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 
-import java.io.File;
-import java.io.FileWriter;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 
 public class Fragment_WebPageTab extends Fragment {
@@ -74,12 +74,12 @@ public class Fragment_WebPageTab extends Fragment {
     private TextInputEditText gEditText_Address;
 
     public String gsWebAddress = "";
+    public String gsWebAddressForLogging = "";
     public String gsMatchingCatalogItemID = "";
 
     ArrayList<String> gals_ResourceRequests;
 
     boolean gbWriteApplicationLog = false;
-    String gsApplicationLogFilePath = "";
 
     public static ViewModel_Browser viewModel_browser; //Used to transfer data between fragments.
 
@@ -121,6 +121,7 @@ public class Fragment_WebPageTab extends Fragment {
 
     public Fragment_WebPageTab(String sURL) {
         gsWebAddress = sURL;
+        gsWebAddressForLogging = UUID.randomUUID().toString();
     }
 
     @Override
@@ -137,9 +138,6 @@ public class Fragment_WebPageTab extends Fragment {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if (gbWriteApplicationLog) {
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
         ApplicationLogWriter("OnCreate Start, getting application context.");
 
         globalClass = (GlobalClass) getActivity().getApplicationContext();
@@ -425,6 +423,7 @@ public class Fragment_WebPageTab extends Fragment {
                 }
 
                 gsWebAddress = sRequestedAddress;
+                gsWebAddressForLogging = UUID.randomUUID().toString();
                 gWebView.loadUrl(sRequestedAddress);
 
                 if (getActivity() != null) {
@@ -657,17 +656,29 @@ public class Fragment_WebPageTab extends Fragment {
 
     private void ApplicationLogWriter(String sMessage) {
         if (gbWriteApplicationLog) {
-            try {
-                File fLog = new File(gsApplicationLogFilePath);
-                FileWriter fwLogFile = new FileWriter(fLog, true);
-                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + "Fragment_WebPageTab" + ", " + sMessage + "\n");
-                fwLogFile.close();
-            } catch (Exception e) {
-                if(e.getMessage() == null){
-                    return;
+
+            if(GlobalClass.IsAppLogFileAvailabile()){
+                GlobalClass.gAB_ApplicationLogFileAvailable.set(false);
+                try {
+                    //Write the data to the file:
+                    OutputStream osApplicationLogFile;
+
+                    osApplicationLogFile = GlobalClass.gcrContentResolver.openOutputStream(GlobalClass.gUriAppLogFile, "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+                    if (osApplicationLogFile != null) {
+                        //Write the data to the file:
+                        sMessage = GlobalClass.GetTimeStampReadReady() + ": " + "Fragment_WebPageTab ID " + giThisFragmentHashCode + ", " + sMessage + "\n";
+                        osApplicationLogFile.write(sMessage.getBytes());
+                        osApplicationLogFile.flush();
+                        osApplicationLogFile.close();
+                    }
+                } catch (Exception e){
+                    String sErrorMessage = "" + e.getMessage();
+                    Log.d("Application Log File", sErrorMessage);
                 }
-                Log.d("Log FileWriter", e.getMessage());
+
+                GlobalClass.gAB_ApplicationLogFileAvailable.set(true);
             }
+
         }
 
     }
@@ -695,6 +706,7 @@ public class Fragment_WebPageTab extends Fragment {
                         String sAddress = icwptd.sAddress;
                         gEditText_Address.setText(sAddress);
                         gsWebAddress = sAddress;
+                        gsWebAddressForLogging = UUID.randomUUID().toString();
 
                         gWebView.gsTabID = icwptd.sTabID;
 
@@ -780,7 +792,7 @@ public class Fragment_WebPageTab extends Fragment {
         return new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String sAddress) {
-
+                ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Page load finished.");
                 //Get cookie. Sometimes needed when requesting a resource download according to some sources.
                 //String sCookie = CookieManager.getInstance().getCookie(sAddress);
                 //GlobalClass.gsCookie = sCookie;
@@ -866,6 +878,8 @@ public class Fragment_WebPageTab extends Fragment {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
 
+                ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Page started.");
+
                 gsNextChapterLink = "";
 
                 gals_ResourceRequests = new ArrayList<>();
@@ -901,6 +915,7 @@ public class Fragment_WebPageTab extends Fragment {
                             if (!icwptd.sAddress.equals(url)) {
                                 icwptd.sAddress = url;
                                 gsWebAddress = url;
+                                gsWebAddressForLogging = UUID.randomUUID().toString();
                             } else {
                                 bSkipSet = true;
                             }
@@ -1013,6 +1028,8 @@ public class Fragment_WebPageTab extends Fragment {
                 //Enter here when an assigned String is changed.
                 //In particular, we enter here when a web page has finished loading.
 
+                ApplicationLogWriter("Site " + gsWebAddressForLogging + ": HTML watcher triggered.");
+
                 gsPageHTML = sHTML;
 
                 //Find the favicon address:
@@ -1081,6 +1098,7 @@ public class Fragment_WebPageTab extends Fragment {
                 //== Pre-import checks
                 //===========
 
+                ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Running pre-import checks.");
 
                 gsCustomDownloadPrompt = "";
                 gsDownloadWarningMessage = "";
@@ -1241,6 +1259,8 @@ public class Fragment_WebPageTab extends Fragment {
                 //Add data to a feeder for the worker. Data must be transfered. Storing it in a static, ungrowing global is unsafe,
                 //  depending on how fast the system might attempt to do it.
 
+                ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Starting worker for comic HTML analysis.");
+
                 GlobalClass.gtmComicWebDataLocators.put(gsWebAddress, icWCDL_Match);
                 GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
 
@@ -1281,24 +1301,38 @@ public class Fragment_WebPageTab extends Fragment {
             //Get boolean indicating that an error may have occurred:
             boolean bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
             boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
+            String sDataRelatedURLAddress = intent.getStringExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
 
             if (bError) {
                 String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
 
-                boolean bRecoverableAnalysisError = intent.getBooleanExtra(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE, false);
-                if(bRecoverableAnalysisError && gbWebpageAnalysisRetry){
-                    //Wait 1 second before retry
-                    try {
-                        Thread.sleep(1000); //todo: confirm that this is hit. Shouldn't take too long in auto-mode.
-                    } catch (Exception ignored){
-                    }
+                if(sDataRelatedURLAddress != null) {
+                    if (sDataRelatedURLAddress.equals(gsWebAddress)) {
+                        boolean bRecoverableAnalysisError = intent.getBooleanExtra(Worker_Import_ComicAnalyzeHTML.EXTRA_STRING_ANALYSIS_ERROR_RECOVERABLE, false);
+                        if (bRecoverableAnalysisError && gbWebpageAnalysisRetry) {
+                            //Wait 1 second before retry
+                            try {
+                                Thread.sleep(1000); //todo: confirm that this is hit. Shouldn't take too long in auto-mode.
+                            } catch (Exception ignored) {
+                            }
+                            //Remove the key from the dataset to allow program to re-analyze the data:
+                            GlobalClass.gtmComicWebDataLocators.remove(gsWebAddress);
 
-                    gbWebpageAnalysisRetry = false;
-                    gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
-                            "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable to check the background html.
-                    if (gLinearProgressIndicator_DLInspection != null) {
-                        gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
+                            gbWebpageAnalysisRetry = false;
+
+                            ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Retrying comic detection.");
+
+                            if (gLinearProgressIndicator_DLInspection != null) {
+                                gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
+                            }
+
+                            gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
+                                    "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable to check the background html.
+
+                        } else if (bRecoverableAnalysisError) {
+                            ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Retry of comic detection ended in error. No further retry.");
+                        }
                     }
                 }
 
@@ -1308,7 +1342,6 @@ public class Fragment_WebPageTab extends Fragment {
                 if (bGetComicDownloadsResponse) {
                     //Look to see if this is a response to a known item to this web tab.
                     //  If it is, set the download button color and change the download button progress bar.
-                    String sDataRelatedURLAddress = intent.getStringExtra(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
                     if(sDataRelatedURLAddress != null) {
                         if(gsWebAddress.equals(sDataRelatedURLAddress)) { //Make sure this is in response to THIS Fragment_WebPageTab instance. It was considered to do a check via webtab ID, but this is better.
                             if (!globalClass.WaitForObjectReady(GlobalClass.gabComicWebAnalysDataTMAvailable, 1)) {
@@ -1331,19 +1364,29 @@ public class Fragment_WebPageTab extends Fragment {
 
                                             if(icWCDL.alicf_ComicDownloadFileItems.size() == 1){
                                                 //If only one image was detected, don't proceed with automated functions.
-                                                gsDownloadWarningMessage = "Attention: Only 1 comic page detected for this website.";
+                                                String sMessage = "Attention: Only 1 comic page detected for this website.";
+                                                gsDownloadWarningMessage = sMessage;
+                                                if (GlobalClass.gbAutoDownloadGroupComics && icWCDL.bRecognizedSeries) {
+                                                    sMessage = sMessage + " Pausing auto-download.";
+                                                }
+                                                sMessage = "Site " + gsWebAddressForLogging + ": " + sMessage;
+                                                ApplicationLogWriter(sMessage);
                                             } else if (GlobalClass.gbAutoDownloadGroupComics && icWCDL.bRecognizedSeries) {
                                                 //If autodownload is on and this item is from a recognized series,
                                                 //  initiate download. The series check is here because the system
                                                 //  was recognizing comics from other sites that did not belong to a group and was just
                                                 //  straight-up downloading them immediately.
+                                                ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Comic detection complete, group recognized for comic.");
                                                 initiateComicGroupItemImport(icWCDL);
                                             }
+                                        } else {
+                                            ApplicationLogWriter("Site " + gsWebAddressForLogging + ": Detected comic page count is 0.");
                                         }
                                     }
                                 }
                                 if (!bDownloadFileItemsFound) {
                                     Toast.makeText(getContext(), "No items found for download. Suggest retry analysis.", Toast.LENGTH_SHORT).show();
+                                    ApplicationLogWriter("Site " + gsWebAddressForLogging + ": No items found for download.");
                                 }
                                 GlobalClass.gabComicWebAnalysDataTMAvailable.set(true);
                             }

@@ -64,7 +64,6 @@ public class Activity_Browser extends AppCompatActivity {
     boolean bTabsLoaded = false;
 
     boolean gbWriteApplicationLog = false;
-    String gsApplicationLogFilePath = "";
 
     public static ViewModel_Browser viewModel_browser; //Used to transfer data between fragments.
 
@@ -97,9 +96,6 @@ public class Activity_Browser extends AppCompatActivity {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
 
         gProgressIndicator_Progress = findViewById(R.id.progressIndicator_Progress);
         gProgressIndicator_Progress.setMax(100);
@@ -374,16 +370,7 @@ public class Activity_Browser extends AppCompatActivity {
     }
 
     private void ApplicationLogWriter(String sMessage){
-        if(gbWriteApplicationLog){
-            try {
-                File fLog = new File(gsApplicationLogFilePath);
-                FileWriter fwLogFile = new FileWriter(fLog, true);
-                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
-                fwLogFile.close();
-            } catch (Exception e) {
-                Log.d("Log FileWriter", "" + e.getMessage());
-            }
-        }
+        //See Fragment_WebPageTab implementation.
 
     }
 
@@ -398,64 +385,27 @@ public class Activity_Browser extends AppCompatActivity {
     }
 
 
-    /*@Override
-    protected void onStart() {
-        super.onStart();
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
-        ApplicationLogWriter("onStart.");
-    }*/
-
     @Override
     protected void onResume() {
         super.onResume();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
+
         ApplicationLogWriter("onResume.");
     }
-
-    /*@Override
-    protected void onPause() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
-        ApplicationLogWriter("onPause.");
-        super.onPause();
-    }*/
 
     @Override
     protected void onRestart() {
         super.onRestart();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
+
         if(!bTabsLoaded) {
             startAction_GetWebPageTabData();
         }
         ApplicationLogWriter("onRestart.");
     }
 
-
-
-    /*@Override
-    protected void onStop() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
-        super.onStop();
-    }*/
 
 
     //==============================================================================================

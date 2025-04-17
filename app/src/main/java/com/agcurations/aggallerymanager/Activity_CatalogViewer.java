@@ -102,9 +102,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -248,17 +245,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
     private void ApplicationLogWriter(String sMessage){
-        if(gbWriteApplicationLog){
-            try {
-                File fLog = new File(gsApplicationLogFilePath);
-                FileWriter fwLogFile = new FileWriter(fLog, true);
-                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
-                fwLogFile.close();
-            } catch (Exception e) {
-                sMessage = e.getMessage() + "";
-                Log.d("Log FileWriter", sMessage);
-            }
-        }
+        //See Fragment_WebPageTab for implementation.
 
     }
 

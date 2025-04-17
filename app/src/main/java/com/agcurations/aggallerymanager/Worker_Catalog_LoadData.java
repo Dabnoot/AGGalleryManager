@@ -155,11 +155,9 @@ public class Worker_Catalog_LoadData extends Worker {
         //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
         //  This can occur if Android closed the application, but saves the last Activity and the user returns.
         //  We want to record the log location so that data can be written to it.
-        String sLogsFolderUri = GlobalClass.gUriLogsFolder.toString();
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        sharedPreferences.edit()
-                .putString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, sLogsFolderUri + File.separator + GlobalClass.gsApplicationLogName) //todo: This is likely not appropriate with the switch from File to DocumentFile.
-                .apply();
+        GlobalClass.gUriAppLogFile = getDataFileOrCreateIt(GlobalClass.gUriLogsFolder, GlobalClass.gsApplicationLogName, "Could not create Application Log File.");
+        //If file size is too big, recreate it:
+
 
         /*GlobalClass.CatalogDataFile_UpdateAllRecords_TimeStamps(
                 globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS]);*/

@@ -69,6 +69,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
 
 import com.google.common.io.BaseEncoding;
 
@@ -107,6 +108,7 @@ public class GlobalClass extends Application {
     public static Uri gUriLogsFolder;
     public static Uri gUriBackupFolder;
     public static Uri gUriJobFilesFolder;
+    public static Uri gUriAppLogFile;
     public static final String gsBrowserDataFile = "WebpageTabData.dat";
     public static Uri gUriBrowserDataFolder;
     public static Uri gUriWebpageTabDataFile;
@@ -296,6 +298,7 @@ public class GlobalClass extends Application {
     public static String gsDLTempFolderName = "DL";
 
     public static String gsApplicationLogName = "ApplicationLog.txt";
+    public static AtomicBoolean gAB_ApplicationLogFileAvailable = new AtomicBoolean(true);
 
     public static final String EXTRA_CALLER_ID = "com.agcurations.aggallermanager.string_caller_id";
     public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
@@ -1322,6 +1325,29 @@ public class GlobalClass extends Application {
         long lCummulativeWaitTimeMS = 0;
         int iWaitTimeInvervalMS = 250;
         while(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get() && lCummulativeWaitTimeMS < lMaxWaitTimeMS){
+            try {
+                Thread.sleep(iWaitTimeInvervalMS);
+                lCummulativeWaitTimeMS += iWaitTimeInvervalMS;
+            } catch (Exception ignored){
+                return false;
+            }
+        }
+        if(lCummulativeWaitTimeMS >= lMaxWaitTimeMS){
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean IsAppLogFileAvailabile(){
+        //Checks to see if the application log file is available, and if not, wait for it to become available.
+        //  If the file does not become available within a time limit, return an indication that the
+        //  file is not available.
+        int iMaxWaitTimeMinutes = 5;
+        int iMaxWaitTimeSeconds = iMaxWaitTimeMinutes * 60;
+        long lMaxWaitTimeMS = iMaxWaitTimeSeconds * 1000;
+        long lCummulativeWaitTimeMS = 0;
+        int iWaitTimeInvervalMS = 250;
+        while(!GlobalClass.gAB_ApplicationLogFileAvailable.get() && lCummulativeWaitTimeMS < lMaxWaitTimeMS){
             try {
                 Thread.sleep(iWaitTimeInvervalMS);
                 lCummulativeWaitTimeMS += iWaitTimeInvervalMS;
@@ -3635,6 +3661,7 @@ public class GlobalClass extends Application {
             }
         } else {
             switch (sStorageSizePreference){
+                //todo: Add code to always have 3 significant digits
                 case STORAGE_SIZE_GIGABYTES:
                     lStorageSize = lStorageSize / (long)Math.pow(1024, 3);
                     sSizeSuffix = " GB";
@@ -3840,6 +3867,12 @@ public class GlobalClass extends Application {
 
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
+    }
+
+    public static Data DataErrorMessage(String sMessage){ //todo: Replace local instances of DataErrorMessage in other classes with a reference to this.
+        return new Data.Builder()
+                .putString(FAILURE_MESSAGE, sMessage)
+                .build();
     }
 
     //=====================================================================================
