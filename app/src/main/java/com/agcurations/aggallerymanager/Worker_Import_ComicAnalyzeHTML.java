@@ -750,9 +750,9 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
                     //Look for a next chapter link for "auto next chapter" feature:
 
-                    sxPathExpression = "//a[@class=\"btn btn-sm btn-outline btn-primary items-center\"]/@href";
+                    sxPathExpression = "//a[@class=\"btn btn-sm btn-outline btn-primary items-center flex-nowrap\"]/@href";
                     Object[] objsNextChapterLinkCandidates = node.evaluateXPath(sxPathExpression);
-                    sxPathExpression = "//a[@class=\"btn btn-sm btn-outline btn-primary items-center\"]";
+                    sxPathExpression = "//a[@class=\"btn btn-sm btn-outline btn-primary items-center flex-nowrap\"]";
                     Object[] objsNextChapterLinkTextCandidates = node.evaluateXPath(sxPathExpression);
                     //Check to see if we found anything:
                     if ((objsNextChapterLinkCandidates != null && objsNextChapterLinkCandidates.length > 0 ) &&
