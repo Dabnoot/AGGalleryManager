@@ -388,11 +388,17 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
                         sImageFilename = sImageFilename.replace("t", ""); //Get rid of the 't', presummably for "thumbnail".
                         String[] sSplit = sImageFilename.split("\\.");
+                        int iExtPos = -1;
                         if (sSplit.length == 2) {
+                            iExtPos = 1;
+                        } else if (sSplit.length > 2) { //Came across strange instance in which the file name was something like 7.webp.webp.
+                            iExtPos = sSplit.length - 1;
+                        }
+                        if (iExtPos != -1) {
                             try {
                                 Integer iPageNumber = Integer.parseInt(sSplit[0]);
                                 String[] sTemp = new String[2];
-                                sTemp[EXTENTION_INDEX] = sSplit[1];
+                                sTemp[EXTENTION_INDEX] = sSplit[iExtPos];
                                 sTemp[THUMBNAIL_URL_INDEX] = sImageAddress;
                                 tmFileIndexImageExtension.put(iPageNumber, sTemp);//Put the thumbnail image address in with the file extension.
                             } catch (Exception ignored) {
