@@ -384,6 +384,9 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //  be downloaded from a slightly different address and filename, hence the convoluted processing below.
                     for (Object objsTagNodeThumbnail : objsTagNodeThumbnails) {
                         String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName("data-src");
+                        if(sImageAddress.startsWith("//")){
+                            sImageAddress = "https:" + sImageAddress;
+                        }
                         BroadcastProgress_ComicDetails(sImageAddress + "\n", -1); //Broadcast progress
                         String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
                         sImageFilename = sImageFilename.replace("t", ""); //Get rid of the 't', presummably for "thumbnail".
@@ -466,7 +469,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                                 lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
                                 if (lSize == -1) {
                                     iServer++;
-                                    if(iServer > 3){
+                                    if(iServer > 9){ //increased from 3 to 4 on 2025-09-11.
                                         bAddressPrefixSearchSatisfied = true; //Stop looking.
                                     } else {
                                         iFileSizeLoopCount = 0;
