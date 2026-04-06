@@ -371,10 +371,26 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 TreeMap<Integer, String[]> tmFileIndexImageExtension = new TreeMap<>();
                 final int EXTENTION_INDEX = 0;
                 final int THUMBNAIL_URL_INDEX = 1;
+                String sThumbSourceAttName = "src";
                 if (objsTagNodeThumbnails != null && objsTagNodeThumbnails.length > 0) {
                     //Get the gallery ID. This is not the same as the NH comic ID.
                     // Example: "https://t.nh&&entai.net/galleries/645538/1t.png"
-                    sImageAddressTemplate = ((TagNode) objsTagNodeThumbnails[0]).getAttributeByName("data-src");
+
+                    sImageAddressTemplate = ((TagNode) objsTagNodeThumbnails[0]).getAttributeByName("src");
+                    if(sImageAddressTemplate == null) {
+                        sThumbSourceAttName = "data-src";
+                        sImageAddressTemplate = ((TagNode) objsTagNodeThumbnails[0]).getAttributeByName("data-src");
+                        if (sImageAddressTemplate == null) {
+                            //Found "data-src" search to be no longer working ~ 2.0.2.6-0.4-0.6
+                            sMessage = "Problem identifying image address template on this webpage. \n" +
+                                    "sxPathExpression: " + snH_Comic_Page_Thumbs_xPE;
+                            BroadcastProgress_ComicDetails(sMessage, 100);
+                            Broadcast_Error(icWebDataLocator.sAddress, sMessage, true);
+                            GlobalClass.gabImportComicWebAnalysisRunning.set(false);
+                            GlobalClass.gabImportComicWebAnalysisFinished.set(true);
+                            return Result.failure(GlobalClass.DataErrorMessage(sMessage));
+                        }
+                    }
                     if (sImageAddressTemplate.length() > 0) {
                         sGalleryID = sImageAddressTemplate.substring(0, sImageAddressTemplate.lastIndexOf("/"));
                         sGalleryID = sGalleryID.substring(sGalleryID.lastIndexOf("/") + 1);
@@ -383,7 +399,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //The thumbnail images from this particular website reveal the file names of the full-size images, which will
                     //  be downloaded from a slightly different address and filename, hence the convoluted processing below.
                     for (Object objsTagNodeThumbnail : objsTagNodeThumbnails) {
-                        String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName("data-src");
+                        String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName(sThumbSourceAttName);
                         if(sImageAddress.startsWith("//")){
                             sImageAddress = "https:" + sImageAddress;
                         }
