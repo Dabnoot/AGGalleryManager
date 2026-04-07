@@ -3,9 +3,11 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.nfc.Tag;
 import android.widget.Toast;
 
 import org.htmlcleaner.CleanerProperties;
+import org.htmlcleaner.ContentNode;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 
@@ -14,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
@@ -244,7 +247,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             //nH comic import web html search strings (may change if the website changes)
             //If comic source is nH, these strings enable searching the nH web page for tag data:
             String snH_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-            String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+            String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/span/..";
             String snH_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
             String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
 
@@ -284,10 +287,42 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 if (objsTagNodesTCFNs != null && objsTagNodesTCFNs.length > 0) {
                     //If we found something, assign it to a string:
                     sData = ((TagNode) objsTagNodesTCFNs[0]).getText().toString();
+
+                    //Process each named data block. Data blocks are parodies, characters, tags, etc.
+                    for (Object objsTagNodesTCFN : objsTagNodesTCFNs) {
+                        String sTagSectionName = "";
+                        StringBuilder sbData = new StringBuilder();
+                        List lChildren = ((TagNode) objsTagNodesTCFN).getAllChildren();
+                        for (Object objs : lChildren){
+                            if( objs instanceof ContentNode){
+                                sTagSectionName = ((ContentNode) objs).getContent().trim(); //This gets the name of a descriptor section.
+                            } else if (objs instanceof TagNode) {
+                                Object[] objValues = ((TagNode) objs).evaluateXPath("//a/span[@class='name']"); //This gets the individual descriptor elements.
+                                if(objValues != null & objValues.length > 0){
+                                    int k = 0;
+                                    sbData.append(((TagNode) objValues[k]).getText().toString());   //This gets the first descriptor's text.
+                                    k++;
+                                    for(; k < objValues.length; k++){
+                                        sbData.append(", ");
+                                        sbData.append(((TagNode) objValues[k]).getText().toString()); //This gets subsequent descriptor's texts.
+                                    }
+                                }
+                            }
+                        }
+                        if (!sTagSectionName.equals("")){
+                            int i = 0;
+                            while (!sTagSectionName.equals(gsDataBlockIDs[i]) && i < gsDataBlockIDs.length - 1){
+                                i++; //  If we have a section name and we're not at the DataBlockID, skip forward until we find it.
+                            }
+                            if(sTagSectionName.equals(gsDataBlockIDs[i])) {
+                                sReturnData[i + 1] = sbData.toString(); //Item 1 is the title.
+                            }
+                        }
+                    }
                 }
 
                 //Replace spacing with tabs and reduce the tab count.
-                sData = sData.replaceAll(" {2}", "\t");
+                /*sData = sData.replaceAll(" {2}", "\t");
                 sData = sData.replaceAll("\t\t", "\t");
                 sData = sData.replaceAll("\t\t", "\t");
                 sData = sData.replaceAll("\t\t", "\t");
@@ -343,7 +378,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         }
                         sReturnData[i + 1] = sbData.toString();
                     }
-                }
+                }*/
 
                 sTitle = sReturnData[COMIC_DETAILS_TITLE_INDEX];
                 sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
