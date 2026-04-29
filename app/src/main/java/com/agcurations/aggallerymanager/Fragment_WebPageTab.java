@@ -1028,8 +1028,17 @@ public class Fragment_WebPageTab extends Fragment {
                 //Enter here when an assigned String is changed.
                 //In particular, we enter here when a web page has finished loading.
 
+                if(sHTML == null)
+                    return;
+
                 ApplicationLogWriter("Site " + gsWebAddressForLogging + ": HTML watcher triggered.");
 
+
+                long lsHTMLSize = sHTML.length();
+                if(sHTML.startsWith("<html><head><title>Just a moment...")){
+                    //This is a preload verification- false hit of page load completion.
+                    return;
+                }
                 gsPageHTML = sHTML;
 
                 //Find the favicon address:
