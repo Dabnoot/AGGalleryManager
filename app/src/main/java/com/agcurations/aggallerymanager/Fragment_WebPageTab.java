@@ -1158,7 +1158,7 @@ public class Fragment_WebPageTab extends Fragment {
                     if(gsWebAddress.startsWith(sComicSeriesIDStartString)){
                         //If we are here, then this website contains a comic that can be downloaded.
                         //  Set the download button color.
-                        SetDownloadButtonColor(READY);
+                        SetDownloadButtonColor(RECOGNIZED);
                         //If this item appears to be a potential comic series entry. Check the ID.
                         sComicSeriesID = gsWebAddress.substring(sComicSeriesIDStartString.length());
                         int iLastSlashIndex = sComicSeriesID.indexOf("/");
@@ -1253,8 +1253,6 @@ public class Fragment_WebPageTab extends Fragment {
                     // would have been set to DUPLICATE in coding above before the routine was exited.
                     if(gsMatchingCatalogItemID.equals("")) {
                         SetDownloadButtonColor(READY);
-                    } else {
-                        SetDownloadButtonColor(RECOGNIZED);
                     }
                     return;
                 }
@@ -1336,6 +1334,8 @@ public class Fragment_WebPageTab extends Fragment {
                                 gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
                             }
 
+                            SetDownloadButtonColor(DETECTION_ERROR);
+
                             gWebView.loadUrl("javascript:Custom_Android_Interface.showHTML" +
                                     "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable to check the background html.
 
@@ -1365,9 +1365,6 @@ public class Fragment_WebPageTab extends Fragment {
                                     if (icWCDL.alicf_ComicDownloadFileItems != null) {
                                         if (icWCDL.alicf_ComicDownloadFileItems.size() > 0) {
                                             bDownloadFileItemsFound = true;
-                                            //Set color of the download icon to be blue:
-                                            SetDownloadButtonColor(RECOGNIZED);
-                                            //Toast.makeText(getContext(), "Success detecting matching comic and images.", Toast.LENGTH_SHORT).show();
                                             gLinearProgressIndicator_DLInspection.setProgress(0);
                                             gLinearProgressIndicator_DLInspection.setVisibility(View.INVISIBLE);
 
@@ -1472,6 +1469,7 @@ public class Fragment_WebPageTab extends Fragment {
     private final int READY = 2;      //Belongs to a domain to which this program is adapted for downloads
     private final int RECOGNIZED = 3; //Recognized as part of a group of comics, ready for download.
     private final int DUPLICATE = 4;  //Item exists in catalog.
+    private final int DETECTION_ERROR = 5;  //Error in processing data or data not found.
     private void SetDownloadButtonColor(int iColor){
         int iColorInt;
         if(iColor == NORMAL) {
@@ -1480,8 +1478,10 @@ public class Fragment_WebPageTab extends Fragment {
             iColorInt = ContextCompat.getColor(gContext, R.color.color_download_ready);
         } else if(iColor == RECOGNIZED){
             iColorInt = ContextCompat.getColor(gContext, R.color.color_download_recognized);
-        } else {
+        } else if(iColor == DUPLICATE){
             iColorInt = ContextCompat.getColor(gContext, R.color.color_download_duplicate);
+        } else {
+            iColorInt = ContextCompat.getColor(gContext, R.color.color_download_error);
         }
         //Set color of the download icon to be grey:
         Drawable d1 = AppCompatResources.getDrawable(gContext, R.drawable.download);

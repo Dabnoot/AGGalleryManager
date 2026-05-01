@@ -62,6 +62,7 @@
     <color name="color_download_ready">#81C784</color>
     <color name="color_download_recognized">#64B5F6</color>
     <color name="color_download_duplicate">#000000</color>
+    <color name="color_download_error">#B71C1C</color>
 
     <!-- google's material design colours from
         http://www.google.com/design/spec/style/color.html#color-ui-color-palette -->
