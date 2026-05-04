@@ -6,7 +6,26 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.TreeMap;
+
 public class GlobalClassTest {
+
+
+    @Test
+    public void TestCleanStorageSize(){
+
+        TreeMap<Long, String> tmTestData = new TreeMap<>();
+        tmTestData.put(512L, "B");
+        tmTestData.put(1024L, "B");
+        tmTestData.put(262144L, "B");
+        tmTestData.put(1048576L, "B");
+        tmTestData.put(67108864L, "B");
+        tmTestData.put(1073741824L, "B");
+        tmTestData.put(17179869184L, "B");
+
+
+
+    }
 
     @Test
     public void SplitFileNameIntoBaseAndExtension() {
