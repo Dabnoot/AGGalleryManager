@@ -8,10 +8,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -23,6 +25,11 @@ import androidx.work.WorkManager;
 public class Fragment_Import_0b_ImageSource extends Fragment {
 
     BroadcastReceiver_FI_0b_ImageSource broadcastReceiver_FI_0b_ImageSource;
+
+    Button gButton_NextStep;
+    RadioButton gRadioButton_ImageSourceFolder;
+    RadioButton gRadioButton_ImageSourceWebpage;
+    RadioButton gRadioButton_ImageSourceHoldingFolder;
 
     public Fragment_Import_0b_ImageSource() {
         // Required empty public constructor
@@ -52,6 +59,39 @@ public class Fragment_Import_0b_ImageSource extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_import_0b_image_source, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        if(getView() == null){
+            return;
+        }
+
+        //Add some logic to enable the next step button when the user selects a radiobutton:
+        gButton_NextStep = getView().findViewById(R.id.button_NextStep);
+        gRadioButton_ImageSourceFolder = getView().findViewById(R.id.radioButton_ImageSourceFolder);
+        gRadioButton_ImageSourceWebpage = getView().findViewById(R.id.radioButton_ImageSourceWebpage);
+        gRadioButton_ImageSourceHoldingFolder = getView().findViewById(R.id.radioButton_ImageSourceHoldingFolder);
+
+        OnClickRBCustom onClickRBCustom = new OnClickRBCustom();
+        gRadioButton_ImageSourceFolder.setOnClickListener(onClickRBCustom);
+        gRadioButton_ImageSourceWebpage.setOnClickListener(onClickRBCustom);
+        gRadioButton_ImageSourceHoldingFolder.setOnClickListener(onClickRBCustom);
+
+    }
+
+    private class OnClickRBCustom implements View.OnClickListener {
+        @Override
+        public void onClick(View view) {
+            if(gButton_NextStep == null){
+                return;
+            }
+
+            gButton_NextStep.setEnabled(gRadioButton_ImageSourceFolder.isChecked() ||
+                    gRadioButton_ImageSourceWebpage.isChecked() ||
+                    gRadioButton_ImageSourceHoldingFolder.isChecked());
+        }
     }
 
     @Override

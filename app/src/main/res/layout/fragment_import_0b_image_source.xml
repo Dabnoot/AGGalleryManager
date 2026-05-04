@@ -99,7 +99,8 @@
                 android:onClick="buttonNextClick_ImageSourceSelected"
                 android:text="Next"
                 android:textSize="24sp"
-                app:backgroundTint="@color/colorButton" />
+                app:backgroundTint="@color/colorButton"
+                android:enabled="false"/>
 
         </LinearLayout>
 
