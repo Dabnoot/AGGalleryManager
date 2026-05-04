@@ -57,7 +57,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
-import java.util.TreeMap;
 
 public class Activity_Import extends AppCompatActivity {
     private GlobalClass globalClass;
@@ -76,17 +75,18 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 7;
     public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 8;
     public static final int FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM = 9;
-    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 10;
-    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 11;
-    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 12;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 13;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 14;
-    public static final int FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE = 15;
-    public static final int FRAGMENT_IMPORT_5B_ID_CONFIRMATION_REPAIR = 16;
-    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 17;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 18;
+    public static final int FRAGMENT_IMPORT_2E_ID_IMPORT_FILE_PREVIEW = 10;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 11;
+    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 12;
+    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 13;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 14;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 15;
+    public static final int FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE = 16;
+    public static final int FRAGMENT_IMPORT_5B_ID_CONFIRMATION_REPAIR = 17;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 18;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 19;
 
-    public static final int FRAGMENT_COUNT = 19;
+    public static final int FRAGMENT_COUNT = 20;
 
     //=================================================
     //User selection global variables:
@@ -105,7 +105,7 @@ public class Activity_Import extends AppCompatActivity {
     public static final String IMPORT_ALIGN_ADJACENCIES = "IMPORT_ALIGN_ADJACENCIES";
 
     //FragmentImport_3_SelectTags
-    public static ViewModel_Fragment_SelectTags viewModelTags; //Used for applying tags globally to an entire import selection.
+    public static ViewModel_Fragment_SelectTags viewModel_fragment_selectTags; //Used for applying tags globally to an entire import selection.
     public static ViewModel_ImportActivity viewModelImportActivity; //Used to transfer data between fragments.
 
     //FragmentImport_4_ImportMethod
@@ -142,9 +142,6 @@ public class Activity_Import extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -176,7 +173,7 @@ public class Activity_Import extends AppCompatActivity {
         mediaMetadataRetriever = new MediaMetadataRetriever();
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
-        viewModelTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
+        viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
 
         //Instantiate the ViewModel sharing data between fragments:
         viewModelImportActivity = new ViewModelProvider(this).get(ViewModel_ImportActivity.class);
@@ -375,7 +372,7 @@ public class Activity_Import extends AppCompatActivity {
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     if (result.getResultCode() == RESULT_OK) {
-                        fileListCustomAdapter.updateFileItemDetails(GlobalClass.galPreviewFileList);
+                        fileListCustomAdapter.updateFileItemDetails(GlobalClass.galPreviewFileList); //todo: Handle case of null.
                         GlobalClass.galPreviewFileList = null; //Release memory.
                     }
                 }
@@ -655,6 +652,16 @@ public class Activity_Import extends AppCompatActivity {
             if(bDeleteOnly){
                 ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE, false);
             } else {
+                //Clear the selected tags and associated data before moving on.
+                // It may retain data from when the user was previewing and assigning tags to items.
+                viewModel_fragment_selectTags.altiTagSuggestions.removeObservers(this);
+                viewModel_fragment_selectTags.altiTagsSelected.removeObservers(this);
+                viewModel_fragment_selectTags.tiTagItemAdded.removeObservers(this);
+                viewModel_fragment_selectTags.tiTagItemsRemoved.removeObservers(this);
+                viewModel_fragment_selectTags.altiTagSuggestions.setValue(null);
+                viewModel_fragment_selectTags.altiTagsSelected.setValue(null);
+                viewModel_fragment_selectTags.tiTagItemAdded.setValue(null);
+                viewModel_fragment_selectTags.tiTagItemsRemoved.setValue(null);
                 ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
             }
 
@@ -663,6 +670,8 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_TagImportSelectionComplete(View v){
+        //todo: Evaluate if viewModel_fragment_selectTags.altiTagsSelected has any data here. If so, clear it so it's not picked up when
+        // an observable is set on it in the next fragment.
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
@@ -782,7 +791,7 @@ public class Activity_Import extends AppCompatActivity {
     public class FileListCustomAdapter extends ArrayAdapter<ItemClass_File> {
 
         final public ArrayList<ItemClass_File> alFileItems;
-        private ArrayList<ItemClass_File> alFileItemsDisplay;
+        public ArrayList<ItemClass_File> alFileItemsDisplay;
         private boolean bSelectAllSelected = false;
         Context contextFromCaller;
 
@@ -1221,7 +1230,11 @@ public class Activity_Import extends AppCompatActivity {
                 }
 
                 UpdateRowDeleteIcon(viewButton, bNewDeleteStateIsYesDelete);
-                recalcButtonNext();
+
+                Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+                if(button_ItemSelectComplete != null) {
+                    recalcButtonNext(button_ItemSelectComplete);
+                }
 
             });
 
@@ -1232,61 +1245,12 @@ public class Activity_Import extends AppCompatActivity {
 
             Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
             button_MediaPreview.setOnClickListener(view -> {
-                //Start the preview popup activity:
-                Intent intentImportFilePreview;
-                intentImportFilePreview = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
 
+                viewModelImportActivity.iSelectedItemIndexForPreview = position;
 
-                Bundle b = new Bundle();
-                b.putInt(MEDIA_CATEGORY,
-                        viewModelImportActivity.iImportMediaCategory); //viewModel not intended
-                // to be used between Activities. Therefore, pass media category via bundle in
-                // intent.
-
-                if(viewModelImportActivity.bImportingOrphanedFiles){
-                    b.putBoolean(IMPORT_ALIGN_ADJACENCIES, true);
-                }
-
-                ArrayList<ItemClass_File> alPreviewFileList = new ArrayList<>();
-                if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
-                        viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-
-                    //Send all of the video and image file items that are shown to the preview, and tell position.
-                    //  That way the user can swipe to the next video or image and apply tags to that one as well.
-                    alPreviewFileList = alFileItemsDisplay;
-                    b.putInt(PREVIEW_FILE_ITEMS_POSITION, position);
-
-                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) { //If comic...
-                    //If this is a comic, put together all of the page fileItems for the preview.
-
-                    //Sort the files for this comic by putting them into a TreeMap:
-                    TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
-                    String sParentComic = alFileItemsDisplay.get(position).sUri;
-                    for (ItemClass_File icf : alFileItems) {
-                        if (icf.sUriParent.equals(sParentComic)) {
-                            tmFiles.put(icf.sFileOrFolderName, icf);
-                        }
-                    }
-                    //Put the files into a standard array:
-                    for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
-                        alPreviewFileList.add(entry.getValue()); //todo: simplify?
-                    }
-                    //Put the tags into the first item in the file array. This is only
-                    // for comics. The item selected by the user is a "folder" item and is not
-                    // transferred to preview, but this is the item holding the tags.
-                    if(alPreviewFileList.size() > 0){
-                        alPreviewFileList.get(0).aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags; //todo: simplify?
-                    }
-
-
-
-                }
-
-                GlobalClass.galPreviewFileList = alPreviewFileList;
-
-                intentImportFilePreview.putExtras(b);
-
-                garlGetTagsForImportItems.launch(intentImportFilePreview);
+                //Go to the preview fragment:
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2E_ID_IMPORT_FILE_PREVIEW, false);
+                stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
 
             });
 
@@ -1350,7 +1314,10 @@ public class Activity_Import extends AppCompatActivity {
             }
 
             if(!bNewCheckedState){
-                recalcButtonNext();
+                Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+                if(button_ItemSelectComplete != null) {
+                    recalcButtonNext(button_ItemSelectComplete);
+                }
             } else {
                 Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
                 if(button_ItemSelectComplete != null){
@@ -1361,7 +1328,7 @@ public class Activity_Import extends AppCompatActivity {
             
         }
         
-        public void recalcButtonNext(){
+        public void recalcButtonNext(@NonNull Button button_ItemSelectComplete){
             boolean bEnableNextButton = false;
             for(ItemClass_File fi: alFileItems){
                 if(fi.bIsChecked || fi.bMarkedForDeletion){
@@ -1369,11 +1336,7 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 }
             }
-            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
-            if(button_ItemSelectComplete != null){
-                button_ItemSelectComplete.setEnabled(bEnableNextButton);
-            }
-
+            button_ItemSelectComplete.setEnabled(bEnableNextButton);
         }
 
 
@@ -1420,7 +1383,10 @@ public class Activity_Import extends AppCompatActivity {
 
             }
 
-            recalcButtonNext();
+            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+            if(button_ItemSelectComplete != null) {
+                recalcButtonNext(button_ItemSelectComplete);
+            }
 
             if (bFoundAndUpdated) {
                 notifyDataSetChanged();
@@ -2172,6 +2138,7 @@ public class Activity_Import extends AppCompatActivity {
                     .load(glideUrl)
                     .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
                     .into(holder.imageView_Thumbnail);*/
+            Log.d("Testing>>>>>>>>>>>>>>>>>>>>>", "Attempting to load " + sImageURL);
             Glide.with(getApplicationContext())
                     .load(sImageURL)
                     .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
@@ -2190,20 +2157,20 @@ public class Activity_Import extends AppCompatActivity {
             return alFileItems.size();
         }
 
-        public void recalcButtonNext(){
-            boolean bEnableNextButton = false;
-            for(ItemClass_File fi: alFileItems){
-                if(fi.bIsChecked){
-                    bEnableNextButton = true;
-                    break;
-                }
-            }
-            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
-            if(button_ItemSelectComplete != null){
-                button_ItemSelectComplete.setEnabled(bEnableNextButton);
-            }
-
-        }
+//        public void recalcButtonNext(){
+//            boolean bEnableNextButton = false;
+//            for(ItemClass_File fi: alFileItems){
+//                if(fi.bIsChecked){
+//                    bEnableNextButton = true;
+//                    break;
+//                }
+//            }
+//            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+//            if(button_ItemSelectComplete != null){
+//                button_ItemSelectComplete.setEnabled(bEnableNextButton);
+//            }
+//
+//        }
 
     }
 
@@ -2237,6 +2204,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_2a_SelectDetectedWebVideo();
                 case FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM:
                     return new Fragment_Import_2c_PreviewDetectedWebComic();
+                case FRAGMENT_IMPORT_2E_ID_IMPORT_FILE_PREVIEW:
+                    return new Fragment_Import_2e_ImportFilePreview();
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
                     return new Fragment_Import_3_SelectTags();
                 case FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT:

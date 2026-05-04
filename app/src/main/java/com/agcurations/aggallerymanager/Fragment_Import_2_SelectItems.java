@@ -23,6 +23,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -42,6 +43,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     ProgressBar gProgressBar_FileDeletionProgress;
     TextView gTextView_FileDeletionProgressBarText;
     TextView gtextView_FileDeletionDebugLog;
+    Button gButton_ItemSelectComplete;
 
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
 
@@ -94,6 +96,8 @@ public class Fragment_Import_2_SelectItems extends Fragment {
             if (gtextView_FileDeletionDebugLog != null) {
                 gtextView_FileDeletionDebugLog.setMovementMethod(new ScrollingMovementMethod());
             }
+
+            gButton_ItemSelectComplete = getView().findViewById(R.id.button_ItemSelectComplete);
         }
 
     }
@@ -123,6 +127,17 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         if(ListViewState == null || viewModelImportActivity.bUpdateImportSelectList){
             initComponents();
         }
+
+        //If the user is returning from Fragment_Import_2e_ImportFilePreview,
+        //  recalc the NEXT button status.
+        if(((Activity_Import)getActivity()).fileListCustomAdapter != null){
+            if(gButton_ItemSelectComplete != null){
+                ((Activity_Import)getActivity()).fileListCustomAdapter.recalcButtonNext(gButton_ItemSelectComplete);
+            }
+        }
+
+
+
     }
 
     @Override
@@ -323,8 +338,8 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));*/
 
         if(getActivity() != null) {
-            if(((Activity_Import) getActivity()).fileListCustomAdapter != null){
-                ((Activity_Import) getActivity()).fileListCustomAdapter.recalcButtonNext();
+            if(gButton_ItemSelectComplete != null){
+                ((Activity_Import)getActivity()).fileListCustomAdapter.recalcButtonNext(gButton_ItemSelectComplete);
             }
         }
 
@@ -398,7 +413,5 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
         }
     }
-
-
 
 }

@@ -42,4 +42,6 @@ public class ViewModel_ImportActivity extends ViewModel {
 
     //Create an array of keys that allow program to locate image links:
     public ItemClass_WebComicDataLocator webComicDataLocator;
+
+    public int iSelectedItemIndexForPreview = -1; //Index of item in list. Item that user has selected to preview.
 }
