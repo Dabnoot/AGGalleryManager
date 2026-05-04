@@ -57,6 +57,9 @@ public class Fragment_Import_2c_PreviewDetectedWebComic extends Fragment {
 
         //Get the comic title and update on the layout:
         String sTitle = ((Activity_Import) getActivity()).recyclerViewComicPreviewAdapter.alFileItems.get(0).sTitle;
+        if( sTitle == null){
+            sTitle = "NoTitle";
+        }
         TextView textView_ComicTitle = getView().findViewById(R.id.textView_ComicTitle);
         textView_ComicTitle.setText(sTitle);
 
