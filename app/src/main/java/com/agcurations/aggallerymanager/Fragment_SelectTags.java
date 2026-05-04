@@ -168,29 +168,31 @@ public class Fragment_SelectTags extends Fragment {
             //React to changes in the selected tag data in the ViewModel:
             final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = selectedTags -> {
 
-                //Update the suggested tags list in the viewmodel:
-                ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
-                ArrayList<ItemClass_Tag> alictNewSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
-                if (alictSuggestions == null) {
-                    alictSuggestions = new ArrayList<>();
-                    alictNewSuggestions = new ArrayList<>();
-                }
-                for (ItemClass_Tag ict : selectedTags) {
-                    boolean bNotInList = true;
-                    for (ItemClass_Tag ictSuggestion : alictSuggestions) {
-                        if (ict.iTagID.equals(ictSuggestion.iTagID)) {
-                            bNotInList = false;
-                            break;
+                if(selectedTags != null) {
+                    //Update the suggested tags list in the viewmodel:
+                    ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                    ArrayList<ItemClass_Tag> alictNewSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                    if (alictSuggestions == null) {
+                        alictSuggestions = new ArrayList<>();
+                        alictNewSuggestions = new ArrayList<>();
+                    }
+                    for (ItemClass_Tag ict : selectedTags) {
+                        boolean bNotInList = true;
+                        for (ItemClass_Tag ictSuggestion : alictSuggestions) {
+                            if (ict.iTagID.equals(ictSuggestion.iTagID)) {
+                                bNotInList = false;
+                                break;
+                            }
+                        }
+                        if (bNotInList) {
+                            if (alictNewSuggestions == null) {
+                                alictNewSuggestions = new ArrayList<>();
+                            }
+                            alictNewSuggestions.add(ict);
                         }
                     }
-                    if (bNotInList) {
-                        if(alictNewSuggestions == null){
-                            alictNewSuggestions = new ArrayList<>();
-                        }
-                        alictNewSuggestions.add(ict);
-                    }
+                    viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
                 }
-                viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
 
             };
             viewModel_fragment_selectTags.altiTagsSelected.observe(getActivity(), selectedTagsObserver);
@@ -318,7 +320,7 @@ public class Fragment_SelectTags extends Fragment {
                     break;
                 }
             }
-            if(bAddChip) {
+            if(bAddChip && getContext()!= null) {
                 Chip chipNew = new Chip(getContext());
                 chipNew.setText(ict.sTagText);
                 chipNew.setId(ict.iTagID);

@@ -189,43 +189,44 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
             @Override
             public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
-
-                //Get the text of the tags and display:
-                StringBuilder sb = new StringBuilder();
-                if(tagItems.size() > 0) {
-                    sb.append(tagItems.get(0).sTagText);
-                    for (int i = 1; i < tagItems.size(); i++) {
-                        sb.append(", ");
-                        sb.append(tagItems.get(i).sTagText);
+                if(tagItems != null) {
+                    //Get the text of the tags and display:
+                    StringBuilder sb = new StringBuilder();
+                    if (tagItems.size() > 0) {
+                        sb.append(tagItems.get(0).sTagText);
+                        for (int i = 1; i < tagItems.size(); i++) {
+                            sb.append(", ");
+                            sb.append(tagItems.get(i).sTagText);
+                        }
                     }
-                }
-                //Display the tags:
-                if(getView() != null) {
-                    TextView textView_ImportTags = getView().findViewById(R.id.textView_ImportTags);
-                    if (textView_ImportTags != null) {
-                        textView_ImportTags.setText(sb.toString());
+                    //Display the tags:
+                    if (getView() != null) {
+                        TextView textView_ImportTags = getView().findViewById(R.id.textView_ImportTags);
+                        if (textView_ImportTags != null) {
+                            textView_ImportTags.setText(sb.toString());
+                        }
                     }
-                }
 
-                //Apply the selected tags to individual items:
-                boolean bUpdateAdapter = false;
-                ItemClass_Tag tiAdded = Activity_Import.viewModelTags.tiTagItemAdded.getValue();
-                if(tiAdded != null){
-                    selectedFileListCustomAdapter.applyTagToItems(tiAdded.iTagID);
-                    bUpdateAdapter = true;
-                }
-                ArrayList<ItemClass_Tag> alictTagsRemoved = Activity_Import.viewModelTags.tiTagItemsRemoved.getValue();
-                if(alictTagsRemoved != null){
-                    selectedFileListCustomAdapter.removeTagsFromItems(alictTagsRemoved);
-                    bUpdateAdapter = true;
-                }
-                if(bUpdateAdapter){
-                    selectedFileListCustomAdapter.notifyDataSetChanged();
+                    //Apply the selected tags to individual items:
+                    boolean bUpdateAdapter = false;
+                    ItemClass_Tag tiAdded = Activity_Import.viewModel_fragment_selectTags.tiTagItemAdded.getValue();
+                    if (tiAdded != null) {
+                        selectedFileListCustomAdapter.applyTagToItems(tiAdded.iTagID);
+                        bUpdateAdapter = true;
+                    }
+                    ArrayList<ItemClass_Tag> alictTagsRemoved = Activity_Import.viewModel_fragment_selectTags.tiTagItemsRemoved.getValue();
+                    if (alictTagsRemoved != null) {
+                        selectedFileListCustomAdapter.removeTagsFromItems(alictTagsRemoved);
+                        bUpdateAdapter = true;
+                    }
+                    if (bUpdateAdapter) {
+                        selectedFileListCustomAdapter.notifyDataSetChanged();
+                    }
                 }
 
             }
         };
-        Activity_Import.viewModelTags.altiTagsSelected.observe(this, selectedTagsObserver);
+        Activity_Import.viewModel_fragment_selectTags.altiTagsSelected.observe(this, selectedTagsObserver);
 
     }
 
