@@ -246,10 +246,18 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
             //nH comic import web html search strings (may change if the website changes)
             //If comic source is nH, these strings enable searching the nH web page for tag data:
-            String snH_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-            String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/span/..";
+            //String snH_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+            String snH_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title svelte-iec8wt']//span[@class='pretty svelte-iec8wt']";
+
+            //String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/span/..";
+            String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-namesvelte-iec8wt']/span/..";
+
+            String snH_Comic_Data_Block_Ele_xPE = "//a/span[@class='name svelte-mmywhv']";
+
             String snH_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
-            String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
+
+            //String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
+            String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container svelte-iec8wt']//img[@class='lazyload']";
 
             try {
                 //===
@@ -297,7 +305,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                             if( objs instanceof ContentNode){
                                 sTagSectionName = ((ContentNode) objs).getContent().trim(); //This gets the name of a descriptor section.
                             } else if (objs instanceof TagNode) {
-                                Object[] objValues = ((TagNode) objs).evaluateXPath("//a/span[@class='name']"); //This gets the individual descriptor elements.
+                                Object[] objValues = ((TagNode) objs).evaluateXPath(snH_Comic_Data_Block_Ele_xPE); //This gets the individual descriptor elements.
                                 if(objValues != null & objValues.length > 0){
                                     int k = 0;
                                     sbData.append(((TagNode) objValues[k]).getText().toString());   //This gets the first descriptor's text.
@@ -445,8 +453,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         int iExtPos = -1;
                         if (sSplit.length == 2) {
                             iExtPos = 1;
-                        } else if (sSplit.length > 2) { //Came across strange instance in which the file name was something like 7.webp.webp.
-                            iExtPos = sSplit.length - 1;
+                        } else if (sSplit.length > 2) { //Came across strange instance in which the file name was something like 7.webp.webp. Try ht.tps://nh.en.tai.ne.t/g/65.14.73/ This one had 1.jpg.webp, and it was the jpg that was valid.
+                            iExtPos = sSplit.length - 2; //Changed from -1 to -2 from experience with 651473.
                         }
                         if (iExtPos != -1) {
                             try {
@@ -518,6 +526,14 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                                 connection.setRequestProperty("Accept-Encoding", "identity");
                                 connection.setConnectTimeout(5000);
                                 lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
+                                if (lSize < 1000) {
+                                    try {
+                                        String s = (String) connection.getContent(); //Generates an exception if file not found.
+                                        s = s + "";
+                                    } catch (Exception e){
+                                        lSize = -1;
+                                    }
+                                }
                                 if (lSize == -1) {
                                     iServer++;
                                     if(iServer > 9){ //increased from 3 to 4 on 2025-09-11.
@@ -529,7 +545,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                                         alsComicPageAndImageData = new ArrayList<>();
                                     }
                                     break;
-                                }
+                                } else
                                 bAddressPrefixSearchSatisfied = true;
                                 iFileSizeLoopCount++;
 
