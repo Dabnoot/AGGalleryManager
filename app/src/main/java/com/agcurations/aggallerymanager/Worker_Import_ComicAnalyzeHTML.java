@@ -205,16 +205,18 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         //Create an array structure assisting with data identification.
         //We don't grab the title from one of the html data blocks on nH.net. Data blocks
         // originally configured to align with nH.net.
-        final String[] gsDataBlockIDs = new String[]{
-                "Parodies:",
-                "Characters:",
-                "Tags:",
-                "Artists:",
-                "Groups:",
-                "Languages:",
-                "Categories:",
-                "Pages:",
-                "Uploaded:"}; //We ignore the upload date data, but still include it.
+        final String[][] gsDataBlockIDs = new String[][]{
+                {"Parodies:",""},
+                {"Characters:",""},
+                {"Tags:",""},
+                {"Artists:",""},
+                {"Groups:",""},
+                {"Languages:",""},
+                {"Categories:",""},
+                {"Pages:",""},
+                {"Uploaded:",""}}; //We ignore the upload date data, but still include it.
+        final int DATABLOCK_NAME_INDEX = 0;
+        final int DATABLOCK_XPATH_INDEX = 1;
 
         int j = gsDataBlockIDs.length + 1;
         String[] sReturnData = new String[j];
@@ -234,6 +236,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         final int COMIC_DETAILS_LANGUAGES_DATA_INDEX = 6;
         final int COMIC_DETAILS_CATEGORIES_DATA_INDEX = 7;
         final int COMIC_DETAILS_PAGES_DATA_INDEX = 8;
+        final int COMIC_DETAILS_UPLOAD_DATE_INDEX = 9;
 
         //ProgressNumerator should equal "2" here.
 
@@ -253,11 +256,19 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-namesvelte-iec8wt']/span/..";
 
             String snH_Comic_Data_Block_Ele_xPE = "//a/span[@class='name svelte-mmywhv']";
+            String snH_Comic_Data_Block_Ele2_xPE = "//a/span[@class='name svelte-iec8wt']";
+            String snH_Comic_Data_Block_Ele3_xPE = "//span[@class='svelte-iec8wt']";
 
             String snH_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
 
             //String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
             String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container svelte-iec8wt']//img[@class='lazyload']";
+
+            for(int k = 0; k < gsDataBlockIDs.length; k++) {
+                gsDataBlockIDs[k][DATABLOCK_XPATH_INDEX] = snH_Comic_Data_Block_Ele_xPE;
+            }
+            gsDataBlockIDs[COMIC_DETAILS_PAGES_DATA_INDEX - 1][DATABLOCK_XPATH_INDEX] = snH_Comic_Data_Block_Ele2_xPE; //The pages item required a different xpath as of 2026-05-23.
+            gsDataBlockIDs[COMIC_DETAILS_UPLOAD_DATE_INDEX - 1][DATABLOCK_XPATH_INDEX] = snH_Comic_Data_Block_Ele3_xPE; //Date upload requires special xpath.
 
             try {
                 //===
@@ -299,16 +310,24 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     //Process each named data block. Data blocks are parodies, characters, tags, etc.
                     for (Object objsTagNodesTCFN : objsTagNodesTCFNs) {
                         String sTagSectionName = "";
+                        int iDataBlockIndex = 0;
                         StringBuilder sbData = new StringBuilder();
                         List lChildren = ((TagNode) objsTagNodesTCFN).getAllChildren();
                         for (Object objs : lChildren){
                             if( objs instanceof ContentNode){
                                 sTagSectionName = ((ContentNode) objs).getContent().trim(); //This gets the name of a descriptor section.
+                                if (!sTagSectionName.equals("")) {
+                                    while (!sTagSectionName.equals(gsDataBlockIDs[iDataBlockIndex][DATABLOCK_NAME_INDEX]) && iDataBlockIndex < gsDataBlockIDs.length - 1) {
+                                        iDataBlockIndex++; //  If we have a section name and we're not at the DataBlockID, skip forward until we find it.
+                                    }
+                                }
                             } else if (objs instanceof TagNode) {
-                                Object[] objValues = ((TagNode) objs).evaluateXPath(snH_Comic_Data_Block_Ele_xPE); //This gets the individual descriptor elements.
+                                Object[] objValues = ((TagNode) objs).evaluateXPath(gsDataBlockIDs[iDataBlockIndex][DATABLOCK_XPATH_INDEX]); //This gets the individual descriptor elements.
                                 if(objValues != null & objValues.length > 0){
                                     int k = 0;
-                                    sbData.append(((TagNode) objValues[k]).getText().toString());   //This gets the first descriptor's text.
+                                    String sTempClean = ((TagNode) objValues[k]).getText().toString(); //This gets the first descriptor's text.
+                                    sTempClean = sTempClean.replaceAll("[)(]", ""); //Date comes in surounded by parenthesis.
+                                    sbData.append(sTempClean);
                                     k++;
                                     for(; k < objValues.length; k++){
                                         sbData.append(", ");
@@ -318,75 +337,12 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                             }
                         }
                         if (!sTagSectionName.equals("")){
-                            int i = 0;
-                            while (!sTagSectionName.equals(gsDataBlockIDs[i]) && i < gsDataBlockIDs.length - 1){
-                                i++; //  If we have a section name and we're not at the DataBlockID, skip forward until we find it.
-                            }
-                            if(sTagSectionName.equals(gsDataBlockIDs[i])) {
-                                sReturnData[i + 1] = sbData.toString(); //Item 1 is the title.
+                            if(sTagSectionName.equals(gsDataBlockIDs[iDataBlockIndex][DATABLOCK_NAME_INDEX])) {
+                                sReturnData[iDataBlockIndex + 1] = sbData.toString(); //Item 1 is the title.
                             }
                         }
                     }
                 }
-
-                //Replace spacing with tabs and reduce the tab count.
-                /*sData = sData.replaceAll(" {2}", "\t");
-                sData = sData.replaceAll("\t\t", "\t");
-                sData = sData.replaceAll("\t\t", "\t");
-                sData = sData.replaceAll("\t\t", "\t");
-                sData = sData.replaceAll("^\t", ""); //Get rid of any leading tab character.
-                sData = sData.replaceAll("\n", ""); //Get rid of any newline characters
-                String[] sDataBreakout = sData.split("\t");
-
-                giProgressNumerator++;
-                iProgressBarValue = Math.round((giProgressNumerator / (float) giProgressDenominator) * 100);
-                BroadcastProgress_ComicDetails("", iProgressBarValue);
-
-                //Process each named data block. Data blocks are parodies, characters, tags, etc.
-                for (int i = 0; i < gsDataBlockIDs.length - 1; i++) {
-                    //gsDataBlockIDs.length - 1 ====> We are ignoring the last data block, "Uploaded:", the upload date.
-                    int iterator = -1; //Determine where in the sequence of objects the current data block will appear.
-                    for (int k = 0; k < sDataBreakout.length - 1; k++) {
-                        //Find the DataBreakout index (k) that contains the DataBlock identifier (not the data):
-                        if (sDataBreakout[k].contains(gsDataBlockIDs[i])) {
-
-                            if (sDataBreakout[k + 1].contains(gsDataBlockIDs[i + 1])) {
-                                //If we are here, then it means that there was no data between the current
-                                //  data block and the next data block. Skip gathering the data for this
-                                //  data block.
-                                continue;
-                            } else {
-                                iterator = k + 1;
-                            }
-
-                            break;
-                        }
-                    }
-                    if (iterator > 0) {
-                        sData = sDataBreakout[iterator];
-                        if (!sDataBreakout[iterator - 1].contains("Pages:")) { //Don't clean-out numbers if we are expecting numbers.
-                            //Get rid of "tag count" data. This is data unique to n%Hen%tai that
-                            //  shows the number of times that the tag has been applied.
-                            sData = sData.replaceAll("\\d{4}K", "\t");
-                            sData = sData.replaceAll("\\d{3}K", "\t");
-                            sData = sData.replaceAll("\\d{2}K", "\t");
-                            sData = sData.replaceAll("\\dK", "\t");
-                            sData = sData.replaceAll("\\d{4}", "\t");
-                            sData = sData.replaceAll("\\d{3}", "\t");
-                            sData = sData.replaceAll("\\d{2}", "\t");
-                            sData = sData.replaceAll("\\d", "\t");
-                        }
-                        //Reformat the data:
-                        String[] sItems = sData.split("\t");
-                        StringBuilder sbData = new StringBuilder();
-                        sbData.append(sItems[0]);
-                        for (int m = 1; m < sItems.length; m++) {
-                            sbData.append(", ");
-                            sbData.append(sItems[m]);
-                        }
-                        sReturnData[i + 1] = sbData.toString();
-                    }
-                }*/
 
                 sTitle = sReturnData[COMIC_DETAILS_TITLE_INDEX];
                 sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
