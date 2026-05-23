@@ -230,6 +230,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
                         int iPageCount = entry.getValue().iComicPages;
+                        if(iPageCount < 0) iPageCount = 0; //If there was a problem identifying the page count during import, page count could be -1.
                         if ((iPageCount >= iPageMin)
                                 && iPageCount <= iPageMax) {
                             bResolutionOrPageCountMatch = true;
