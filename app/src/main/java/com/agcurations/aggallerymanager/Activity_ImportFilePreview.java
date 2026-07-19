@@ -41,6 +41,7 @@ import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.PopupMenu;
@@ -51,7 +52,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.SeekParameters;
 import androidx.media3.ui.PlayerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -86,6 +89,12 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     private int giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
     private static final String PLAYBACK_TIME = "play_time";
 
+    private final int SEEK_PARAMETER_EXACT = 0;
+    private final int SEEK_PARAMETER_PREVIOUS_SYNC = 1;
+    private int giExoplayer_Seek_Resolution = SEEK_PARAMETER_EXACT;
+    private long glDuration = -1;
+    long glSeekModeFixedLimit = 600 * 1000; //600s = 10 min. Once a video reaches 10 min, don't go into EXACT mode anymore.
+
     ArrayList<Integer> galiLastAssignedTags;
     boolean gbFreezeLastAssignedReset = false;
     boolean gbPastingTags = false;
@@ -115,6 +124,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     Context gContextWindow;
 
+    @OptIn(markerClass = UnstableApi.class)
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -299,7 +309,43 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             //Create the ExoPlayer.
             gExoPlayer = new ExoPlayer.Builder(this).build();
             gExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
+
+            gExoPlayer.setSeekParameters(SeekParameters.EXACT); //May cause lag during seek.
+            giExoplayer_Seek_Resolution = SEEK_PARAMETER_EXACT; //Record the current setting.
+
+            gExoPlayer.addListener(new Player.Listener() {
+
+                @Override
+                public void onPositionDiscontinuity(Player.PositionInfo oldPosition, Player.PositionInfo newPosition, int reason) {
+                    Player.Listener.super.onPositionDiscontinuity(oldPosition, newPosition, reason);
+
+                    if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                        long lSeekSpeed = Math.abs(oldPosition.positionMs - newPosition.positionMs);
+                        long lSeekExactLimit = 4 * 1000;
+
+                        int iNewSeekMode;
+                        if (lSeekSpeed > lSeekExactLimit) {
+                            iNewSeekMode = SEEK_PARAMETER_PREVIOUS_SYNC;
+                        } else {
+                            iNewSeekMode = SEEK_PARAMETER_EXACT;
+                        }
+
+                        if(iNewSeekMode != giExoplayer_Seek_Resolution && glDuration < glSeekModeFixedLimit){
+                            if(iNewSeekMode == SEEK_PARAMETER_EXACT) {
+                                gExoPlayer.setSeekParameters(SeekParameters.EXACT);
+                                //Log.d("SetSeekMode", "Setting seek mode to EXACT.");
+                            } else {
+                                gExoPlayer.setSeekParameters(SeekParameters.PREVIOUS_SYNC);
+                                //Log.d("SetSeekMode", "Setting seek mode to PREVIOUS_SYNC.");
+                            }
+                            giExoplayer_Seek_Resolution = iNewSeekMode;
+                        }
+                    }
+                }
+            });
+
             gplayerView_ExoVideoPlayer = findViewById(R.id.playerView_ExoVideoPlayer);
+            gplayerView_ExoVideoPlayer.setTimeBarScrubbingEnabled(true);
             gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
 
 
@@ -329,11 +375,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 long lVideoDuration = galFileItems.get(giFileItemIndex).lVideoTimeInMilliseconds;
+                glDuration = -1;
                 if (lVideoDuration < 0L) {
                     //If there is no video length, exit this activity.
                     Toast.makeText(getApplicationContext(),"No video length.", Toast.LENGTH_SHORT).show();
                     finish();
                 }
+                glDuration = lVideoDuration;
                 gplayerView_ExoVideoPlayer.bringToFront();
                 gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
 
@@ -467,6 +515,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
 
 
+    @OptIn(markerClass = UnstableApi.class)
     private void initializeFile(){
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
 
@@ -474,6 +523,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 Uri uriVideoFile = Uri.parse(galFileItems.get(giFileItemIndex).sUri);
 
                 MediaItem mediaItem = MediaItem.fromUri(uriVideoFile);
+                Long lTempDuration;
+                lTempDuration = mediaItem.mediaMetadata.durationMs;
+                if(lTempDuration != null){
+                    glDuration = lTempDuration;
+                }
                 gExoPlayer.setMediaItem(mediaItem);
                 gExoPlayer.prepare();
 
@@ -544,6 +598,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                                     if(uriM3U8 != null) {
                                         MediaItem mediaItem = MediaItem.fromUri(uriM3U8);
                                         gExoPlayer.setMediaItem(mediaItem);
+
+                                        Long lTempDuration;
+                                        lTempDuration = mediaItem.mediaMetadata.durationMs;
+                                        if(lTempDuration != null){
+                                            glDuration = lTempDuration;
+                                        }
+
                                         gExoPlayer.prepare();
                                         gExoPlayer.setPlayWhenReady(true);
                                     } else {
@@ -559,10 +620,25 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             } else if (galFileItems.get(giFileItemIndex).iTypeFileFolderURL == ItemClass_File.TYPE_URL) {
                 MediaItem mediaItem = MediaItem.fromUri(galFileItems.get(giFileItemIndex).sURLVideoLink);
+
+                Long lTempDuration;
+                lTempDuration = mediaItem.mediaMetadata.durationMs;
+                if(lTempDuration != null){
+                    glDuration = lTempDuration;
+                }
+
                 gExoPlayer.setMediaItem(mediaItem);
                 gExoPlayer.prepare();
                 gExoPlayer.setPlayWhenReady(true);
 
+            }
+
+            if(glDuration < glSeekModeFixedLimit) {
+                gExoPlayer.setSeekParameters(SeekParameters.EXACT);
+                giExoplayer_Seek_Resolution = SEEK_PARAMETER_EXACT;
+            } else {
+                gExoPlayer.setSeekParameters(SeekParameters.PREVIOUS_SYNC);
+                giExoplayer_Seek_Resolution = SEEK_PARAMETER_PREVIOUS_SYNC;
             }
             // Skipping to 1 shows the first frame of the video.
             gExoPlayer.seekTo(1);

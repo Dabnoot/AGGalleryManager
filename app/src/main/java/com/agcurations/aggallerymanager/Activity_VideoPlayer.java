@@ -46,6 +46,7 @@ import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.SeekParameters;
 import androidx.media3.ui.PlayerView;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -78,6 +79,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private Fragment_ItemDetails gFragment_itemDetails;
 
     private boolean gbAutoHideControlsDueToSwipe = false;
+
+    private final int SEEK_PARAMETER_EXACT = 0;
+    private final int SEEK_PARAMETER_PREVIOUS_SYNC = 1;
+    private int giExoplayer_Seek_Resolution = SEEK_PARAMETER_EXACT;
+    private long glDuration = -1;
+    long glSeekModeFixedLimit = 600 * 1000; //600s = 10 min. Once a video reaches 10 min, don't go into EXACT mode anymore.
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -313,6 +320,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         //Create the ExoPlayer.
         gExoPlayer = new ExoPlayer.Builder(this).build();
 
+        gExoPlayer.setSeekParameters(SeekParameters.EXACT); //May cause lag during seek.
+        giExoplayer_Seek_Resolution = SEEK_PARAMETER_EXACT; //Record the current setting.
+
         gExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
 
         gExoPlayer.addListener(new Player.Listener() {
@@ -329,8 +339,36 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 }
 
             }
-        });
 
+            @Override
+            public void onPositionDiscontinuity(Player.PositionInfo oldPosition, Player.PositionInfo newPosition, int reason) {
+                Player.Listener.super.onPositionDiscontinuity(oldPosition, newPosition, reason);
+
+                if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                    long lSeekSpeed = Math.abs(oldPosition.positionMs - newPosition.positionMs);
+                    long lSeekExactLimit = 4 * 1000;
+
+                    int iNewSeekMode;
+                    if (lSeekSpeed > lSeekExactLimit) {
+                        iNewSeekMode = SEEK_PARAMETER_PREVIOUS_SYNC;
+                    } else {
+                        iNewSeekMode = SEEK_PARAMETER_EXACT;
+                    }
+
+                    if(iNewSeekMode != giExoplayer_Seek_Resolution && glDuration < glSeekModeFixedLimit){
+                        if(iNewSeekMode == SEEK_PARAMETER_EXACT) {
+                            gExoPlayer.setSeekParameters(SeekParameters.EXACT);
+                            //Log.d("SetSeekMode", "Setting seek mode to EXACT.");
+                        } else {
+                            gExoPlayer.setSeekParameters(SeekParameters.PREVIOUS_SYNC);
+                            //Log.d("SetSeekMode", "Setting seek mode to PREVIOUS_SYNC.");
+                        }
+                        giExoplayer_Seek_Resolution = iNewSeekMode;
+                    }
+                }
+            }
+        });
+        gplayerView_ExoVideoPlayer.setTimeBarScrubbingEnabled(true);
         gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
 
         gplayerView_ExoVideoPlayer.setOnTouchListener((v, event) -> gdVideoView.onTouchEvent(event));
@@ -464,6 +502,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     //  Video-affecting routines
     //==============================================================================================
 
+    @OptIn(markerClass = UnstableApi.class)
     private void initializePlayer() {
 
         gtmM3U8_TS_File_Sequence = null;
@@ -531,6 +570,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         gImageView_GifViewer.setVisibility(View.VISIBLE);
                         gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
                     }
+                    glDuration = -1;
                 } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
@@ -547,6 +587,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
                         gExoPlayer.setPlayWhenReady(true);
                     }
+
+                    glDuration = ci.lDuration_Milliseconds;
 
                     /*todo: Read the M3U8 file and confirm that the text is using an up-to-date path
                       aligned with the current storage*/
@@ -565,6 +607,16 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
                         gExoPlayer.setPlayWhenReady(true);
                     }
+                    glDuration = ci.lDuration_Milliseconds;
+                }
+
+                //Set the scrubbing resolution (my term) so that as the user drag the seek bar there is a smooth, continuous update on the position preview image:
+                if(glDuration < glSeekModeFixedLimit) {
+                    gExoPlayer.setSeekParameters(SeekParameters.EXACT);
+                    giExoplayer_Seek_Resolution = SEEK_PARAMETER_EXACT;
+                } else {
+                    gExoPlayer.setSeekParameters(SeekParameters.PREVIOUS_SYNC);
+                    giExoplayer_Seek_Resolution = SEEK_PARAMETER_PREVIOUS_SYNC;
                 }
 
             } //End if our catalog item is not null.
