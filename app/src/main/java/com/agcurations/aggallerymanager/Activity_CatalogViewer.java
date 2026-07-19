@@ -198,21 +198,33 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         }
 
         final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
+        int iDelay = -1;
         if(GlobalClass.giDrawerUseCntCatBrowser < 5) {
             //Start the drawer open so that the user knows it's there, and
             //  configure a runnable to close the drawer after a timeout.
             //This is to train the user so that they know that the drawer is there.
-            drawer_layout_sort.openDrawer(GravityCompat.START);
-            drawer_layout_sort.postDelayed(() ->
-                    drawer_layout_sort.closeDrawer(GravityCompat.START), 1500);
+            iDelay = 1500;
         } else if(GlobalClass.giDrawerUseCntCatBrowser < 10) {
             //The user has been using the drawer. Close it faster.
-            drawer_layout_sort.openDrawer(GravityCompat.START);
-            drawer_layout_sort.postDelayed(() ->
-                    drawer_layout_sort.closeDrawer(GravityCompat.START), 500);
+            iDelay = 500;
             //After the user has used the drawer more than X times, don't start with the
             //  drawer open anymore - assume the user knows that it's there and how to use it.
             // This piece of data is unique to each user name.
+        }
+        if(iDelay > 0) {
+            drawer_layout_sort.openDrawer(GravityCompat.START);
+            drawer_layout_sort.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (gRecyclerViewCatalogAdapter != null) {     //It the catalog recycler view has been populated...
+                        if (gRecyclerViewCatalogAdapter.getItemCount() > 0) { //If the item count is == 0, leave the drawer open.
+                            drawer_layout_sort.closeDrawer(GravityCompat.START);
+                        }
+                    } else {
+                        drawer_layout_sort.closeDrawer(GravityCompat.START);
+                    }
+                }
+            }, iDelay);
         }
 
         //Populate the CatalogDataEditor fragment:
@@ -309,6 +321,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         drawer_layout_sort.closeDrawer(GravityCompat.START);
     }
 
+    public void OpenSortDrawer(){
+        final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
+        drawer_layout_sort.openDrawer(GravityCompat.START);
+    }
+
 
     public class CatalogViewerServiceResponseReceiver extends BroadcastReceiver {
 
@@ -372,6 +389,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                     toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " " + sNoun + ".", Toast.LENGTH_SHORT);
                     toastLastToastMessage.show();
+                    if(gRecyclerViewCatalogAdapter.getItemCount() == 0){
+                        //If there are no items to show, open the sort and filter drawer for the user so they can quickly change settings.
+                        OpenSortDrawer();
+                    }
                 }
 
                 //Check to see if this is a response to update log or progress bar:
