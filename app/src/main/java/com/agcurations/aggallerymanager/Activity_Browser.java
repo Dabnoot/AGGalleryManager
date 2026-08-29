@@ -2,6 +2,11 @@ package com.agcurations.aggallerymanager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
@@ -31,6 +36,7 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -78,7 +84,17 @@ public class Activity_Browser extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_browser);
+
+        //Make sure the view is not on-top or behind the system status/navigation bars. The view should be bounded / shrunk to not overlap:
+        final OnApplyWindowInsetsListener systemBarsInsetsListener = (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            return windowInsets;
+        };
+        final RelativeLayout rlTopLevelLayout = findViewById(R.id.topLevelLayout);
+        ViewCompat.setOnApplyWindowInsetsListener(rlTopLevelLayout, systemBarsInsetsListener);
 
         //Instantiate the ViewModel sharing data between fragments:
         viewModel_browser = new ViewModelProvider(this).get(ViewModel_Browser.class);
