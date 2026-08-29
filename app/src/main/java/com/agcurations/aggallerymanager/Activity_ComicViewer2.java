@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -39,6 +40,7 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        WindowCompat.enableEdgeToEdge(getWindow());
 
         com.agcurations.aggallerymanager.databinding.ActivityComicViewer2Binding binding = ActivityComicViewer2Binding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
