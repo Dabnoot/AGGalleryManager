@@ -6,7 +6,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -37,6 +42,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -93,7 +99,20 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         setTheme(R.style.MainTheme);
 
         super.onCreate(savedInstanceState);
+        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_catalog_viewer);
+
+        //Make sure the drawers that pop out from the sides are not behind the top status bar or the bottom navigation bar.
+        // These drawers should not be on-top or behind, they should be bounded / shrunk to not overlap:
+        final OnApplyWindowInsetsListener systemBarsInsetsListener = (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            return windowInsets;
+        };
+        final FrameLayout flFragment_Catalog_Sort = findViewById(R.id.fragment_Catalog_Sort);
+        final FrameLayout flFragment_Catalog_Data_Editor = findViewById(R.id.fragment_Catalog_Data_Editor);
+        ViewCompat.setOnApplyWindowInsetsListener(flFragment_Catalog_Sort, systemBarsInsetsListener);
+        ViewCompat.setOnApplyWindowInsetsListener(flFragment_Catalog_Data_Editor, systemBarsInsetsListener);
 
         //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
@@ -239,11 +258,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             fragmentTransaction.commit();
         }
 
-        final DrawerLayout drawer_layout_data = findViewById(R.id.drawer_layout_data);
-        drawer_layout_data.openDrawer(GravityCompat.END); //Start the drawer open so that the user knows it's there.
+        final DrawerLayout dlDrawer_layout_data = findViewById(R.id.drawer_layout_data);
+        dlDrawer_layout_data.openDrawer(GravityCompat.END); //Start the drawer open so that the user knows it's there.
         //Configure a runnable to close the drawer after a timeout.
-        drawer_layout_data.postDelayed(() ->
-                drawer_layout_data.closeDrawer(GravityCompat.END), 1500);
+        dlDrawer_layout_data.postDelayed(() ->
+                dlDrawer_layout_data.closeDrawer(GravityCompat.END), 1500);
 
         populate_RecyclerViewCatalogItems();
 
