@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/constraintLayout_Main"
+    android:id="@+id/constraintLayout_Main1"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,22 +8,7 @@
     android:layout_height="match_parent"
     tools:context=".Activity_Main">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/materialToolbar_TopAppBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="?attr/actionBarSize"
-            app:title="Gallery+"
-            app:menu="@menu/main_activity_menu"/>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <!--    The below TextView is used to provide an darkening to the background.-->
+    <!--    The below TextView is used to provide a darkening to the background.-->
     <TextView
         android:id="@+id/textView"
         android:layout_width="match_parent"
@@ -37,188 +22,212 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
 
-    <ImageView
-        android:id="@+id/imageView_Video"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/imageView_Images"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.4"
-        app:srcCompat="@drawable/nob_videos"
-        android:contentDescription="Videos"
-        android:onClick="startVideoCatalogActivity"/>
-
-    <ImageView
-        android:id="@+id/imageView_ImportVideo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@id/imageView_Video"
-        app:layout_constraintBottom_toBottomOf="@id/imageView_Video"
-        app:srcCompat="@drawable/plus_red_blkbrd_64"
-        android:onClick="startImportVideos"/>
-
-
-    <ImageView
-        android:id="@+id/imageView_Images"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:onClick="startPicturesCatalogActivity"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imageView_Video"
-        app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/nob_pictures"
-        android:contentDescription="Pictures" />
-
-    <ImageView
-        android:id="@+id/imageView_ImportImages"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@id/imageView_Images"
-        app:layout_constraintBottom_toBottomOf="@id/imageView_Images"
-        app:srcCompat="@drawable/plus_red_blkbrd_64"
-        android:onClick="startImportImages"/>
-
-    <ImageView
-        android:id="@+id/imageView_Comics"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:onClick="startComicsCatalogActivity"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageView_Images"
-        app:layout_constraintTop_toTopOf="@+id/imageView_Video"
-        app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/nob_comics"
-        android:contentDescription="Comics" />
-
-    <TextView
-        android:id="@+id/textView_Videos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Videos"
-        android:textSize="28sp"
-        style="@style/BusyBackgroundOverlayText"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/imageView_Images"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView_Video"
-        app:layout_constraintVertical_bias="0.2"/>
-
-    <ImageView
-        android:id="@+id/imageView_ImportComics"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@id/imageView_Comics"
-        app:layout_constraintBottom_toBottomOf="@id/imageView_Comics"
-        app:srcCompat="@drawable/plus_red_blkbrd_64"
-        android:onClick="startImportComics"/>
-
-    <TextView
-        android:id="@+id/textView_Pictures"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pictures"
-        android:textSize="28sp"
-        style="@style/BusyBackgroundOverlayText"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/textView_Videos"
-        app:layout_constraintVertical_bias="0.0"/>
-
-
-    <TextView
-        android:id="@+id/textView_Comics"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Comics"
-        android:textSize="28sp"
-        style="@style/BusyBackgroundOverlayText"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageView_Images"
-        app:layout_constraintTop_toTopOf="@+id/textView_Videos"
-        app:layout_constraintVertical_bias="0.0"/>
-
-    <ProgressBar
-        android:id="@+id/progressBar_WorkerTest"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout_Main2"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        style="@android:style/Widget.ProgressBar.Horizontal"
-        android:progressDrawable="@drawable/progressbar_colors"
-        android:visibility="invisible"/>
+        android:layout_height="match_parent"
+        tools:context=".Activity_Main">
 
-    <TextView
-        android:id="@+id/textView_WorkerTest"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="invisible"/>
-
-    <ImageButton
-        android:id="@+id/imageButton_DayNight"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:src="@drawable/daynight"
-        android:backgroundTint="@color/colorButton"
-        android:background="?android:selectableItemBackground"
-        android:visibility="invisible"/>
-
-    <ImageButton
-        android:id="@+id/imageButton_Browser"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_margin="20dp"
-        android:scaleType="fitXY"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:src="@drawable/icons8_globe_100_white"
-        android:background="?android:selectableItemBackground"/>
-
-    <Button
-        android:id="@+id/button_Test"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Test"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="20dp"
-        android:backgroundTint="@color/colorButton"
-        android:visibility="invisible"
-        android:onClick="buttonTestClick_Test"/>
-
-    <RelativeLayout
-        android:id="@+id/linearLayout_Progress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progressIndicator_CatalogReadProgress"
+        <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="invisible" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:background="@android:color/transparent"
+            app:elevation="0dp">
 
-        <TextView
-            android:id="@+id/textView_CatalogReadProgressBarText"
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/materialToolbar_TopAppBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="?attr/actionBarSize"
+                app:title="Gallery+"
+                app:menu="@menu/main_activity_menu"/>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <ImageView
+            android:id="@+id/imageView_Video"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imageView_Images"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.4"
+            app:srcCompat="@drawable/nob_videos"
+            android:contentDescription="Videos"
+            android:onClick="startVideoCatalogActivity"/>
+
+        <ImageView
+            android:id="@+id/imageView_ImportVideo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:visibility="invisible"
-            android:textColor="@color/colorTextColor"/>
-    </RelativeLayout>
+            app:layout_constraintEnd_toEndOf="@id/imageView_Video"
+            app:layout_constraintBottom_toBottomOf="@id/imageView_Video"
+            app:srcCompat="@drawable/plus_red_blkbrd_64"
+            android:onClick="startImportVideos"/>
 
+
+        <ImageView
+            android:id="@+id/imageView_Images"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:onClick="startPicturesCatalogActivity"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageView_Video"
+            app:layout_constraintVertical_bias="0.0"
+            app:srcCompat="@drawable/nob_pictures"
+            android:contentDescription="Pictures" />
+
+        <ImageView
+            android:id="@+id/imageView_ImportImages"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="@id/imageView_Images"
+            app:layout_constraintBottom_toBottomOf="@id/imageView_Images"
+            app:srcCompat="@drawable/plus_red_blkbrd_64"
+            android:onClick="startImportImages"/>
+
+        <ImageView
+            android:id="@+id/imageView_Comics"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:onClick="startComicsCatalogActivity"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/imageView_Images"
+            app:layout_constraintTop_toTopOf="@+id/imageView_Video"
+            app:layout_constraintVertical_bias="0.0"
+            app:srcCompat="@drawable/nob_comics"
+            android:contentDescription="Comics" />
+
+        <TextView
+            android:id="@+id/textView_Videos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Videos"
+            android:textSize="28sp"
+            style="@style/BusyBackgroundOverlayText"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imageView_Images"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView_Video"
+            app:layout_constraintVertical_bias="0.2"/>
+
+        <ImageView
+            android:id="@+id/imageView_ImportComics"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="@id/imageView_Comics"
+            app:layout_constraintBottom_toBottomOf="@id/imageView_Comics"
+            app:srcCompat="@drawable/plus_red_blkbrd_64"
+            android:onClick="startImportComics"/>
+
+        <TextView
+            android:id="@+id/textView_Pictures"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pictures"
+            android:textSize="28sp"
+            style="@style/BusyBackgroundOverlayText"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/textView_Videos"
+            app:layout_constraintVertical_bias="0.0"/>
+
+
+        <TextView
+            android:id="@+id/textView_Comics"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Comics"
+            android:textSize="28sp"
+            style="@style/BusyBackgroundOverlayText"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/imageView_Images"
+            app:layout_constraintTop_toTopOf="@+id/textView_Videos"
+            app:layout_constraintVertical_bias="0.0"/>
+
+        <ProgressBar
+            android:id="@+id/progressBar_WorkerTest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:progressDrawable="@drawable/progressbar_colors"
+            android:visibility="invisible"/>
+
+        <TextView
+            android:id="@+id/textView_WorkerTest"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:visibility="invisible"/>
+
+        <ImageButton
+            android:id="@+id/imageButton_DayNight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:src="@drawable/daynight"
+            android:backgroundTint="@color/colorButton"
+            android:background="?android:selectableItemBackground"
+            android:visibility="invisible"/>
+
+        <ImageButton
+            android:id="@+id/imageButton_Browser"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="20dp"
+            android:scaleType="fitXY"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:src="@drawable/icons8_globe_100_white"
+            android:background="?android:selectableItemBackground"/>
+
+        <Button
+            android:id="@+id/button_Test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="20dp"
+            android:backgroundTint="@color/colorButton"
+            android:visibility="invisible"
+            android:onClick="buttonTestClick_Test"/>
+
+        <RelativeLayout
+            android:id="@+id/linearLayout_Progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progressIndicator_CatalogReadProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="invisible" />
+
+            <TextView
+                android:id="@+id/textView_CatalogReadProgressBarText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:visibility="invisible"
+                android:textColor="@color/colorTextColor"/>
+        </RelativeLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,8 @@
 
 package com.agcurations.aggallerymanager;
 
+import static androidx.core.content.ContextCompat.startActivity;
+
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -10,6 +12,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -23,6 +29,7 @@ import androidx.work.WorkManager;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -124,11 +131,23 @@ public class Activity_Main extends AppCompatActivity {
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
                 .detectLeakedClosableObjects()
                 .build());
-
         //Return theme away from startup_screen
         setTheme(R.style.MainTheme); //For the background image.
         super.onCreate(savedInstanceState);
+        WindowCompat.enableEdgeToEdge(getWindow());
         setContentView(R.layout.activity_main);
+
+        View vConstraintLayout_Main2 = findViewById(R.id.constraintLayout_Main2);
+        ViewCompat.setOnApplyWindowInsetsListener(vConstraintLayout_Main2, (v, windowInsets) -> {
+            // Get the size of the system bars (status bar, navigation bar)
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // Apply those sizes as padding to your view
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+
+            // Return the insets so child views can still see them if needed
+            return windowInsets;
+        });
 
         AM = this;
 
@@ -296,7 +315,7 @@ public class Activity_Main extends AppCompatActivity {
         } else {
 
             //Get user list immediately to allow login while the rest of the data loads.
-            ReadUserData(getApplicationContext());
+            ReadUserData(globalClass.getApplicationContext());
             if(GlobalClass.galicu_Users.size() == 1){
                 bSingleUserInUse = true;
                 if(GlobalClass.galicu_Users.get(0).sPin.equals("")){
@@ -312,6 +331,7 @@ public class Activity_Main extends AppCompatActivity {
                 //  a current user is logged-in.
                 Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
                 startActivity(intentUserSelection);
+
             }
 
             if(!GlobalClass.gabDataLoaded.get()) { //Don't reload the data just because the main activity was restarted.
