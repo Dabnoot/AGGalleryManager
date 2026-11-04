@@ -7,6 +7,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
@@ -129,6 +133,19 @@ public class Activity_Import extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_import);
+
+        WindowCompat.enableEdgeToEdge(getWindow());
+        View vLayout_Import_Guided_Activity = findViewById(R.id.layout_import_guided_activity);
+        ViewCompat.setOnApplyWindowInsetsListener(vLayout_Import_Guided_Activity, (v, windowInsets) -> {
+            // Get the size of the system bars (status bar, navigation bar)
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // Apply those sizes as padding to your view
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+
+            // Return the insets so child views can still see them if needed
+            return windowInsets;
+        });
 
         //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
