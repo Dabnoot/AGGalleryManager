@@ -78,19 +78,20 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT = 6;
     public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 7;
     public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 8;
-    public static final int FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM = 9;
-    public static final int FRAGMENT_IMPORT_2E_ID_IMPORT_FILE_PREVIEW = 10;
-    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 11;
-    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 12;
-    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 13;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 14;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 15;
-    public static final int FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE = 16;
-    public static final int FRAGMENT_IMPORT_5B_ID_CONFIRMATION_REPAIR = 17;
-    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 18;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 19;
+    public static final int FRAGMENT_IMPORT_2AT_ID_SELECT_DETECTED_THUMBNAIL_ITEM = 9;
+    public static final int FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM = 10;
+    public static final int FRAGMENT_IMPORT_2E_ID_IMPORT_FILE_PREVIEW = 11;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 12;
+    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 13;
+    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 14;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 15;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 16;
+    public static final int FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE = 17;
+    public static final int FRAGMENT_IMPORT_5B_ID_CONFIRMATION_REPAIR = 18;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 19;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 20;
 
-    public static final int FRAGMENT_COUNT = 20;
+    public static final int FRAGMENT_COUNT = 21;
 
     //=================================================
     //User selection global variables:
@@ -102,6 +103,7 @@ public class Activity_Import extends AppCompatActivity {
     public static int SelectItemsListViewWidth = 1000;  //Expands the listView items to the width of the listview.
     public FileListCustomAdapter fileListCustomAdapter; //For the file selector.
     public VideoDownloadListCustomAdapter videoDownloadListCustomAdapter; //For the video download selector.
+    public ThumbnailListCustomAdapter thumbnailListCustomAdapter; //For selecting a thumbnail image with the video download didn't find one.
     public RecyclerViewComicPreviewAdapter recyclerViewComicPreviewAdapter; //For comic download.
 
     public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
@@ -344,6 +346,8 @@ public class Activity_Import extends AppCompatActivity {
                 if (bGetVideoDownloadsResponse) {
                     ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE);
                     videoDownloadListCustomAdapter = new VideoDownloadListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alicf_VideoDownloadFileItems);
+                    ArrayList<ItemClass_File> alicf_ThumbnailCandidatesFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_VIDEO_THUMBNAIL_CANDIDATES_RESPONSE);
+                    thumbnailListCustomAdapter = new ThumbnailListCustomAdapter(getApplicationContext(), R.id.listView_ThumbnailDownloadItems, alicf_ThumbnailCandidatesFileItems);
                 }
 
                 //Check to see if this is a response to request to get comic downloads from html:
@@ -618,6 +622,7 @@ public class Activity_Import extends AppCompatActivity {
                     || viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE_SERIES);
 
         boolean bNewTagsFound = false;
+        boolean bVideoSoughtButNoThumbnail = false;
         if(bImportIsOnlineVideo){
             //Get selected item(s) and assign it to the viewModel:
             ArrayList<ItemClass_File> alfi = new ArrayList<>();
@@ -627,6 +632,9 @@ public class Activity_Import extends AppCompatActivity {
                         bNewTagsFound = true;
                     }
                     alfi.add(fi);
+                    if(fi.sURLThumbnail.equals("")){
+                        bVideoSoughtButNoThumbnail = true;
+                    }
                     break;
                 }
             }
@@ -666,23 +674,42 @@ public class Activity_Import extends AppCompatActivity {
                 }
             }
 
+            //Clear the selected tags and associated data before moving on.
+            // It may retain data from when the user was previewing and assigning tags to items.
+            viewModel_fragment_selectTags.altiTagSuggestions.removeObservers(this);
+            viewModel_fragment_selectTags.altiTagsSelected.removeObservers(this);
+            viewModel_fragment_selectTags.tiTagItemAdded.removeObservers(this);
+            viewModel_fragment_selectTags.tiTagItemsRemoved.removeObservers(this);
+            viewModel_fragment_selectTags.altiTagSuggestions.setValue(null);
+            viewModel_fragment_selectTags.altiTagsSelected.setValue(null);
+            viewModel_fragment_selectTags.tiTagItemAdded.setValue(null);
+            viewModel_fragment_selectTags.tiTagItemsRemoved.setValue(null);
             if(bDeleteOnly){
                 ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE, false);
+            } else if(bVideoSoughtButNoThumbnail) {
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2AT_ID_SELECT_DETECTED_THUMBNAIL_ITEM, false);
             } else {
-                //Clear the selected tags and associated data before moving on.
-                // It may retain data from when the user was previewing and assigning tags to items.
-                viewModel_fragment_selectTags.altiTagSuggestions.removeObservers(this);
-                viewModel_fragment_selectTags.altiTagsSelected.removeObservers(this);
-                viewModel_fragment_selectTags.tiTagItemAdded.removeObservers(this);
-                viewModel_fragment_selectTags.tiTagItemsRemoved.removeObservers(this);
-                viewModel_fragment_selectTags.altiTagSuggestions.setValue(null);
-                viewModel_fragment_selectTags.altiTagsSelected.setValue(null);
-                viewModel_fragment_selectTags.tiTagItemAdded.setValue(null);
-                viewModel_fragment_selectTags.tiTagItemsRemoved.setValue(null);
                 ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
             }
 
         }
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+    }
+
+    public void buttonNextClick_ThumbnailSkip(View v){
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+    }
+
+    public void buttonNextClick_ThumbnailSelected(View v){
+        for (ItemClass_File fi : thumbnailListCustomAdapter.alFileItems) {
+            if (fi.bIsChecked && !viewModelImportActivity.alfiConfirmedFileImports.isEmpty()) {
+                //There should only be one item checked.
+                viewModelImportActivity.alfiConfirmedFileImports.get(0).sURLThumbnail = fi.sURLThumbnail;
+                break;
+            }
+        }
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
@@ -2043,6 +2070,122 @@ public class Activity_Import extends AppCompatActivity {
 
     }
 
+    public class ThumbnailListCustomAdapter extends ArrayAdapter<ItemClass_File> {
+        //This class for displaying to user image files found in html.
+        // The user can select only one item for use as a thumbnail on video download.
+
+        final public ArrayList<ItemClass_File> alFileItems;
+        Context contextFromCaller;
+
+        public ThumbnailListCustomAdapter(Context context, int textViewResourceId, ArrayList<ItemClass_File> alfi) {
+            super(context, textViewResourceId, alfi);
+            contextFromCaller = context;
+            alFileItems = new ArrayList<>(alfi);
+        }
+
+        @Override
+        @NonNull
+        public View getView(final int position, View v, @NonNull ViewGroup parent) {
+            View row = v;
+            if (row == null) {
+                LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+                //My custom list item design is here
+                row = inflater.inflate(R.layout.listview_thumbnail_selectable, parent, false);
+            }
+
+            CheckBox checkBox_StorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
+            final ImageView ivThumbnailPreview =  row.findViewById(R.id.imageView_Thumbnail);
+
+            TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
+
+            tvLine1.setText(alFileItems.get(position).sFileOrFolderName);
+
+            //Display a thumbnail:
+            Glide.with(getContext()).
+                    load(alFileItems.get((position)).sURLThumbnail).
+                    into(ivThumbnailPreview);
+
+            checkBox_StorageItemSelect.setChecked(alFileItems.get(position).bIsChecked);
+
+            //Expand the width of the listItem to the width of the ListView.
+            //  This makes it so that the listItem responds to the click even when
+            //  the click is off of the text.
+            row.setMinimumWidth(SelectItemsListViewWidth);
+
+            //Set the onClickListener for the row to toggle the checkbox:
+            row.setOnClickListener(view -> {
+                boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
+                checkBox_StorageItemSelect.setChecked(bNewCheckedState);
+                alFileItems.get(position).bIsChecked = bNewCheckedState;
+                toggleItemChecked(position, bNewCheckedState);
+
+            });
+
+
+            //Set the onClickListener for the checkbox to toggle the checkbox:
+            checkBox_StorageItemSelect.setOnClickListener(view -> {
+                CheckBox checkBox_StorageItemSelect1 = (CheckBox) view;
+                boolean bNewCheckedState = checkBox_StorageItemSelect1.isChecked();
+                alFileItems.get(position).bIsChecked = bNewCheckedState;
+                toggleItemChecked(position, bNewCheckedState);
+
+            });
+
+            return row;
+        }
+
+
+        private void toggleItemChecked(int iFileItemsDisplayPosition, boolean bNewCheckedState){
+
+            for(ItemClass_File icf: alFileItems){
+                icf.bIsChecked = false;  //Reset all items to not-checked state as only one item gets checked.
+            }
+
+            //Apply the checked-state to the item:
+            alFileItems.get(iFileItemsDisplayPosition).bIsChecked = bNewCheckedState;
+
+            //Enable/disable next button:
+            recalcButtonNext();
+
+            notifyDataSetChanged(); //Update the checkboxes for all items.
+        }
+
+        public void recalcButtonNext(){
+            boolean bEnableNextButton = false;
+            for(ItemClass_File fi: alFileItems){
+                if(fi.bIsChecked){
+                    bEnableNextButton = true;
+                    break;
+                }
+            }
+            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+            if(button_ItemSelectComplete != null){
+                button_ItemSelectComplete.setEnabled(bEnableNextButton);
+            }
+
+        }
+
+
+        //To prevent data resetting when scrolled
+        @Override
+        public int getCount() {
+            return alFileItems.size();
+        }
+
+        @Override
+        public ItemClass_File getItem(int position) {
+            return alFileItems.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+
+
+    }
+
     public class RecyclerViewComicPreviewAdapter extends RecyclerView.Adapter<RecyclerViewComicPreviewAdapter.ViewHolder> {
 
         public Activity activity;
@@ -2219,6 +2362,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_2_SelectItems();
                 case FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM:
                     return new Fragment_Import_2a_SelectDetectedWebVideo();
+                case FRAGMENT_IMPORT_2AT_ID_SELECT_DETECTED_THUMBNAIL_ITEM:
+                    return new Fragment_Import_2at_SelectDetectedThumbnail();
                 case FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM:
                     return new Fragment_Import_2c_PreviewDetectedWebComic();
                 case FRAGMENT_IMPORT_2E_ID_IMPORT_FILE_PREVIEW:

@@ -275,6 +275,13 @@ public class GlobalClass extends Application {
     public static AtomicBoolean gabImportComicWebAnalysisRunning = new AtomicBoolean(false);
     public static AtomicBoolean gabImportComicWebAnalysisFinished = new AtomicBoolean(false);
 
+    //Variables to control starting of video web address analysis:
+    // These variables prevent the system/user from starting another analysis until an existing
+    // operation is finished.
+    public static AtomicBoolean gabWebVideoAnalysDataTMAvailable = new AtomicBoolean(true);
+    public static TreeMap<String, ItemClass_WebVideoDataLocator> gtmWebVideoDataLocators = new TreeMap<>();
+    public static AtomicBoolean gabImportWebVideoAnalysisRunning = new AtomicBoolean(false);
+    public static AtomicBoolean gabImportWebVideoAnalysisFinished = new AtomicBoolean(false);
 
 
     //==============================
@@ -3751,6 +3758,7 @@ public class GlobalClass extends Application {
 
     public static final String EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //Used to flag in a listener.
     public static final String EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //ArrayList of response data
+    public static final String EXTRA_AL_GET_VIDEO_THUMBNAIL_CANDIDATES_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_VIDEO_THUMBNAIL_CANDIDATES_RESPONSE"; //ArrayList of response data
 
     public static final String EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE"; //Used to flag in a listener.
     public static final String EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_WEB_COMIC_ANALYSIS_RESPONSE"; //ArrayList of response data

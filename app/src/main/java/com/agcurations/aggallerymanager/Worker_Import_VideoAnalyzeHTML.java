@@ -38,25 +38,21 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
 
     public static final String TAG_WORKER_IMPORT_VIDEOANALYZEHTML = "com.agcurations.aggallermanager.tag_worker_import_videoanalyzehtml";
 
-    boolean bDebug = true;
+    public static final String EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY = "com.agcurations.aggallermanager.extra_string_web_data_locator_al_key";
+
+    boolean bDebug = false;
+
+    String gsDataRecordKey;
 
     public Worker_Import_VideoAnalyzeHTML(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
+        gsDataRecordKey = getInputData().getString(EXTRA_STRING_WEB_DATA_LOCATOR_AL_KEY);
     }
 
     @NonNull
     @Override
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
-
-        /*if(globalClass.gbWorkerVideoAnalysisInProgress){
-            String sMessage = "Concurrent Worker_Import_VideoAnalyzeHTML worker detected. Stopping new worker with SUCCESS.";
-            Data data = new Data.Builder()
-                        .putString("MESSAGE", sMessage)
-                        .build();
-            return Result.success(data);
-        }*/
-        //globalClass.gbWorkerVideoAnalysisInProgress = true;
 
         String sIntentActionFilter = Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT;
 
@@ -66,7 +62,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                 sIntentActionFilter);
 
         ItemClass_WebVideoDataLocator icWebDataLocator = null;
-        for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators){
+        for(ItemClass_WebVideoDataLocator icWVDL: GlobalClass.galWebVideoDataLocators){
             if(icWVDL.bHostNameMatchFound){
                 icWebDataLocator = icWVDL;
                 break;
@@ -78,7 +74,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                     false, 0,
                     false, "",
                     sIntentActionFilter);
-            globalClass.gbWorkerVideoAnalysisInProgress = false;
+            GlobalClass.gbWorkerVideoAnalysisInProgress = false;
             return Result.failure();
         } else {
             //Create a copy of icWebDataLocator since it has been behaving as though it has been
@@ -88,6 +84,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
             icWDL_new.sHTML = icWebDataLocator.sHTML;
             icWDL_new.sWebPageTitle = icWebDataLocator.sWebPageTitle;
             icWDL_new.alVideoDownloadSearchKeys = new ArrayList<>(icWebDataLocator.alVideoDownloadSearchKeys);
+            icWDL_new.alsThumbnailCandidates = new ArrayList<>(icWebDataLocator.alsThumbnailCandidates);
             icWebDataLocator = icWDL_new;
 
         }
@@ -207,7 +204,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
         } catch (Exception e){
             String sMessage = "Problem with HTML parser. Try again?\n" + e.getMessage();
             globalClass.problemNotificationConfig(sMessage, sIntentActionFilter);
-            globalClass.gbWorkerVideoAnalysisInProgress = false;
+            GlobalClass.gbWorkerVideoAnalysisInProgress = false;
             return Result.failure();
         }
         //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
@@ -230,10 +227,69 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
         //Assemble a list of FileItems (ItemClass_File) listing the potential downloads.
         //  Include filename, download address, tags, and, if available, file size, resolution, and duration:
         ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = new ArrayList<>();
+        ArrayList<ItemClass_File> alicf_ThumbnailCandidateFileItems = new ArrayList<>();
+
+        //Copy-over thumbnail candidates:
+        URL urlImageLink = null;
+        for(String sThumbnailCandidate: icWebDataLocator.alsThumbnailCandidates){
+
+            String sTempFilename;
+            sTempFilename = sThumbnailCandidate;
+            int iStartLocation = Math.max(sTempFilename.lastIndexOf("/") + 1, 0);
+            int iEndLocation;
+            int iSpecialEndCharLocation = sTempFilename.lastIndexOf("?");
+            if (iSpecialEndCharLocation > 0) {
+                iEndLocation = iSpecialEndCharLocation;
+            } else {
+                iEndLocation = sTempFilename.length();
+            }
+            sTempFilename = sTempFilename.substring(iStartLocation, iEndLocation);
+            ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_URL, sTempFilename);
+            icf.sURLThumbnail = sThumbnailCandidate;
+
+            try {
+                urlImageLink = new URL(sThumbnailCandidate);
+                HttpURLConnection connection = (HttpURLConnection) urlImageLink.openConnection();
+                connection.setRequestProperty("Accept-Encoding", "identity");
+                icf.lSizeBytes = connection.getContentLength(); //Returns -1 if content size is not in the header.
+                connection.disconnect();
+
+                alicf_ThumbnailCandidateFileItems.add(icf);
+            } catch (Exception ignored) {
+
+            }
+
+
+        }
 
 
         //Analyze data based on the Video Download Search Keys (VDSKs). Each VDSK can be either a
         // textual search key or an XPath Expression, similar to RegEx, but for XML/HTML.
+
+
+        //Check to see if there are precursors suggesting resolution on the m3u8's, such as 1080p.
+        //  If there are, see how many, attempt to discern the resolutions.
+        //  If there are multiple resolutions, the address of the file appears to be the same,
+        //    check the user's preferences for "ignore resolutions below..." or whatever, and don't
+        //    process those resolutions.
+
+        int iLowResOmitThresh = 1080; //Omit low level resolutions when there are options lower than this. User may want this lower res option if video is long.
+        ArrayList<String> alsResolutions = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> iResEntry:GlobalClass.gtmVideoResolutions.entrySet()) {
+            alsResolutions.add(iResEntry.getValue() + "p");
+        }
+        int iVDSK_ResMax = -1;
+        for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
+            int iResMentionCountOnSource = 0;
+            for(String sRes: alsResolutions){
+
+            }
+        }
+
+
+
+
+
         int j = 0;
         for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
             if(bDebug) Log.d("vdsk","loop " + j + ": DataType " + vdsk.sDataType);
@@ -624,6 +680,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                         ArrayList<ItemClass_M3U8> al_M3U8 = new ArrayList<>();
                         boolean bReadingM3U8Item = false;
                         ItemClass_M3U8 icM3U8 = null;
+                        int iM3U8MaxAvailRes = -1;         //Track the maximum resolution available
                         for (String sLine : sM3U8_MasterDataLines) {
                             if (sLine.startsWith("#EXT-X-STREAM-INF")) {
                                 bReadingM3U8Item = true;
@@ -647,6 +704,21 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                                                     break;
                                                 case "RESOLUTION":
                                                     icM3U8.sResolution = sDataSplit[1];
+                                                    icM3U8.iResHeight = -1;
+                                                    String[] sResHW = icM3U8.sResolution.split("x");
+                                                    if(icM3U8.sResolution != null){
+                                                        if (sResHW.length > 1){
+                                                            try {
+
+                                                                icM3U8.iResHeight = Integer.parseInt(sResHW[1]); //Second entry (which is 1 in a zero-based count) has the height.
+                                                                if (icM3U8.iResHeight > iM3U8MaxAvailRes) {
+                                                                    iM3U8MaxAvailRes = icM3U8.iResHeight;
+                                                                }
+                                                            } catch (Exception e){
+                                                                Log.d("ConvErr", e.getMessage());
+                                                            }
+                                                        }
+                                                    }
                                                     bCODECFlag = false;
                                                     break;
                                                 case "NAME":
@@ -707,6 +779,23 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             }
                         }
 
+                        //Evaluate if entries in the m3u8 master file should be skipped due to low
+                        //  resolution:
+                        if(iM3U8MaxAvailRes > 0) { //If resolution capture was successful...
+                            //Look to see if entries should be omitted from further analysis:
+                            if(iM3U8MaxAvailRes >= iLowResOmitThresh) {
+                                ArrayList<ItemClass_M3U8> al_M3U8_Keepers = new ArrayList<>();
+                                for (ItemClass_M3U8 icM3U8_entry : al_M3U8) {
+                                    if (icM3U8_entry.iResHeight > iLowResOmitThresh){
+                                        al_M3U8_Keepers.add(icM3U8_entry);
+                                    }
+                                }
+                                if(al_M3U8_Keepers.size() > 0){
+                                    al_M3U8 = al_M3U8_Keepers;
+                                }
+                            }
+                        }
+
 
                         //Example of an M3U8 item file containing TS file entries:
                         /*
@@ -734,6 +823,9 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                         hls-480p-fe73877.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
                         #EXTIN
                         */
+
+
+
 
                         //Evaluate the M3U8 files and create a list of the .ts files in each M3U8 item:
                         for (ItemClass_M3U8 icM3U8_entry : al_M3U8) {
@@ -963,6 +1055,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
             Intent broadcastIntent_VideoWebDetectResponse = new Intent();
             broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, true);
             broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, alicf_VideoDownloadFileItems);
+            broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.EXTRA_AL_GET_VIDEO_THUMBNAIL_CANDIDATES_RESPONSE,alicf_ThumbnailCandidateFileItems);
             broadcastIntent_VideoWebDetectResponse.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
             broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);

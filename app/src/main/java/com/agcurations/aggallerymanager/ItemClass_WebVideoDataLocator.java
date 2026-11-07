@@ -19,6 +19,7 @@ public class ItemClass_WebVideoDataLocator {
     }
 
     ArrayList<ItemClass_VideoDownloadSearchKey> alVideoDownloadSearchKeys;
+    ArrayList<String> alsThumbnailCandidates;
 
 
 
