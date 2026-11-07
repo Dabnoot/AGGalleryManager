@@ -568,6 +568,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
                         + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                         + GlobalClass.gsFileSeparator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
+                if (ci.sThumbnail_File.equals("")){
+                    bThumbnailQuickLookupSuccess = false;
+                }
             }
             String sThumbnailUri = GlobalClass.gsUriAppRootPrefix
                     + GlobalClass.gsFileSeparator + sPath;
@@ -605,60 +608,52 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         uriThumbnailUri = null;
                     } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                         //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
-                        Uri uriVideoTagFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ci.sFolderRelativePath);
+                        Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ci.sFolderRelativePath);
 
-                        if (uriVideoTagFolder != null) {
-                            Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoTagFolder.toString(), ci.sItemID);
-
-                            if (uriVideoWorkingFolder != null) {
-                                Uri uriDownloadedThumbnailFile = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sThumbnail_File);
-
-                                if (uriDownloadedThumbnailFile != null) { //isDir if ci.sThum=="".
-                                    uriThumbnailUri = uriDownloadedThumbnailFile;
-                                } else {
-                                    //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
-                                    boolean bVideoFileFound = false;
-                                    Uri uriM3U8File = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sFilename);
-                                    if (uriM3U8File != null) {
-                                        try {
-                                            InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(uriM3U8File);
-                                            if (isM3U8File != null) {
-                                                BufferedReader brReader;
-                                                brReader = new BufferedReader(new InputStreamReader(isM3U8File));
-                                                String sLine = brReader.readLine();
-                                                while (sLine != null) {
-                                                    if (!sLine.startsWith("#") && sLine.contains(".st")) {
-                                                        Uri uriThumbnailFileCandidate = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), sLine);
-                                                        if (uriThumbnailFileCandidate != null) {
-                                                            uriThumbnailUri = uriThumbnailFileCandidate;
-                                                            bVideoFileFound = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    // read next line
-                                                    sLine = brReader.readLine();
+                        if (uriVideoWorkingFolder != null) {
+                            if (!ci.sThumbnail_File.equals("")) { //isDir if ci.sThum=="".
+                                uriThumbnailUri = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sThumbnail_File);
+                            } else {
+                                //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
+                                boolean bVideoFileFound = false;
+                                Uri uriM3U8File = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sFilename);
+                                if (uriM3U8File != null) {
+                                    try {
+                                        InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(uriM3U8File);
+                                        if (isM3U8File != null) {
+                                            BufferedReader brReader;
+                                            brReader = new BufferedReader(new InputStreamReader(isM3U8File));
+                                            String sLine = brReader.readLine();
+                                            while (sLine != null) {
+                                                if (!sLine.startsWith("#") && sLine.contains(".st")) {
+                                                    uriThumbnailUri = Uri.parse(sLine);
+                                                    bVideoFileFound = true;
+                                                    break;
                                                 }
-                                                brReader.close();
-                                                isM3U8File.close();
+                                                // read next line
+                                                sLine = brReader.readLine();
                                             }
-
-                                        } catch (Exception e) {
-                                            //Probably a file IO exception.
-                                            bVideoFileFound = false; //redundant, but don't want special behavior.
+                                            brReader.close();
+                                            isM3U8File.close();
                                         }
-                                    }
-                                    if (!bVideoFileFound) {
-                                        if (holder.textView_CatalogItemNotification != null) {
-                                            //Notify the user that post-processing is incomplete:
-                                            holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
-                                            String sMessage = "Item pending post-processing...";
-                                            holder.textView_CatalogItemNotification.setText(sMessage);
-                                        }
-                                    }
 
-                                }  //End if we had to look for a .ts file to serve as a thumbnail file.
-                            } //End if unable to find video working folder DocumentFile.
-                        } //End if unable to find video tag folder DocumentFile.
+                                    } catch (Exception e) {
+                                        //Probably a file IO exception.
+                                        bVideoFileFound = false; //redundant, but don't want special behavior.
+                                    }
+                                }
+                                if (!bVideoFileFound) {
+                                    if (holder.textView_CatalogItemNotification != null) {
+                                        //Notify the user that post-processing is incomplete:
+                                        holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                                        String sMessage = "Item pending post-processing...";
+                                        holder.textView_CatalogItemNotification.setText(sMessage);
+                                    }
+                                }
+
+                            }  //End if we had to look for a .ts file to serve as a thumbnail file.
+                        } //End if unable to find video working folder DocumentFile.
+
                     } //End if video is m3u8 style.
                 } else {
                     if (holder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
